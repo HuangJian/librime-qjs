@@ -25,10 +25,11 @@
   - 🧪 JavaScript 插件？随心所欲地用 qjs/nodejs/bun/deno [执行测试](https://github.com/HuangJian/rime-frost/tree/hj/js/tests)。
 
 ## TODO
+
 - [ ] 多平台支持
   - [x] macOS
   - [ ] Windows
-  - [ ] Linux（PR Welcome）
+  - [x] Linux
   - [ ] Android（PR Welcome）
   - [ ] iOS（PR Welcome）
 - [ ] 更多 JavaScript 引擎支持（PR Welcome）
@@ -37,5 +38,37 @@
     - 性能最优的 JavaScript 引擎
   - [ ] 基于已安装的 nodejs/deno 使用 V8 引擎
 
+## 安装说明
+
+### ArchLinux
+
+从 AUR 安装
+
+```shell
+paru -S librime-qjs-git
+```
+
+### NixOS
+
+从 NUR 安装
+
+```nix
+overlays = [
+  ...
+  (_final: prev: {
+    librime = prev.librime.override {
+      plugins = with prev; [
+        nur.repos.xyenon.librime-qjs
+        librime-lua
+        librime-octagram
+      ];
+    };
+  })
+  ...
+];
+```
+
 ## 开发说明
+
 - [build on macOS](./doc/build-macos.md)
+- [build on Linux](./doc/build-linux.md)

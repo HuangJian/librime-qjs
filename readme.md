@@ -25,10 +25,11 @@ Bring a fresh JavaScript plugin ecosystem to the Rime Input Method Engine, deliv
   - 🧪 JavaScript plugins? Test freely with qjs/nodejs/bun/deno using our [test suite](https://github.com/HuangJian/rime-frost/tree/hj/js/tests).
 
 ## TODO
+
 - [ ] Multiple Platform Support
   - [x] macOS
   - [ ] Windows
-  - [ ] Linux (PR Welcome)
+  - [x] Linux
   - [ ] Android (PR Welcome)
   - [ ] iOS (PR Welcome)
 - [ ] More JavaScript Engine Support (PR Welcome)
@@ -37,5 +38,37 @@ Bring a fresh JavaScript plugin ecosystem to the Rime Input Method Engine, deliv
     - Most performant JavaScript engine
   - [ ] V8 engine support via nodejs/deno
 
+## Installation
+
+### ArchLinux
+
+Install from AUR
+
+```shell
+paru -S librime-qjs-git
+```
+
+### NixOS
+
+Install from NUR
+
+```nix
+overlays = [
+  ...
+  (_final: prev: {
+    librime = prev.librime.override {
+      plugins = with prev; [
+        nur.repos.xyenon.librime-qjs
+        librime-lua
+        librime-octagram
+      ];
+    };
+  })
+  ...
+];
+```
+
 ## Development
+
 - [build on macOS](./doc/build-macos.md)
+- [build on Linux](./doc/build-linux.md)
