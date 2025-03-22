@@ -83,6 +83,12 @@ jobs:
       - name: Install Rime plugins
         run: .\action-install-plugins-windows.bat
 
+     - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+          timeout-minutes: 360
+
       - name: Build and test
         run: |
           .\build.bat
