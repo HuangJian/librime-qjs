@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.12)
 # Set the project name and version
 project(LibrimeQjs VERSION 0.1)
 
+option(BUILD_TOOLS "Build tools" ON)
+
 add_definitions(-DRIME_QJS_VERSION="${PROJECT_VERSION}")
 
 # Specify C++17 standard
@@ -27,29 +29,34 @@ if(WIN32)
     # NB: Windows 7 is EOL and we are only supporting in so far as it doesn't interfere with progress.
     list(APPEND qjs_defines WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0601)
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/quickjs.h")
-  # QuickJS source files
-  set(QUICKJS_SOURCES
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/quickjs.c
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/libregexp.c
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/libunicode.c
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/libbf.c
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/cutils.c
-  )
 
-  include_directories(include ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs)
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/quickjs.h")
+  message(FATAL_ERROR "QuickJS-NG source files not found. \nPlease clone it by `git submodule update --init --recursive` and try again.")
+endif()
 
-  # Create QuickJS library
-  add_library(qjs STATIC ${QUICKJS_SOURCES})
+# QuickJS source files
+set(QUICKJS_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/quickjs.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/libregexp.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/libunicode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/libbf.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/cutils.c
+)
 
-  if(UNIX AND NOT APPLE)
-    # Position-Independent Code (PIC) Required for later linking to librime-qjs (a shared library)
-    set_target_properties(qjs PROPERTIES POSITION_INDEPENDENT_CODE ON)
-  endif()
+include_directories(include ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs)
 
-  target_compile_definitions(qjs PRIVATE ${qjs_defines})
-  target_include_directories(qjs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs)
+# Create QuickJS library
+add_library(qjs STATIC ${QUICKJS_SOURCES})
 
+if(UNIX AND NOT APPLE)
+  # Position-Independent Code (PIC) Required for later linking to librime-qjs (a shared library)
+  set_target_properties(qjs PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+target_compile_definitions(qjs PRIVATE ${qjs_defines})
+target_include_directories(qjs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs)
+
+if (BUILD_TOOLS)
   # Create QuickJS executable
   add_executable(qjs_exe
     ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/gen/repl.c
@@ -95,8 +102,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/quickjs/quickjs.h")
   if(NOT WIN32)
     set_target_properties(qjs_exe PROPERTIES ENABLE_EXPORTS TRUE)
   endif()
-else()
-  message(FATAL_ERROR "QuickJS-NG source files not found. \nPlease clone it by `git submodule update --init --recursive` and try again.")
 endif()
 
 set(CMAKE_CURRENT_LIST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/list)
