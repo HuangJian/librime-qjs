@@ -31,19 +31,19 @@ jobs:
       CXX: ${{ matrix.cxx_compiler }}
       RIME_PLUGINS: ${{ inputs.rime_plugins }}
     steps:
-      # - name: Configure tmate scrolling
-      #   # in copy mode (press Ctrl-b [ then use arrow keys or Page Up/Page Down)
-      #   run: |
-      #     mkdir -p ~/.tmate
-      #     echo "set -g history-limit 50000" > ~/.tmate.conf
-      #     echo "set -g terminal-overrides 'xterm*:smcup@:rmcup@'" >> ~/.tmate.conf
-      # - name: Setup tmate session
-      #   if: matrix.compiler == 'clang-19'
-      #   uses: mxschmitt/action-tmate@v3
-      #   with:
-      #     limit-access-to-actor: true
-      #     timeout-minutes: 360
-      #     detached: true
+      - name: Configure tmate scrolling
+        # in copy mode (press Ctrl-b [ then use arrow keys or Page Up/Page Down)
+        run: |
+          mkdir -p ~/.tmate
+          echo "set -g history-limit 50000" > ~/.tmate.conf
+          echo "set -g terminal-overrides 'xterm*:smcup@:rmcup@'" >> ~/.tmate.conf
+      - name: Setup tmate session
+        if: matrix.compiler == 'clang-19'
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+          timeout-minutes: 360
+          detached: true
 
       - name: Checkout last commit
         uses: actions/checkout@v4
