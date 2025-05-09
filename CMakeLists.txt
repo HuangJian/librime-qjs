@@ -7,6 +7,7 @@ project(LibrimeQjs VERSION 1.1.0)
 
 option(BUILD_TOOLS "Build tools" ON)
 option(BUILD_BENCHMARKS "Run benchmarks" OFF)
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
 
 option(ENABLE_JAVASCRIPTCORE "Enable JavaScriptCore" OFF)
 if(APPLE)
@@ -150,6 +151,47 @@ add_library(librime-qjs-objs OBJECT
   ${SRC_ENGINE_QUICKJS}
   ${SRC_ENGINE_JAVASCRIPTCORE}
 )
+
+if(ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND APPLE)
+  message(STATUS "Enabling LLVM code coverage instrumentation")
+  target_compile_options(librime-qjs-objs PRIVATE
+    -fprofile-instr-generate
+    -fcoverage-mapping
+    -fno-elide-constructors
+    -fcoverage-mcdc
+  )
+  target_link_options(librime-qjs-objs PRIVATE
+    -fprofile-instr-generate
+    -fcoverage-mapping
+    -fno-elide-constructors
+    -fcoverage-mcdc
+  )
+
+  # file(GLOB HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/types/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/src/types/*.hpp")
+  # message(STATUS "Header files: ${HEADER_FILES}")
+  # set_source_files_properties(${HEADER_FILES}
+  #   PROPERTIES
+  #   LANGUAGE CXX
+  #   COMPILE_FLAGS "-fprofile-instr-generate -fcoverage-mapping -fno-elide-constructors -fcoverage-mcdc"
+  # )
+
+  # Find the LLVM compiler runtime library path
+  execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} -print-runtime-dir
+    OUTPUT_VARIABLE CLANG_RT_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  if(CLANG_RT_PATH)
+    message(STATUS "Found LLVM compiler runtime path: ${CLANG_RT_PATH}")
+    set(CLANG_RT_PROFILE "${CLANG_RT_PATH}/libclang_rt.profile_osx.a")
+  else()
+    message(WARNING "Could not find LLVM compiler runtime path. Coverage may not work properly.")
+    # Fallback to direct linking, which may still fail if the library is not in the search path
+    set(CLANG_RT_PROFILE "clang_rt.profile_osx")
+  endif()
+endif()
+
 if(BUILD_SHARED_LIBS)
   set_target_properties(librime-qjs-objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -173,6 +215,7 @@ if(BUILD_SHARED_LIBS)
   endif()
 endif()
 
+# cd <librime>
 # cmake -S . -B build -DBUILD_BENCHMARKS=ON
 # make && ./plugins/qjs/build/qjs-benchmark
 if(BUILD_BENCHMARKS)
@@ -181,5 +224,5 @@ endif()
 
 set(plugin_name "rime-qjs" PARENT_SCOPE)
 set(plugin_objs $<TARGET_OBJECTS:librime-qjs-objs> PARENT_SCOPE)
-set(plugin_deps ${rime_library} ${rime_gears_library} qjs ${JAVASCRIPTCORE} PARENT_SCOPE)
+set(plugin_deps ${rime_library} ${rime_gears_library} qjs ${JAVASCRIPTCORE} ${CLANG_RT_PROFILE} PARENT_SCOPE)
 set(plugin_modules "qjs" PARENT_SCOPE)

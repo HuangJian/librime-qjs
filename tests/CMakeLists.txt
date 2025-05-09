@@ -25,12 +25,28 @@ target_link_libraries(librime-qjs-tests PUBLIC
   librime-qjs-objs
   GTest::gtest
   ${Marisa_LIBRARY}
+  ${CLANG_RT_PROFILE}
 )
 
 if(ENABLE_JAVASCRIPTCORE)
   find_library(JAVASCRIPTCORE JavaScriptCore REQUIRED)
   include_directories(${JAVASCRIPTCORE}/Headers)
   target_link_libraries(librime-qjs-tests PRIVATE ${JAVASCRIPTCORE})
+endif()
+
+if(ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND APPLE)
+  target_compile_options(librime-qjs-tests PRIVATE
+    -fprofile-instr-generate
+    -fcoverage-mapping
+    -fno-elide-constructors
+    -fcoverage-mcdc
+  )
+  target_link_options(librime-qjs-tests PRIVATE
+    -fprofile-instr-generate
+    -fcoverage-mapping
+    -fno-elide-constructors
+    -fcoverage-mcdc
+  )
 endif()
 
 if(WIN32)
@@ -41,14 +57,3 @@ endif()
 add_test(NAME librime-qjs-tests
   COMMAND librime-qjs-tests
   WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-
-
-# set(benchmark_files "benchmark/dict/load_map_benchmark.cc")
-# add_executable(load-dict-benchmark ${benchmark_files})
-# target_link_libraries(load-dict-benchmark
-#   librime-qjs-objs
-#   ${rime_library}
-#   ${rime_dict_library}
-#   ${rime_gears_library}
-#   ${GTEST_LIBRARIES}
-# )

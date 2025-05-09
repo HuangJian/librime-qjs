@@ -1,4 +1,4 @@
-[English](./doc/readme.en.md) | 中文 | [Plugin Development Guide](./doc/plugin-dev.en.md) | [插件开发指南](./doc/plugin-dev.cn.md)
+[![Release CI](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml/badge.svg)](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml) [English](./doc/readme.en.md) | 中文 | [Plugin Development Guide](./doc/plugin-dev.en.md) | [插件开发指南](./doc/plugin-dev.cn.md)
 
 # librime-qjs
 
