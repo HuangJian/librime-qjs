@@ -11,7 +11,16 @@
 #include "qjs_translation.h"
 #include "types/qjs_types.h"
 
-class JscLoadBundledPluginTest : public testing::Test {};
+class JscLoadBundledPluginTest : public testing::Test {
+  void SetUp() override {
+    auto& engine = JsEngine<JSValueRef>::instance();
+    std::filesystem::path path(rime_get_api()->get_user_data_dir());
+    path.append("js");
+    engine.setBaseFolderPath(path.generic_string().c_str());
+
+    registerTypesToJsEngine<JSValueRef>();
+  }
+};
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(JscLoadBundledPluginTest, RunEsmBundledTranslator) {

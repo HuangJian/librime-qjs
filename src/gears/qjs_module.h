@@ -39,11 +39,15 @@ protected:
   }
 
   ~QjsModule() {
+    if (!isLoaded_) {
+      return;
+    }
+
     auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
     if (jsEngine.isUndefined(finalizer_)) {
-      DLOG(INFO) << "[qjs] ~" << namespace_ << " no `finalizer` function exported.";
-    } else if (isLoaded_) {
-      DLOG(INFO) << "[qjs] running the finalizer function of " << namespace_;
+      LOG(INFO) << "[qjs] ~" << namespace_ << " no `finalizer` function exported.";
+    } else {
+      LOG(INFO) << "[qjs] running the finalizer function of " << namespace_;
       T_JS_VALUE finalizerResult = jsEngine.callFunction(finalizer_, instance_, 0, nullptr);
       if (jsEngine.isException(finalizerResult)) {
         LOG(ERROR) << "[qjs] ~" << namespace_ << " Error running the finalizer function.";
@@ -51,9 +55,7 @@ protected:
       jsEngine.freeValue(finalizerResult);
     }
 
-    if (isLoaded_) {
-      jsEngine.unprotectFromGC(instance_, mainFunc_, finalizer_);
-    }
+    jsEngine.unprotectFromGC(instance_, mainFunc_, finalizer_);
     jsEngine.freeValue(instance_, mainFunc_, finalizer_);
   }
 
