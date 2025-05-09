@@ -155,6 +155,10 @@ const interfacesOutsideTypes = [
     methods: ['filter', 'isApplicable'],
   },
   {
+    name: 'FastFilter',
+    methods: ['filter', 'isApplicable'],
+  },
+  {
     name: 'ParseTextFileOptions',
     props: ['delimiter', 'comment', 'lines', 'isReversed', 'charsToRemove', 'onDuplicatedKey', 'concatSeparator'],
   },

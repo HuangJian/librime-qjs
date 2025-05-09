@@ -50,8 +50,10 @@ jobs:
         run: |
           brew install llvm ninja
           echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
-          echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
+          echo "/opt/homebrew/opt/llvm/bin:/usr/local/opt/llvm/bin:$$GITHUB_PATH" > $GITHUB_PATH
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
+          echo LDFLAGS="-L/opt/homebrew/opt/llvm/lib" >> $GITHUB_ENV
+          echo CPPFLAGS="-I/opt/homebrew/opt/llvm/include" >> $GITHUB_ENV
 
       - name: Install Boost
         run: ./install-boost.sh
