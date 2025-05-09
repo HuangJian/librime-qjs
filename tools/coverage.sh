@@ -6,7 +6,7 @@ dirRime="$dirQjs/../.."
 rm -rf ${dirQjs}/build/qjs.*
 rm -rf ${dirQjs}/build/coverage
 
-cd $dirRime
+cd "$dirRime"
 
 cmake . -Bcoverage \
     -G Ninja \
@@ -35,3 +35,13 @@ llvm-cov show \
     -ignore-filename-regex='.*boost.*' \
     -ignore-filename-regex='.*(tests|thirdparty).*' \
     --output-dir=${dirQjs}/build/coverage
+
+# upload it to codecov later
+llvm-cov export \
+    -format="lcov" \
+    -instr-profile=${profile}.profdata \
+    ./librime-qjs-tests \
+    -ignore-filename-regex='.*/librime/(include|src)/.*' \
+    -ignore-filename-regex='.*boost.*' \
+    -ignore-filename-regex='.*(tests|thirdparty).*' \
+     > "${profile}.lcov"

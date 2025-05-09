@@ -1,4 +1,4 @@
-name: Development CI (linters)
+name: Development CI (lint > coverage > leak)
 
 on:
   push:
@@ -32,3 +32,56 @@ jobs:
 
       - name: Check rime.d.ts
         run: (cd ./tools; node ./check-api-coverage.js)
+
+  coverage:
+    runs-on: macos-14
+    env:
+      boost_version: 1.84.0
+      BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.84.0
+      RIME_PLUGINS: ${{ github.repository }}@${{ github.ref_name }}
+    steps:
+      - name: Checkout last commit
+        uses: actions/checkout@v4
+        with:
+          repository: HuangJian/librime
+          submodules: recursive
+
+      - name: Configure build environment
+        run: |
+          brew install llvm ninja
+          echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
+          echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
+          echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
+
+      - name: Install Boost
+        run: ./install-boost.sh
+
+      - name: Check submodules
+        run: git submodule > submodule-status
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            bin
+            include
+            lib
+            share
+          key: ${{ runner.os }}-${{ runner.arch }}-deps-${{ hashFiles('submodule-status') }}
+
+      - name: Build dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: make deps
+
+      - name: Install Rime plugins
+        run: ./action-install-plugins-macos.sh
+
+      - name: Build and test
+        run: bash ./plugins/qjs/tools/coverage.sh
+
+      - name: upload to codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: plugins/qjs/build/qjs.lcov
