@@ -10,6 +10,11 @@ QuickJsEngineImpl::QuickJsEngineImpl()
   JS_SetGCThreshold(runtime_, SIXTEEN_MEGABYTES);
   JS_SetModuleLoaderFunc(runtime_, nullptr, js_module_loader, nullptr);
 
+#ifdef WIN32
+  /* use 0 to disable maximum stack size check */
+  JS_SetMaxStackSize(runtime_, 0);
+#endif
+
   exposeLogToJsConsole(context_);
 }
 
