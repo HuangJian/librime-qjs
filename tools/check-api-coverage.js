@@ -86,7 +86,7 @@ function parseDtsDeclarations() {
         const getterMatch = line.match(/^\s+readonly\s(\w+)\??:/)
         if (getterMatch) getters.add(getterMatch[1])
 
-        const methodMatch = line.match(/^\s*(new|\w+)(\s*|\?)\(/)
+        const methodMatch = line.match(/^\s*(new|\*?\w+)(\s*|\?)\(/)
         if (methodMatch) methods.add(methodMatch[1].replace('new', 'constructor'))
       })
       declarations.set(name, { props, getters, methods })
@@ -153,6 +153,10 @@ const interfacesOutsideTypes = [
   {
     name: 'Filter',
     methods: ['filter', 'isApplicable'],
+  },
+  {
+    name: 'FastFilter',
+    methods: ['*filter', 'isApplicable'],
   },
   {
     name: 'ParseTextFileOptions',
