@@ -194,7 +194,7 @@ public:
   }
 
   [[nodiscard]] JSValueRef throwError(JsErrorType errorType, const std::string& message) const {
-    return JSValueMakeString(impl_->getContext(), JscStringRAII(message.c_str()));
+    throw JsException(errorType, message);
   }
 
   [[nodiscard]] bool isFunction(const JSValueRef& value) const {
