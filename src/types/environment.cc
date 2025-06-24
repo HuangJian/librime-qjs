@@ -95,7 +95,7 @@ std::pair<std::string, std::string> Environment::popen(const std::string& comman
   if (!completed) {
     pclosex(pipe);  // Forcefully terminate
     if (worker.joinable()) {
-      worker.join();
+      worker.detach();
     }
     const std::string error = "popen timed-out with command = [" + command + "] in " +
                               std::to_string(timeoutInMilliseconds) + "ms";
