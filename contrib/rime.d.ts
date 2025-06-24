@@ -703,10 +703,11 @@ interface Environment {
   /**
    * Execute a shell command and capture its output
    * @param command - Shell command to execute
+   * @param timeout - Max duration in milliseconds to execute the command, default to 1000ms
    * @returns {string} Command output
-   * @throws {Error} If command execution fails
+   * @throws {Error} If command execution fails or timed-out
    */
-  popen(command: string): string
+  popen(command: string, timeout?: number): string
 }
 
 /**

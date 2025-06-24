@@ -50,12 +50,12 @@ class JsWrapper<Environment> {
     if (command.empty()) {
       return engine.throwError(JsErrorType::SYNTAX, "The command argument should be a string");
     }
-    try {
-      std::string result = Environment::popen(command);
-      return engine.wrap(result);
-    } catch (const std::exception& e) {
-      return engine.throwError(JsErrorType::GENERIC, e.what());
+    auto timeout = argc > 1 ? engine.toInt(argv[1]) : 1000;  // default to 1000ms
+    auto result = Environment::popen(command, timeout);
+    if (!result.second.empty()) {
+      return engine.throwError(JsErrorType::GENERIC, result.second);
     }
+    return engine.wrap(result.first);
   })
 
 public:

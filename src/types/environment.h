@@ -29,7 +29,8 @@ public:
   static std::string loadFile(const std::string& path);
   static bool fileExists(const std::string& path);
   static std::string getRimeInfo();
-  static std::string popen(const std::string& command);
+  static std::pair<std::string, std::string> popen(const std::string& command,
+                                                   int timeoutInMilliseconds);
 
   static std::string formatMemoryUsage(size_t usage);
 

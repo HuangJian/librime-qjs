@@ -1,10 +1,18 @@
 #include "environment.h"
 
 #include <glog/logging.h>
-#include <stdexcept>
+
+#include <chrono>
+#include <condition_variable>
+#include <cstdio>
+#include <mutex>
+#include <string>
+#include <thread>
+
 #include "process_memory.hpp"
 
 #ifdef _WIN32
+#include <windows.h>
 static FILE* popenx(const std::string& command) {
   return _popen(command.c_str(), "r");
 }
@@ -21,6 +29,86 @@ static int pclosex(FILE* pipe) {
   return ::pclose(pipe);
 }
 #endif
+
+//Structure to hold pipe data and synchronization
+struct PipeData {
+  std::string output;
+  std::mutex mutex;
+  std::condition_variable cv;
+  bool finished = false;
+};
+
+// Reads pipe output into a string (runs in worker thread)
+void readPipe(FILE* pipe, PipeData& data) {
+  constexpr size_t READ_BUFFER_SIZE = 128;
+  char buffer[READ_BUFFER_SIZE];
+  auto* ptrBuffer = static_cast<char*>(buffer);
+  while (fgets(ptrBuffer, sizeof(buffer), pipe) != nullptr) {
+    std::lock_guard lock(data.mutex);
+    data.output += ptrBuffer;
+  }
+  {
+    std::lock_guard lock(data.mutex);
+    data.finished = true;
+  }
+  data.cv.notify_one();  // Notify parent thread
+}
+
+// Waits for thread to finish or timeout
+template <typename Rep, typename Period>
+bool joinWithTimeout(std::thread& thread,
+                     PipeData& data,
+                     const std::chrono::duration<Rep, Period>& timeout) {
+  std::unique_lock lock(data.mutex);
+
+  // Wait until either:
+  // - The thread finishes (data.finished == true), or
+  // - The timeout is reached
+  while (!data.finished) {
+    if (data.cv.wait_for(lock, timeout) == std::cv_status::timeout) {
+      return false;  // Timeout reached
+    }
+  }
+  lock.unlock();
+
+  if (thread.joinable()) {
+    thread.join();
+  }
+  return true;  // Thread finished normally
+}
+
+std::pair<std::string, std::string> Environment::popen(const std::string& command,
+                                                       int timeoutInMilliseconds) {
+  if (command.empty()) {
+    return std::make_pair("", "Command is empty");
+  }
+
+  FILE* pipe = popenx(command);
+  if (pipe == nullptr) {
+    return std::make_pair("", "Failed to run command: " + command);
+  }
+
+  PipeData pipeData;
+  std::thread worker(readPipe, pipe, std::ref(pipeData));
+  const bool completed =
+      joinWithTimeout(worker, pipeData, std::chrono::milliseconds(timeoutInMilliseconds));
+  if (!completed) {
+    pclosex(pipe);  // Forcefully terminate
+    if (worker.joinable()) {
+      worker.join();
+    }
+    const std::string error = "popen timed-out with command = [" + command + "] in " +
+                              std::to_string(timeoutInMilliseconds) + "ms";
+    return std::make_pair("", error);
+  }
+
+  const int status = pclosex(pipe);
+  if (status != 0) {
+    return std::make_pair("", "Command failed with status: " + std::to_string(status));
+  }
+
+  return std::make_pair(pipeData.output, "");
+}
 
 std::string Environment::formatMemoryUsage(size_t usage) {
   constexpr size_t KILOBYTE = 1024;
@@ -65,31 +153,4 @@ std::string Environment::getRimeInfo() {
      << "Process RSS Mem: " << formatMemoryUsage(residentSet);
 
   return ss.str();
-}
-
-std::string Environment::popen(const std::string& command) {
-  if (command.empty()) {
-    throw std::runtime_error("Command is empty");
-  }
-
-  FILE* pipe = popenx(command);
-  if (pipe == nullptr) {
-    throw std::runtime_error("Failed to run command: " + command);
-  }
-
-  // Read the output
-  constexpr size_t READ_BUFFER_SIZE = 128;
-  char buffer[READ_BUFFER_SIZE];
-  char* ptrBuffer = static_cast<char*>(buffer);
-  std::string result;
-  while (fgets(ptrBuffer, sizeof(buffer), pipe) != nullptr) {
-    result += ptrBuffer;
-  }
-
-  int status = pclosex(pipe);
-  if (status != 0) {
-    throw std::runtime_error("Command failed with status: " + std::to_string(status));
-  }
-
-  return result;
 }

@@ -21,7 +21,15 @@ private:
       DictionaryDataHelper(getFolderPath(__FILE__).c_str(), "dummy_dict.txt");
 
 protected:
-  void SetUp() override { trieDataHelper_.createDummyTextFile(); }
+  void SetUp() override {
+    trieDataHelper_.createDummyTextFile();
+
+    registerTypesToJsEngine<T>();
+    std::filesystem::path path(rime_get_api()->get_user_data_dir());
+    path.append("js");
+    auto& jsEngine = JsEngine<T>::instance();
+    jsEngine.setBaseFolderPath(path.generic_string().c_str());
+  }
 
   void TearDown() override {
     auto folder = getFolderPath(__FILE__);
