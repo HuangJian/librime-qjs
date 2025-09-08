@@ -14,20 +14,20 @@
   logError(format, __VA_ARGS__); \
   JS_ThrowReferenceError(ctx, format, __VA_ARGS__);
 
-enum { PATH_MAX = 1024 };
+enum { LOADER_PATH_MAX = 1024 };
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-static char qjsBaseFolder[PATH_MAX] = {0};
+static char qjsBaseFolder[LOADER_PATH_MAX] = {0};
 
 void setQjsBaseFolder(const char* path) {
-  strncpy(qjsBaseFolder, path, PATH_MAX);
+  strncpy(qjsBaseFolder, path, LOADER_PATH_MAX);
 }
 
 #ifdef _WIN32
 #include <windows.h>
 __attribute__((constructor)) void initBaseFolder() {
-  char path[PATH_MAX];
-  GetModuleFileNameA(NULL, path, PATH_MAX);
+  char path[LOADER_PATH_MAX];
+  GetModuleFileNameA(NULL, path, LOADER_PATH_MAX);
   char* last_slash = strrchr(path, '\\');
   if (last_slash) {
     *last_slash = '\0';
@@ -105,7 +105,7 @@ extern void logErrorImpl(const char* message);
 void logInfo(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  char buffer[PATH_MAX];
+  char buffer[LOADER_PATH_MAX];
   vsnprintf(buffer, sizeof(buffer), format, args);
   va_end(args);
 
@@ -119,7 +119,7 @@ void logInfo(const char* format, ...) {
 void logError(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  char buffer[PATH_MAX];
+  char buffer[LOADER_PATH_MAX];
   vsnprintf(buffer, sizeof(buffer), format, args);
   va_end(args);
 
@@ -142,8 +142,8 @@ static bool isFileExists(const char* path) {
 }
 
 static const char* getActualFileName(const char* moduleName) {
-  static char fileNameAttempt[PATH_MAX];
-  char fullPath[PATH_MAX];
+  static char fileNameAttempt[LOADER_PATH_MAX];
+  char fullPath[LOADER_PATH_MAX];
 
   // has extension and file exists, return moduleName without modification
   const char* extensions[] = {".js", ".mjs", ".cjs"};
@@ -174,7 +174,7 @@ static const char* getActualFilePath(const char* path) {
   const char* possibleExtensions[] = {"", ".js", ".mjs", ".cjs"};
   const int numExtensions = sizeof(possibleExtensions) / sizeof(possibleExtensions[0]);
 
-  static char fullPath[PATH_MAX];
+  static char fullPath[LOADER_PATH_MAX];
   for (int i = 0; i < numExtensions; i++) {
     snprintf(fullPath, sizeof(fullPath), "%s%s", path, possibleExtensions[i]);
     if (isFileExists(fullPath)) {
@@ -186,7 +186,7 @@ static const char* getActualFilePath(const char* path) {
 }
 
 char* tryFindNodeModuleEntryFileName(const char* folder, const char* key) {
-  char packageJsonPath[PATH_MAX];
+  char packageJsonPath[LOADER_PATH_MAX];
   snprintf(packageJsonPath, sizeof(packageJsonPath), "%s/package.json", folder);
 
   FILE* packageJson = fopen(packageJsonPath, "r");
@@ -195,7 +195,7 @@ char* tryFindNodeModuleEntryFileName(const char* folder, const char* key) {
   }
 
   char* entryFileName = NULL;
-  char line[PATH_MAX];
+  char line[LOADER_PATH_MAX];
 
   while (fgets(line, sizeof(line), packageJson)) {
     char* pos = strstr(line, key);
@@ -224,7 +224,7 @@ char* tryFindNodeModuleEntryFileName(const char* folder, const char* key) {
 
   fclose(packageJson);
 
-  char entryFilePath[PATH_MAX];
+  char entryFilePath[LOADER_PATH_MAX];
   snprintf(entryFilePath, sizeof(entryFilePath), "%s/%s", folder, entryFileName);
   const char* actualPath = getActualFilePath(entryFilePath);
   if (actualPath) {
@@ -236,7 +236,7 @@ char* tryFindNodeModuleEntryFileName(const char* folder, const char* key) {
 
 char* tryFindNodeModuleEntryPath(const char* baseFolder,
                                  const char* moduleName) {
-  char folder[PATH_MAX];
+  char folder[LOADER_PATH_MAX];
   snprintf(folder, sizeof(folder), "%s/node_modules/%s", baseFolder, moduleName);
 
   char* entryFileName = tryFindNodeModuleEntryFileName(folder, "\"module\":");
@@ -312,7 +312,7 @@ char* readJsCode(JSContext* ctx, const char* moduleName) {
     LOG_AND_THROW_ERROR(ctx, "File not found: %s", moduleName);
     return NULL;
   }
-  char fullPath[PATH_MAX];
+  char fullPath[LOADER_PATH_MAX];
   if (isAbsolutePath(fileName)) {
     snprintf(fullPath, sizeof(fullPath), "%s", fileName);
   } else {
@@ -355,7 +355,7 @@ JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
 JSModuleDef* js_module_loader(JSContext* ctx,
                               const char* moduleName,
                               void* opaque) {
-  char fullPath[PATH_MAX];
+  char fullPath[LOADER_PATH_MAX];
   if (isAbsolutePath(moduleName)) {
     snprintf(fullPath, sizeof(fullPath), "%s", moduleName);
   } else {
@@ -375,7 +375,7 @@ JSModuleDef* js_module_loader(JSContext* ctx,
     return NULL;
   }
 
-  char modulePath[PATH_MAX];
+  char modulePath[LOADER_PATH_MAX];
   snprintf(modulePath, sizeof(modulePath), "node_modules/%s/%s", moduleName, nodeModuleEntryFile);
   free(nodeModuleEntryFile);
 
