@@ -33,8 +33,16 @@ public:
   ComponentWrapperBase& operator=(ComponentWrapperBase&&) = delete;
 
 protected:
-  explicit ComponentWrapperBase(const rime::Ticket& ticket);
-  virtual ~ComponentWrapperBase();
+  explicit ComponentWrapperBase(const rime::Ticket& ticket)
+      : T_BASE(ticket),
+        environment_(std::make_unique<Environment>(ticket.engine, ticket.name_space)) {
+    DLOG(INFO) << "[qjs] " << typeid(T_ACTUAL).name()
+               << " ComponentWrapper created with ticket: " << ticket.name_space;
+  }
+
+  virtual ~ComponentWrapperBase() {
+    DLOG(INFO) << "[qjs] " << typeid(T_ACTUAL).name() << " ComponentWrapper destroyed";
+  }
 
 private:
   std::unique_ptr<Environment> environment_;
@@ -47,7 +55,25 @@ class QuickJSComponent : public T_BASE::Component {
 
 public:
   // NOLINTNEXTLINE(readability-identifier-naming)
-  ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>* Create(const rime::Ticket& ticket);
+  ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>* Create(const rime::Ticket& ticket) {
+    // The same plugin could have difference configurations for different schemas, and then behave differently.
+    // So we need to create a new component for each schema.
+    const std::string schemaId = ticket.engine->schema()->schema_id();
+    KeyType key = std::make_pair(schemaId, ticket.name_space);
+
+    auto component = new ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>(ticket);
+    std::shared_ptr<T_ACTUAL> actual = nullptr;
+    if (components_.count(key)) {
+      actual = components_[key];
+    } else {
+      LOG(INFO) << "[qjs] creating component '" << ticket.name_space << "' for schema " << schemaId;
+      actual = std::make_shared<T_ACTUAL>(ticket, component->environment());
+      components_[key] = actual;
+    }
+
+    component->setActual(actual);
+    return component;
+  }
 
 private:
   std::map<KeyType, std::shared_ptr<T_ACTUAL>> components_;
