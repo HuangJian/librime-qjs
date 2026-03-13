@@ -25,6 +25,8 @@ public:
       : ComponentWrapperBase<T_ACTUAL, rime::Processor, T_JS_VALUE>(ticket) {}
 
   // NOLINTNEXTLINE(readability-identifier-naming)
-  rime::ProcessResult ProcessKeyEvent(const rime::KeyEvent& keyEvent) override;
+  rime::ProcessResult ProcessKeyEvent(const rime::KeyEvent& keyEvent) override {
+    return this->actual()->processKeyEvent(keyEvent, this->environment());
+  }
 };
 }  // namespace rime

@@ -48,6 +48,8 @@ public:
 
   // NOLINTNEXTLINE(readability-identifier-naming)
   virtual rime::an<rime::Translation> Apply(rime::an<rime::Translation> translation,
-                                            rime::CandidateList* candidates);
+                                            rime::CandidateList* candidates) override {
+    return this->actual()->apply(translation, this->environment());
+  }
 };
 }  // namespace rime

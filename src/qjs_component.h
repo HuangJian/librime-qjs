@@ -7,8 +7,10 @@
 #include <rime/ticket.h>
 #include <rime/translator.h>
 
+#include <glog/logging.h>
 #include <map>
 #include <memory>
+#include <typeinfo>
 #include <utility>
 #include "types/environment.h"
 
@@ -55,7 +57,7 @@ class QuickJSComponent : public T_BASE::Component {
 
 public:
   // NOLINTNEXTLINE(readability-identifier-naming)
-  ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>* Create(const rime::Ticket& ticket) {
+  ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>* Create(const rime::Ticket& ticket) override {
     // The same plugin could have difference configurations for different schemas, and then behave differently.
     // So we need to create a new component for each schema.
     const std::string schemaId = ticket.engine->schema()->schema_id();

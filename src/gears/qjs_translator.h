@@ -33,6 +33,9 @@ public:
       : ComponentWrapperBase<T_ACTUAL, rime::Translator, T_JS_VALUE>(ticket) {}
 
   // NOLINTNEXTLINE(readability-identifier-naming)
-  virtual rime::an<rime::Translation> Query(const std::string& input, const rime::Segment& segment);
+  virtual rime::an<rime::Translation> Query(const std::string& input,
+                                            const rime::Segment& segment) override {
+    return this->actual()->query(input, segment, this->environment());
+  }
 };
 }  // namespace rime
