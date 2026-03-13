@@ -3,10 +3,8 @@
 #include <glog/logging.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -23,15 +21,15 @@ void QuickJSCodeLoader::logJsError(JSContext* ctx, const char* prefix, const cha
     return;
   }
 
-  JSValue exception = JS_GetException(ctx);
+  const JSValue exception = JS_GetException(ctx);
   const char* message = JS_ToCString(ctx, exception);
   google::LogMessage(file, line, google::GLOG_ERROR).stream()
       << "[qjs]" << prefix << ' ' << message;
   JS_FreeCString(ctx, message);  // Free the C string
 
-  JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
-  const char* stackTrace = JS_ToCString(ctx, stack);
-  if (stackTrace != nullptr && *stackTrace != '\0') {
+  const JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
+  if (const char* stackTrace = JS_ToCString(ctx, stack);
+      stackTrace != nullptr && *stackTrace != '\0') {
     google::LogMessage(file, line, google::GLOG_ERROR).stream()
         << "[qjs] JS stack trace: " << stackTrace;
     JS_FreeCString(ctx, stackTrace);  // Free the C string
@@ -44,14 +42,14 @@ void QuickJSCodeLoader::logJsError(JSContext* ctx, const char* prefix, const cha
 }
 
 JSValue QuickJSCodeLoader::loadJsModuleToNamespace(JSContext* ctx, const char* moduleName) {
-  JSValue funcObj = loadJsModule(ctx, moduleName);
+  const JSValue funcObj = loadJsModule(ctx, moduleName);
   if (JS_IsException(funcObj)) {
     logJsError(ctx, "Failed to load js module:", __FILE__, __LINE__);
     return funcObj;
   }
 
   auto* md = reinterpret_cast<JSModuleDef*>(JS_VALUE_GET_PTR(funcObj));
-  JSValue evalResult = JS_EvalFunction(ctx, funcObj);
+  const JSValue evalResult = JS_EvalFunction(ctx, funcObj);
   if (JS_IsException(evalResult)) {
     logJsError(ctx, "Failed to evaluate the module:", __FILE__, __LINE__);
     return evalResult;
@@ -73,39 +71,40 @@ JSValue QuickJSCodeLoader::createInstanceOfEsmBundledModule(JSContext* ctx,
                                                             const std::string& moduleName,
                                                             std::vector<JSValue>& args,
                                                             const std::string& mainFuncName) {
-  auto module = loadJsModuleToNamespace(ctx, moduleName.c_str());
+  const auto module = loadJsModuleToNamespace(ctx, moduleName.c_str());
   if (JS_IsException(module)) {
     logJsError(ctx, "Failed to load js module:", __FILE__, __LINE__);
     return module;
   }
 
-  JSValue jsClass = getExportedClassHavingMethodNameInModule(ctx, module, mainFuncName.c_str());
+  const JSValue jsClass =
+      getExportedClassHavingMethodNameInModule(ctx, module, mainFuncName.c_str());
   JS_FreeValue(ctx, module);
 
   if (JS_IsException(jsClass)) {
     JS_FreeValue(ctx, jsClass);
-    std::string message =
+    const std::string message =
         "No exported class having a `" + mainFuncName + "` function in " + moduleName;
     logJsError(ctx, message.c_str(), __FILE__, __LINE__);
     return JS_ThrowPlainError(ctx, "%s", message.c_str());
   }
 
-  JSValue constructor = getMethodByNameInClass(ctx, jsClass, "constructor");
+  const JSValue constructor = getMethodByNameInClass(ctx, jsClass, "constructor");
   if (JS_IsException(constructor)) {
     JS_FreeValue(ctx, jsClass);
     JS_FreeValue(ctx, constructor);
-    std::string message = "No `constructor` function in " + moduleName;
+    const std::string message = "No `constructor` function in " + moduleName;
     logJsError(ctx, message.c_str(), __FILE__, __LINE__);
     return JS_ThrowPlainError(ctx, "%s", message.c_str());
   }
 
-  int argc = static_cast<int>(args.size());
-  JSValue instance = JS_CallConstructor(ctx, constructor, argc, args.data());
+  const int argc = static_cast<int>(args.size());
+  const JSValue instance = JS_CallConstructor(ctx, constructor, argc, args.data());
   JS_FreeValue(ctx, jsClass);
   JS_FreeValue(ctx, constructor);
 
   if (JS_IsException(instance)) {
-    std::string message = "Failed to create an instance of " + moduleName;
+    const std::string message = "Failed to create an instance of " + moduleName;
     logJsError(ctx, message.c_str(), __FILE__, __LINE__);
     return JS_ThrowPlainError(ctx, "%s", message.c_str());
   }
@@ -191,14 +190,14 @@ JSValue QuickJSCodeLoader::createInstanceOfIifeBundledModule(JSContext* ctx,
 }
 
 JSValue QuickJSCodeLoader::getMethodByNameInClass(JSContext* ctx,
-                                                  JSValue classObj,
+                                                  const JSValue classObj,
                                                   const char* methodName) {
-  auto proto = JS_GetPropertyStr(ctx, classObj, "prototype");
+  const auto proto = JS_GetPropertyStr(ctx, classObj, "prototype");
   if (JS_IsException(proto)) {
     return JS_UNDEFINED;
   }
 
-  JSValue method = JS_GetPropertyStr(ctx, proto, methodName);
+  const JSValue method = JS_GetPropertyStr(ctx, proto, methodName);
   JS_FreeValue(ctx, proto);
   if (JS_IsException(method) || !JS_IsFunction(ctx, method)) {
     JS_FreeValue(ctx, method);
@@ -209,17 +208,17 @@ JSValue QuickJSCodeLoader::getMethodByNameInClass(JSContext* ctx,
 }
 
 JSValue QuickJSCodeLoader::getExportedClassByNameInModule(JSContext* ctx,
-                                                          JSValue moduleObj,
+                                                          const JSValue moduleObj,
                                                           const char* className) {
   JSPropertyEnum* props = nullptr;
   uint32_t propCount = 0;  // Get all enumerable properties from namespace
-  int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
-  if (JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
-    size_t n = strlen(className);
+  if (constexpr int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
+      JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
+    const size_t n = strlen(className);
     for (uint32_t i = 0; i < propCount; i++) {
-      JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
+      const JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
       const char* propName = JS_AtomToCString(ctx, props[i].atom);
-      bool isMatched = !JS_IsException(propVal) && strncmp(propName, className, n) == 0;
+      const bool isMatched = !JS_IsException(propVal) && strncmp(propName, className, n) == 0;
 
       JS_FreeCString(ctx, propName);
       JS_FreeAtom(ctx, props[i].atom);
@@ -238,19 +237,19 @@ JSValue QuickJSCodeLoader::getExportedClassByNameInModule(JSContext* ctx,
 }
 
 JSValue QuickJSCodeLoader::getExportedClassHavingMethodNameInModule(JSContext* ctx,
-                                                                    JSValue moduleObj,
+                                                                    const JSValue moduleObj,
                                                                     const char* methodName) {
   JSPropertyEnum* props = nullptr;
   uint32_t propCount = 0;  // Get all enumerable properties from namespace
-  int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
-  if (JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
+  if (constexpr int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
+      JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
     for (uint32_t i = 0; i < propCount; i++) {
-      JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
+      const JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
       const char* propName = JS_AtomToCString(ctx, props[i].atom);
 
       bool found = false;
       if (JS_IsObject(propVal)) {
-        auto method = getMethodByNameInClass(ctx, propVal, methodName);
+        const auto method = getMethodByNameInClass(ctx, propVal, methodName);
         found = !JS_IsException(method) && !JS_IsUndefined(method) && JS_IsFunction(ctx, method);
         JS_FreeValue(ctx, method);
       }

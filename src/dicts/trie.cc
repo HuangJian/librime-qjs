@@ -14,9 +14,9 @@
 namespace rime {
 
 void Trie::loadBinaryFile(const std::string& filePath) {
-  boost::interprocess::file_mapping mapping(std::string(filePath).c_str(),
-                                            boost::interprocess::read_only);
-  boost::interprocess::mapped_region region(mapping, boost::interprocess::read_only);
+  const boost::interprocess::file_mapping mapping(std::string(filePath).c_str(),
+                                                  boost::interprocess::read_only);
+  const boost::interprocess::mapped_region region(mapping, boost::interprocess::read_only);
 
   const char* current = static_cast<const char*>(region.get_address());
   const char* end = current + region.get_size();
@@ -104,7 +104,7 @@ void Trie::add(const std::string& key, const std::string& value) {
   agent.set_query(key.c_str(), key.length());
 
   if (trie_.lookup(agent)) {
-    std::size_t id = agent.key().id();
+    const std::size_t id = agent.key().id();
 
     // Resize data vector if necessary
     if (id >= data_.size()) {
@@ -172,8 +172,7 @@ std::vector<std::pair<std::string, std::string>> Trie::prefixSearch(
 
   while (trie_.predictive_search(agent)) {
     std::string key(agent.key().ptr(), agent.key().length());
-    std::size_t id = agent.key().id();
-    if (id < data_.size()) {
+    if (const std::size_t id = agent.key().id(); id < data_.size()) {
       auto value = data_[id];
       if (!concatSeparator_.empty()) {
         auto arr = split(value, concatSeparator_);

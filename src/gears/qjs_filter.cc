@@ -2,7 +2,7 @@
 #include <type_traits>
 
 template <typename T_JS_VALUE>
-QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const rime::Ticket& ticket, Environment* environment)
+QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment* environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "filter") {
   if (!this->isLoaded()) {
     return;
@@ -47,14 +47,15 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
 }
 
 template <typename T_JS_VALUE>
-std::shared_ptr<rime::Translation> QuickJSFilter<T_JS_VALUE>::apply(
-    std::shared_ptr<rime::Translation> translation,
+std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
+    std::shared_ptr<Translation> translation,
     Environment* environment) {
   if (this->getNamespace().find("benchmark_begin") != std::string::npos) {
     beginClock = std::chrono::steady_clock::now();
   } else if (this->getNamespace().find("benchmark_end") != std::string::npos) {
-    auto endClock = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endClock - beginClock);
+    const auto endClock = std::chrono::steady_clock::now();
+    const auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(endClock - beginClock);
     std::string engine = "jsc";
     if constexpr (std::is_same_v<T_JS_VALUE, JSValue>) {
       engine = "qjs";
@@ -74,7 +75,7 @@ std::shared_ptr<rime::Translation> QuickJSFilter<T_JS_VALUE>::apply(
     auto jsEvn = jsEngine.wrap(environment);
     T_JS_VALUE args[1] = {jsEvn};
     auto result = jsEngine.callFunction(funcIsApplicable_, this->getInstance(), 1, args);
-    bool isApplicable = jsEngine.isBool(result) && jsEngine.toBool(result);
+    const bool isApplicable = jsEngine.isBool(result) && jsEngine.toBool(result);
     jsEngine.freeValue(jsEvn, result);
     if (!isApplicable) {
       return translation;
@@ -92,9 +93,9 @@ std::shared_ptr<rime::Translation> QuickJSFilter<T_JS_VALUE>::apply(
 
 namespace rime {
 
-template class ComponentWrapper<QuickJSFilter<JSValue>, rime::Filter, JSValue>;
+template class ComponentWrapper<QuickJSFilter<JSValue>, Filter, JSValue>;
 #ifdef _ENABLE_JAVASCRIPTCORE
-template class ComponentWrapper<QuickJSFilter<JSValueRef>, rime::Filter, JSValueRef>;
+template class ComponentWrapper<QuickJSFilter<JSValueRef>, Filter, JSValueRef>;
 #endif
 }  // namespace rime
 

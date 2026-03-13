@@ -23,7 +23,7 @@ class JsEngine<JSValue> {
 
 public:
   using T_JS_OBJECT = JSValue;
-  inline static const char* engineName = "QuickJS-NG";
+  inline static auto engineName = "QuickJS-NG";
 
   ~JsEngine() = default;
 
@@ -32,9 +32,9 @@ public:
   JsEngine& operator=(const JsEngine& other) = delete;
   JsEngine& operator=(JsEngine&&) = delete;
 
-  static JsEngine<JSValue>& instance() {
-    std::lock_guard<std::mutex> lock(instanceMutex);
-    static JsEngine<JSValue> instance;
+  static JsEngine& instance() {
+    std::lock_guard lock(instanceMutex);
+    static JsEngine instance;
     return instance;
   }
 
@@ -48,7 +48,7 @@ public:
 
     auto& sharedInstance = instance();
 
-    std::lock_guard<std::mutex> lock(instanceMutex);
+    std::lock_guard lock(instanceMutex);
     sharedInstance.impl_ = std::make_unique<QuickJsEngineImpl>();
   }
 
@@ -70,7 +70,7 @@ public:
 
   [[nodiscard]] JSValue toObject(const JSValue& value) const { return value; }
 
-  void setBaseFolderPath(const char* absolutePath) { impl_->setBaseFolderPath(absolutePath); }
+  void setBaseFolderPath(const char* absolutePath) const { impl_->setBaseFolderPath(absolutePath); }
   // NOLINTEND(readability-convert-member-functions-to-static)
 
   [[nodiscard]] JSValue newArray() const { return JS_NewArray(impl_->getContext()); }
@@ -79,11 +79,11 @@ public:
     return impl_->getArrayLength(array);
   }
 
-  void insertItemToArray(JSValue array, size_t index, const JSValue& value) const {
+  void insertItemToArray(const JSValue array, const size_t index, const JSValue& value) const {
     impl_->insertItemToArray(array, index, value);
   }
 
-  [[nodiscard]] JSValue getArrayItem(const JSValue& array, size_t index) const {
+  [[nodiscard]] JSValue getArrayItem(const JSValue& array, const size_t index) const {
     return impl_->getArrayItem(array, index);
   }
 
@@ -98,10 +98,10 @@ public:
   }
 
   using ExposeFunction = JSCFunction*;
-  int setObjectFunction(JSValue obj,
+  int setObjectFunction(const JSValue obj,
                         const char* functionName,
-                        ExposeFunction cppFunction,
-                        int expectingArgc) const {
+                        const ExposeFunction cppFunction,
+                        const int expectingArgc) const {
     return impl_->setObjectFunction(obj, functionName, cppFunction, expectingArgc);
   }
 
@@ -119,12 +119,14 @@ public:
 
   [[nodiscard]] JSValue callFunction(const JSValue& func,
                                      const JSValue& thisArg,
-                                     int argc,
+                                     const int argc,
                                      JSValue* argv) const {
     return impl_->callFunction(func, thisArg, argc, argv);
   }
 
-  [[nodiscard]] JSValue newClassInstance(const JSValue& clazz, int argc, JSValue* argv) const {
+  [[nodiscard]] JSValue newClassInstance(const JSValue& clazz,
+                                         const int argc,
+                                         JSValue* argv) const {
     return impl_->newClassInstance(clazz, argc, argv);
   }
 
@@ -133,8 +135,8 @@ public:
     return impl_->getJsClassHavingMethod(module, methodName);
   }
 
-  [[nodiscard]] JSValue getMethodOfClassOrInstance(JSValue jsClass,
-                                                   JSValue instance,
+  [[nodiscard]] JSValue getMethodOfClassOrInstance(const JSValue jsClass,
+                                                   const JSValue instance,
                                                    const char* methodName) const {
     return impl_->getMethodOfClassOrInstance(jsClass, instance, methodName);
   }
@@ -144,7 +146,7 @@ public:
   }
   [[nodiscard]] JSValue getLatestException() const { return JS_GetException(impl_->getContext()); }
 
-  void logErrorStackTrace(const JSValue& exception, const char* file, int line) const {
+  void logErrorStackTrace(const JSValue& exception, const char* file, const int line) const {
     impl_->logErrorStackTrace(exception, file, line);
   }
 
@@ -180,9 +182,8 @@ public:
   [[nodiscard]] typename JsWrapper<T>::T_UNWRAP_TYPE unwrap(const JSValue& value) const {
     if constexpr (is_shared_ptr_v<typename JsWrapper<T>::T_UNWRAP_TYPE>) {
       if (auto* ptr = JS_GetOpaque(value, JsWrapper<T>::jsClassId)) {
-        if (auto sharedPtr = static_cast<std::shared_ptr<T>*>(ptr)) {
-          return *sharedPtr;
-        }
+        auto sharedPtr = static_cast<std::shared_ptr<T>*>(ptr);
+        return *sharedPtr;
       }
     } else {
       if (auto* ptr = JS_GetOpaque(value, JsWrapper<T>::jsClassId)) {
@@ -210,14 +211,16 @@ public:
 
   [[nodiscard]] JSValue wrap(const char* str) const { return impl_->toJsString(str); }
   [[nodiscard]] JSValue wrap(const std::string& str) const { return impl_->toJsString(str); }
-  [[nodiscard]] JSValue wrap(bool value) const { return JS_NewBool(impl_->getContext(), value); }
-  [[nodiscard]] JSValue wrap(size_t value) const {
+  [[nodiscard]] JSValue wrap(const bool value) const {
+    return JS_NewBool(impl_->getContext(), value);
+  }
+  [[nodiscard]] JSValue wrap(const size_t value) const {
     return impl_->toJsNumber(static_cast<int64_t>(value));
   }
-  [[nodiscard]] JSValue wrap(int value) const {
+  [[nodiscard]] JSValue wrap(const int value) const {
     return impl_->toJsNumber(static_cast<int64_t>(value));
   }
-  [[nodiscard]] JSValue wrap(double value) const { return impl_->toJsNumber(value); }
+  [[nodiscard]] JSValue wrap(const double value) const { return impl_->toJsNumber(value); }
 
   [[nodiscard]] JSValue createInstanceOfModule(const char* moduleName,
                                                std::vector<JSValue>& args,
@@ -234,7 +237,7 @@ public:
 
   [[nodiscard]] JSValue getGlobalObject() const { return JS_GetGlobalObject(impl_->getContext()); }
 
-  [[nodiscard]] JSValue throwError(JsErrorType errorType, const std::string& message) const {
+  [[nodiscard]] JSValue throwError(const JsErrorType errorType, const std::string& message) const {
     return impl_->throwError(errorType, message);
   }
 };

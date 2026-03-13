@@ -6,7 +6,7 @@
 void replaceNewClassInstanceStatementInPlace(std::string& source,
                                              const std::string& instanceName,
                                              const std::vector<std::string>& argumentNames) {
-  //  find the last statment in this format: `globalThis.sort_by_pinyin_js = new SortCandidatesByPinyinFilter()`
+  //  find the last statement in this format: `globalThis.sort_by_pinyin_js = new SortCandidatesByPinyinFilter()`
   std::regex pattern(R"(globalThis\.\w+\s*=\s*new\s*(\w+)\s*\(\))");
   std::sregex_iterator it(source.begin(), source.end(), pattern);
   std::sregex_iterator lastMatch = it;
@@ -28,8 +28,8 @@ void replaceNewClassInstanceStatementInPlace(std::string& source,
   source = std::regex_replace(source, std::regex("var\\s*" + className + R"(\s*=\s*class\s*\{)"),
                               "var " + indexedClassName + " = class {");
 
-  //  replace `globaThis.sort_by_pinyin_js = new SortCandidatesByPinyinFilter()` with:
-  // `globaThis.${instanceName} = new SortCandidatesByPinyinFilter_N(globaThis.arg0, globaThis.arg1, ...)\n})()`
+  //  replace `globalThis.sort_by_pinyin_js = new SortCandidatesByPinyinFilter()` with:
+  // `globalThis.${instanceName} = new SortCandidatesByPinyinFilter_N(globalThis.arg0, globalThis.arg1, ...)\n`
   std::stringstream ss;
   ss << "globalThis." << instanceName << " = new " << indexedClassName << "(";
   for (const std::string& argumentName : argumentNames) {

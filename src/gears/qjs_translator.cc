@@ -46,9 +46,9 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
 
 namespace rime {
 
-template class ComponentWrapper<QuickJSTranslator<JSValue>, rime::Translator, JSValue>;
+template class ComponentWrapper<QuickJSTranslator<JSValue>, Translator, JSValue>;
 #ifdef _ENABLE_JAVASCRIPTCORE
-template class ComponentWrapper<QuickJSTranslator<JSValueRef>, rime::Translator, JSValueRef>;
+template class ComponentWrapper<QuickJSTranslator<JSValueRef>, Translator, JSValueRef>;
 #endif
 }  // namespace rime
 

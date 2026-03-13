@@ -7,7 +7,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::KeyEvent> {
+class JsWrapper<KeyEvent> {
   DEFINE_GETTER(KeyEvent, shift, obj->shift())
   DEFINE_GETTER(KeyEvent, ctrl, obj->ctrl())
   DEFINE_GETTER(KeyEvent, alt, obj->alt())

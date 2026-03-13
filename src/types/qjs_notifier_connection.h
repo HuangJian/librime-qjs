@@ -5,7 +5,7 @@
 #include "engines/js_macros.h"
 #include "js_wrapper.h"
 
-using NotifierConnection = rime::connection;
+using NotifierConnection = connection;
 
 constexpr const char* JS_LISTENER_PROPERTY_NAME = "jsListenerFunc";
 

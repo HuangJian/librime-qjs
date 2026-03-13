@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JavaScriptCore/JavaScript.h>
-#include <JavaScriptCore/JavaScriptCore.h>
 #include <filesystem>
 #include <string>
 #include <vector>

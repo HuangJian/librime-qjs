@@ -2,7 +2,6 @@
 
 #include <glog/logging.h>
 #include <string>
-#include <vector>
 
 #include "types/qjs_types.h"
 

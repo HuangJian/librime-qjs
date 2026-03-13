@@ -8,14 +8,14 @@
 using namespace rime;
 
 template <typename T_JS_VALUE>
-class QuickJSTranslation : public rime::PrefetchTranslation {
+class QuickJSTranslation final : public PrefetchTranslation {
 public:
   QuickJSTranslation(const QuickJSTranslation&) = delete;
   QuickJSTranslation(QuickJSTranslation&&) = delete;
   QuickJSTranslation& operator=(const QuickJSTranslation&) = delete;
   QuickJSTranslation& operator=(QuickJSTranslation&&) = delete;
 
-  QuickJSTranslation(rime::an<rime::Translation> translation,
+  QuickJSTranslation(an<Translation> translation,
                      const T_JS_VALUE& filterObj,
                      const T_JS_VALUE& filterFunc,
                      Environment* environment);
@@ -33,7 +33,7 @@ private:
 };
 
 template <typename T_JS_VALUE>
-class QuickJSFastTranslation : public rime::Translation {
+class QuickJSFastTranslation final : public Translation {
   using T_JS_OBJECT = typename JsEngine<T_JS_VALUE>::T_JS_OBJECT;
 
   bool isGeneratorEverInvoked_ = false;
@@ -49,7 +49,7 @@ public:
   QuickJSFastTranslation& operator=(const QuickJSFastTranslation&) = delete;
   QuickJSFastTranslation& operator=(QuickJSFastTranslation&&) = delete;
 
-  QuickJSFastTranslation(const rime::an<rime::Translation>& translation,
+  QuickJSFastTranslation(const an<Translation>& translation,
                          const T_JS_OBJECT& filterObj,
                          const T_JS_OBJECT& filterFunc,
                          Environment* environment);
@@ -57,7 +57,7 @@ public:
   ~QuickJSFastTranslation() override;
 
   bool Next() override;
-  an<rime::Candidate> Peek() override;
+  an<Candidate> Peek() override;
 
 private:
   void invokeGenerator();

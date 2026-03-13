@@ -7,13 +7,13 @@
 #include "js_wrapper.h"
 #include "qjs_notifier_connection.h"
 
-using Notifier = rime::signal<void(rime::Context*)>;
-using NotifierConnection = rime::connection;
+using Notifier = rime::signal<void(Context*)>;
+using NotifierConnection = connection;
 
 template <>
 class JsWrapper<Notifier> {
   template <typename T>  // <-- make it a template function to satisfy the clang compiler
-  static void handleNotification(JsEngine<T>& engine, const T& jsFunc, rime::Context* rimeContext) {
+  static void handleNotification(JsEngine<T>& engine, const T& jsFunc, Context* rimeContext) {
     auto undefined = engine.toObject(engine.undefined());
     T arg = engine.wrap(rimeContext);
     auto result = engine.callFunction(engine.toObject(jsFunc), undefined, 1, &arg);

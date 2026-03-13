@@ -2,8 +2,6 @@
 
 #include <glog/logging.h>
 #include <quickjs.h>
-#include <cstdint>
-#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -58,8 +56,12 @@ public:
     return JS_NewString(context_, str.c_str());
   }
   [[nodiscard]] std::string toStdString(const JSValue& value) const;
-  [[nodiscard]] JSValue toJsNumber(double value) const { return JS_NewFloat64(context_, value); }
-  [[nodiscard]] JSValue toJsNumber(int64_t value) const { return JS_NewInt64(context_, value); }
+  [[nodiscard]] JSValue toJsNumber(const double value) const {
+    return JS_NewFloat64(context_, value);
+  }
+  [[nodiscard]] JSValue toJsNumber(const int64_t value) const {
+    return JS_NewInt64(context_, value);
+  }
   [[nodiscard]] double toDouble(const JSValue& value) const;
   [[nodiscard]] size_t toInt(const JSValue& value) const;
 

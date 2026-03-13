@@ -1,6 +1,5 @@
 #pragma once
 
-#include <rime/config.h>
 #include <rime/config/config_types.h>
 #include "engines/js_macros.h"
 #include "js_wrapper.h"
@@ -8,7 +7,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::ConfigValue> {
+class JsWrapper<ConfigValue> {
   DEFINE_CFUNCTION(getType, { return engine.wrap("scalar"); })
 
   DEFINE_CFUNCTION(getBool, {

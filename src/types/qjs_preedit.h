@@ -7,7 +7,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::Preedit> {
+class JsWrapper<Preedit> {
   DEFINE_GETTER(Preedit, text, obj->text)
   DEFINE_GETTER(Preedit, caretPos, obj->caret_pos)
   DEFINE_GETTER(Preedit, selectStart, obj->sel_start)

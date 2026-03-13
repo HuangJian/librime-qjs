@@ -2,7 +2,7 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSProcessor<T_JS_VALUE>::QuickJSProcessor(const rime::Ticket& ticket, Environment* environment)
+QuickJSProcessor<T_JS_VALUE>::QuickJSProcessor(const Ticket& ticket, Environment* environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "process") {}
 
 template <typename T_JS_VALUE>

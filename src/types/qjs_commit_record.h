@@ -8,7 +8,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::CommitRecord> {
+class JsWrapper<CommitRecord> {
   DEFINE_GETTER(CommitRecord, type, obj->type)
   DEFINE_GETTER(CommitRecord, text, obj->text)
 

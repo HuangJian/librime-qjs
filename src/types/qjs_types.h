@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engines/common.h"
-#include "qjs_candidate.h"
 #include "qjs_candidate_iterator.h"
 #include "qjs_commit_history.h"
 #include "qjs_commit_record.h"
@@ -29,21 +28,21 @@ void registerTypesToJsEngine() {
   DLOG(INFO) << "[qjs] registering rime types to the " << engine.engineName << " engine...";
 
   // expose all types
-  engine.template registerType<rime::Candidate>();
-  engine.template registerType<rime::Translation>();
-  engine.template registerType<rime::Trie>();
+  engine.template registerType<Candidate>();
+  engine.template registerType<Translation>();
+  engine.template registerType<Trie>();
   engine.template registerType<LevelDb>();
-  engine.template registerType<rime::Segment>();
-  engine.template registerType<rime::KeyEvent>();
-  engine.template registerType<rime::Context>();
-  engine.template registerType<rime::Preedit>();
-  engine.template registerType<rime::Schema>();
-  engine.template registerType<rime::Config>();
-  engine.template registerType<rime::Engine>();
-  engine.template registerType<rime::ConfigItem>();
-  engine.template registerType<rime::ConfigValue>();
-  engine.template registerType<rime::ConfigList>();
-  engine.template registerType<rime::ConfigMap>();
+  engine.template registerType<Segment>();
+  engine.template registerType<KeyEvent>();
+  engine.template registerType<Context>();
+  engine.template registerType<Preedit>();
+  engine.template registerType<Schema>();
+  engine.template registerType<Config>();
+  engine.template registerType<Engine>();
+  engine.template registerType<ConfigItem>();
+  engine.template registerType<ConfigValue>();
+  engine.template registerType<ConfigList>();
+  engine.template registerType<ConfigMap>();
   engine.template registerType<Environment>();
   engine.template registerType<SystemInfo>();
   engine.template registerType<CommitRecord>();

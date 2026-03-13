@@ -31,18 +31,20 @@ int64_t QuickJsEngineImpl::getMemoryUsage() const {
 }
 
 size_t QuickJsEngineImpl::getArrayLength(const JSValue& array) const {
-  auto lengthVal = JS_GetPropertyStr(context_, array, "length");
+  const auto lengthVal = JS_GetPropertyStr(context_, array, "length");
   if (JS_IsException(lengthVal)) {
     return 0;
   }
   return toInt(lengthVal);
 }
 
-void QuickJsEngineImpl::insertItemToArray(JSValue array, size_t index, const JSValue& value) const {
+void QuickJsEngineImpl::insertItemToArray(const JSValue array,
+                                          const size_t index,
+                                          const JSValue& value) const {
   JS_SetPropertyUint32(context_, array, index, value);
 }
 
-JSValue QuickJsEngineImpl::getArrayItem(const JSValue& array, size_t index) const {
+JSValue QuickJsEngineImpl::getArrayItem(const JSValue& array, const size_t index) const {
   return JS_GetPropertyUint32(context_, array, index);
 }
 
@@ -50,7 +52,7 @@ JSValue QuickJsEngineImpl::getObjectProperty(const JSValue& obj, const char* pro
   return JS_GetPropertyStr(context_, obj, propertyName);
 }
 
-int QuickJsEngineImpl::setObjectProperty(JSValue obj,
+int QuickJsEngineImpl::setObjectProperty(const JSValue obj,
                                          const char* propertyName,
                                          const JSValue& value) const {
   if (JS_IsUndefined(value) || JS_IsNull(value)) {
@@ -62,28 +64,30 @@ int QuickJsEngineImpl::setObjectProperty(JSValue obj,
   return JS_SetPropertyStr(context_, obj, propertyName, value);
 }
 
-int QuickJsEngineImpl::setObjectFunction(JSValue obj,
+int QuickJsEngineImpl::setObjectFunction(const JSValue obj,
                                          const char* functionName,
                                          JSCFunction* cppFunction,
-                                         int expectingArgc) const {
+                                         const int expectingArgc) const {
   return JS_SetPropertyStr(context_, obj, functionName,
                            JS_NewCFunction(context_, cppFunction, functionName, expectingArgc));
 }
 
 JSValue QuickJsEngineImpl::callFunction(const JSValue& func,
                                         const JSValue& thisArg,
-                                        int argc,
+                                        const int argc,
                                         JSValue* argv) const {
-  auto ret = JS_Call(context_, func, thisArg, argc, argv);
+  const auto ret = JS_Call(context_, func, thisArg, argc, argv);
   if (JS_IsException(ret)) {
     logErrorStackTrace(ret, __FILE_NAME__, __LINE__);
   }
   return ret;
 }
 
-JSValue QuickJsEngineImpl::newClassInstance(const JSValue& clazz, int argc, JSValue* argv) const {
-  JSValue constructor = getMethodOfClassOrInstance(clazz, JS_UNDEFINED, "constructor");
-  auto instance = JS_CallConstructor(context_, constructor, argc, argv);
+JSValue QuickJsEngineImpl::newClassInstance(const JSValue& clazz,
+                                            const int argc,
+                                            JSValue* argv) const {
+  const JSValue constructor = getMethodOfClassOrInstance(clazz, JS_UNDEFINED, "constructor");
+  const auto instance = JS_CallConstructor(context_, constructor, argc, argv);
   JS_FreeValue(context_, constructor);
   return instance;
 }
@@ -93,15 +97,15 @@ JSValue QuickJsEngineImpl::getJsClassHavingMethod(const JSValue& module,
   return QuickJSCodeLoader::getExportedClassHavingMethodNameInModule(context_, module, methodName);
 }
 
-JSValue QuickJsEngineImpl::getMethodOfClassOrInstance(JSValue jsClass,
-                                                      JSValue instance,
+JSValue QuickJsEngineImpl::getMethodOfClassOrInstance(const JSValue jsClass,
+                                                      [[maybe_unused]] JSValue instance,
                                                       const char* methodName) const {
   return QuickJSCodeLoader::getMethodByNameInClass(context_, jsClass, methodName);
 }
 
-void QuickJsEngineImpl::logErrorStackTrace(const JSValue& exception,
+void QuickJsEngineImpl::logErrorStackTrace([[maybe_unused]] const JSValue& exception,
                                            const char* file,
-                                           int line) const {
+                                           const int line) const {
   QuickJSCodeLoader::logJsError(context_, "", file, line);
 }
 
@@ -123,7 +127,8 @@ JSValue QuickJsEngineImpl::getGlobalObject() const {
   return JS_GetGlobalObject(context_);
 }
 
-JSValue QuickJsEngineImpl::throwError(JsErrorType errorType, const std::string& message) const {
+JSValue QuickJsEngineImpl::throwError(const JsErrorType errorType,
+                                      const std::string& message) const {
   switch (errorType) {
     case JsErrorType::SYNTAX:
     case JsErrorType::EVAL:
@@ -147,14 +152,14 @@ void QuickJsEngineImpl::registerType(const char* typeName,
                                      JSClassID& classId,
                                      JSClassDef& classDef,
                                      JSCFunction* constructor,
-                                     int constructorArgc,
+                                     const int constructorArgc,
                                      JSClassFinalizer* finalizer,
                                      const JSCFunctionListEntry* properties,
-                                     int propertyCount,
+                                     const int propertyCount,
                                      const JSCFunctionListEntry* getters,
-                                     int getterCount,
+                                     const int getterCount,
                                      const JSCFunctionListEntry* functions,
-                                     int functionCount) {
+                                     const int functionCount) {
   // using WRAPPER = JsWrapper<T_RIME_TYPE>;
 
   if (registeredTypes_.count(typeName) > 0) {
@@ -173,10 +178,10 @@ void QuickJsEngineImpl::registerType(const char* typeName,
 
   JSValue proto = JS_NewObject(context_);
   if (constructor != nullptr) {
-    JSValue jsConstructor =
+    const JSValue jsConstructor =
         JS_NewCFunction2(context_, constructor, typeName, constructorArgc, JS_CFUNC_constructor, 0);
     JS_SetConstructor(context_, jsConstructor, proto);
-    auto jsGlobal = JS_GetGlobalObject(context_);
+    const auto jsGlobal = JS_GetGlobalObject(context_);
     JS_SetPropertyStr(context_, jsGlobal, typeName, jsConstructor);
     JS_FreeValue(context_, jsGlobal);
   }
@@ -221,12 +226,12 @@ JSValue QuickJsEngineImpl::wrap(const char* typeName, void* ptr, const char* poi
   if (ptr == nullptr) {
     return JS_NULL;
   }
-  auto it = registeredTypes_.find(typeName);
+  const auto it = registeredTypes_.find(typeName);
   if (it == registeredTypes_.end()) {
     return JS_ThrowInternalError(context_, "Type %s is not registered", typeName);
   }
 
-  JSValue jsobj = JS_NewObjectClass(context_, static_cast<int>(it->second));
+  const JSValue jsobj = JS_NewObjectClass(context_, static_cast<int>(it->second));
   if (JS_IsUndefined(jsobj)) {
     LOG(ERROR) << "Failed to create a new object of type " << typeName
                << " with classId = " << it->second;
@@ -237,7 +242,7 @@ JSValue QuickJsEngineImpl::wrap(const char* typeName, void* ptr, const char* poi
   }
   if (JS_SetOpaque(jsobj, ptr) < 0) {
     JS_FreeValue(context_, jsobj);
-    const char* format = "Failed to set a %s pointer to a %s object with classId = %d";
+    const auto format = "Failed to set a %s pointer to a %s object with classId = %d";
     return JS_ThrowInternalError(context_, format, pointerType, typeName, it->second);
   }
   return jsobj;
@@ -252,7 +257,7 @@ void QuickJsEngineImpl::exposeLogToJsConsole(JSContext* ctx) {
   JS_FreeValue(ctx, globalObj);
 }
 
-static std::string logToStringStream(JSContext* ctx, int argc, JSValueConst* argv) {
+static std::string logToStringStream(JSContext* ctx, const int argc, JSValueConst* argv) {
   // FIXME: Unicode characters display incorrectly on Windows, showing "鉁?" instead of "✓".
   // While quickjs-ng's `js_print` function could help with console output,
   // I haven't found a way to integrate it with glog's `LOG(severity)` statements.
@@ -270,7 +275,7 @@ static std::string logToStringStream(JSContext* ctx, int argc, JSValueConst* arg
 
 JSValue QuickJsEngineImpl::jsLog(JSContext* ctx,
                                  JSValueConst thisVal,
-                                 int argc,
+                                 const int argc,
                                  JSValueConst* argv) {
   google::LogMessage("$qjs$", 0, google::GLOG_INFO).stream() << logToStringStream(ctx, argc, argv);
   return JS_UNDEFINED;
@@ -278,7 +283,7 @@ JSValue QuickJsEngineImpl::jsLog(JSContext* ctx,
 
 JSValue QuickJsEngineImpl::jsError(JSContext* ctx,
                                    JSValueConst thisVal,
-                                   int argc,
+                                   const int argc,
                                    JSValueConst* argv) {
   google::LogMessage("$qjs$", 0, google::GLOG_ERROR).stream() << logToStringStream(ctx, argc, argv);
   return JS_UNDEFINED;

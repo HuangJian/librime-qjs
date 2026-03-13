@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JavaScriptCore/JavaScript.h>
-#include <JavaScriptCore/JavaScriptCore.h>
 #include <memory>
 #include <mutex>
 
@@ -15,19 +14,18 @@
 
 template <>
 class JsEngine<JSValueRef> {
-  inline static bool isInitialized = false;
   inline static std::mutex instanceMutex;
   std::unique_ptr<JscEngineImpl> impl_{std::make_unique<JscEngineImpl>()};
 
-  JsEngine<JSValueRef>() = default;
+  JsEngine() = default;
 
 public:
   using T_JS_OBJECT = JSObjectRef;
-  inline static const char* engineName = "JavaScriptCore";
+  inline static auto engineName = "JavaScriptCore";
 
-  static JsEngine<JSValueRef>& instance() {
-    std::lock_guard<std::mutex> lock(instanceMutex);
-    static JsEngine<JSValueRef> instance;
+  static JsEngine& instance() {
+    std::lock_guard lock(instanceMutex);
+    static JsEngine instance;
     return instance;
   }
 
@@ -54,16 +52,13 @@ public:
   }
 
   static void shutdown() {
-    if (!isInitialized) {
-      return;
-    }
     auto& sharedInstance = instance();
 
-    std::lock_guard<std::mutex> lock(instanceMutex);
+    std::lock_guard lock(instanceMutex);
     sharedInstance.impl_ = std::make_unique<JscEngineImpl>();
   }
 
-  ~JsEngine<JSValueRef>() = default;
+  ~JsEngine();
 
   JsEngine(const JsEngine&) = delete;
   JsEngine(JsEngine&&) = delete;
@@ -87,20 +82,19 @@ public:
   }
 
   template <typename... Args>
-  void freeValue(const Args&... args) const {
+  void freeValue([[maybe_unused]] const Args&... args) const {
     // JavaScriptCore handles memory management automatically
   }
 
   template <typename... Args>
   void protectFromGC(const Args&... args) const {
-    (((args != nullptr && !isUndefined(args)) ? JSValueProtect(impl_->getContext(), args) : void()),
+    ((args != nullptr && !isUndefined(args) ? JSValueProtect(impl_->getContext(), args) : void()),
      ...);
   }
 
   template <typename... Args>
   void unprotectFromGC(const Args&... args) const {
-    (((args != nullptr && !isUndefined(args)) ? JSValueUnprotect(impl_->getContext(), args)
-                                              : void()),
+    ((args != nullptr && !isUndefined(args) ? JSValueUnprotect(impl_->getContext(), args) : void()),
      ...);
   }
 
@@ -121,11 +115,13 @@ public:
     return impl_->getArrayLength(array);
   }
 
-  void insertItemToArray(JSValueRef array, size_t index, const JSValueRef& value) const {
+  void insertItemToArray(const JSValueRef array,
+                         const size_t index,
+                         const JSValueRef& value) const {
     impl_->insertItemToArray(array, index, value);
   }
 
-  [[nodiscard]] JSValueRef getArrayItem(const JSValueRef& array, size_t index) const {
+  [[nodiscard]] JSValueRef getArrayItem(const JSValueRef& array, const size_t index) const {
     return impl_->getArrayItem(array, index);
   }
 
@@ -138,14 +134,16 @@ public:
     return impl_->getObjectProperty(obj, propertyName);
   }
 
-  int setObjectProperty(const JSObjectRef& obj, const char* propertyName, const JSValueRef& value) {
+  int setObjectProperty(const JSObjectRef& obj,
+                        const char* propertyName,
+                        const JSValueRef& value) const {
     return impl_->setObjectProperty(obj, propertyName, value);
   }
 
-  int setObjectFunction(JSObjectRef obj,
+  int setObjectFunction(const JSObjectRef obj,
                         const char* functionName,
                         JSObjectCallAsFunctionCallback cppFunction,
-                        int expectingArgc) {
+                        const int expectingArgc) const {
     return impl_->setObjectFunction(obj, functionName, cppFunction, expectingArgc);
   }
 
@@ -174,12 +172,14 @@ public:
 
   JSValueRef callFunction(const JSObjectRef& func,
                           const JSObjectRef& thisArg,
-                          int argc,
-                          JSValueRef* argv) const {
+                          const int argc,
+                          const JSValueRef* argv) const {
     return impl_->callFunction(func, thisArg, argc, argv);
   }
 
-  JSObjectRef newClassInstance(const JSObjectRef& clazz, int argc, JSValueRef* argv) {
+  JSObjectRef newClassInstance(const JSObjectRef& clazz,
+                               const int argc,
+                               const JSValueRef* argv) const {
     return impl_->newClassInstance(clazz, argc, argv);
   }
 
@@ -187,13 +187,14 @@ public:
     return impl_->getJsClassHavingMethod(module, methodName);
   }
 
-  JSObjectRef getMethodOfClassOrInstance(JSObjectRef jsClass,
-                                         JSObjectRef instance,
-                                         const char* methodName) {
+  JSObjectRef getMethodOfClassOrInstance(const JSObjectRef jsClass,
+                                         const JSObjectRef instance,
+                                         const char* methodName) const {
     return impl_->getMethodOfClassOrInstance(jsClass, instance, methodName);
   }
 
-  [[nodiscard]] JSValueRef throwError(JsErrorType errorType, const std::string& message) const {
+  [[nodiscard]] JSValueRef throwError(const JsErrorType errorType,
+                                      const std::string& message) const {
     throw JsException(errorType, message);
   }
 
@@ -243,9 +244,8 @@ public:
 
     if constexpr (is_shared_ptr_v<typename JsWrapper<T>::T_UNWRAP_TYPE>) {
       if (void* ptr = JSObjectGetPrivate(toObject(value))) {
-        if (auto sharedPtr = static_cast<std::shared_ptr<T>*>(ptr)) {
-          return *sharedPtr;
-        }
+        auto sharedPtr = static_cast<std::shared_ptr<T>*>(ptr);
+        return *sharedPtr;
       }
     } else {
       if (auto* ptr = JSObjectGetPrivate(toObject(value))) {
@@ -296,19 +296,20 @@ public:
     return JSValueMakeNumber(impl_->getContext(), value);
   }
 
-  void setBaseFolderPath(const char* absolutePath) { impl_->setBaseFolderPath(absolutePath); }
+  void setBaseFolderPath(const char* absolutePath) const { impl_->setBaseFolderPath(absolutePath); }
 
   JSObjectRef createInstanceOfModule(const char* moduleName,
                                      const std::vector<JSValueRef>& args,
-                                     const std::string& mainFuncName) {
+                                     [[maybe_unused]] const std::string& mainFuncName) const {
     return impl_->createInstanceOfModule(moduleName, args);
   }
 
-  JSValueRef loadJsFile(const char* fileName) { return impl_->loadJsFile(fileName); }
+  JSValueRef loadJsFile(const char* fileName) const { return impl_->loadJsFile(fileName); }
 
-  JSValueRef eval(const char* code, const char* filename = "<eval>") {
+  JSValueRef eval(const char* code, const char* filename = "<eval>") const {
     return impl_->eval(code, filename);
   }
 
-  JSValueRef getGlobalObject() { return impl_->getGlobalObject(); }
+  JSValueRef getGlobalObject() const { return impl_->getGlobalObject(); }
 };
+inline JsEngine<const OpaqueJSValue*>::~JsEngine() {}

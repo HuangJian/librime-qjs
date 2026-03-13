@@ -1,10 +1,8 @@
 #include "jsc_code_loader.h"
 #include <glog/logging.h>
 #include <algorithm>
-#include <cstddef>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -12,7 +10,7 @@
 #include "engines/jscode_utils.h"
 
 std::pair<std::string, std::filesystem::path> JscCodeLoader::loadModuleSource(
-    JSContextRef ctx,
+    [[maybe_unused]] JSContextRef ctx,
     const std::string& baseFolderPath,
     const std::string& moduleName) {
   std::string possibleFileNames[] = {"dist/" + moduleName + ".iife.js",
@@ -86,36 +84,35 @@ JSValueRef JscCodeLoader::loadEsmBundledModuleToGlobalThis(JSContextRef ctx,
                                                            JSValueRef* exception) {
   auto [source, filePath] = loadModuleSource(ctx, baseFolderPath, moduleName);
   if (source.empty()) {
-    std::string message = "Failed to open file for module: " + moduleName;
+    const std::string message = "Failed to open file for module: " + moduleName;
     *exception = JSValueMakeString(ctx, JscStringRAII(message.c_str()));
     return nullptr;
   }
 
-  auto sourceUrl = JscStringRAII(filePath.generic_string().c_str());
-  JSEvaluateScript(ctx, JscStringRAII(source.c_str()), nullptr, sourceUrl, 0, exception);
+  JSEvaluateScript(ctx, JscStringRAII(source.c_str()), nullptr,
+                   JscStringRAII(filePath.generic_string().c_str()), 0, exception);
   return JSContextGetGlobalObject(ctx);
 }
 
-JSValueRef JscCodeLoader::getExportedClassHavingMethodNameInModule(JSContextRef ctx,
-                                                                   JSValueRef moduleObj,
+JSValueRef JscCodeLoader::getExportedClassHavingMethodNameInModule(const JSContextRef ctx,
+                                                                   const JSValueRef moduleObj,
                                                                    const char* methodName) {
   if (!JSValueIsObject(ctx, moduleObj)) {
     return JSValueMakeNull(ctx);
   }
 
-  JSObjectRef moduleObjRef = JSValueToObject(ctx, moduleObj, nullptr);
+  const JSObjectRef moduleObjRef = JSValueToObject(ctx, moduleObj, nullptr);
 
   // Get all properties of the module object
-  JSPropertyNameArrayRef propertyNames = JSObjectCopyPropertyNames(ctx, moduleObjRef);
-  size_t count = JSPropertyNameArrayGetCount(propertyNames);
+  const JSPropertyNameArrayRef propertyNames = JSObjectCopyPropertyNames(ctx, moduleObjRef);
+  const size_t count = JSPropertyNameArrayGetCount(propertyNames);
 
   for (size_t i = 0; i < count; i++) {
-    JSStringRef propertyName = JSPropertyNameArrayGetNameAtIndex(propertyNames, i);
-    JSValueRef property = JSObjectGetProperty(ctx, moduleObjRef, propertyName, nullptr);
-
-    if (JSValueIsObject(ctx, property)) {
-      JSObjectRef propertyObj = JSValueToObject(ctx, property, nullptr);
-      JSValueRef method =
+    const JSStringRef propertyName = JSPropertyNameArrayGetNameAtIndex(propertyNames, i);
+    if (const JSValueRef property = JSObjectGetProperty(ctx, moduleObjRef, propertyName, nullptr);
+        JSValueIsObject(ctx, property)) {
+      const JSObjectRef propertyObj = JSValueToObject(ctx, property, nullptr);
+      const JSValueRef method =
           JSObjectGetProperty(ctx, propertyObj, JSStringCreateWithUTF8CString(methodName), nullptr);
 
       if (JSValueIsObject(ctx, method) &&
@@ -130,29 +127,30 @@ JSValueRef JscCodeLoader::getExportedClassHavingMethodNameInModule(JSContextRef 
   return JSValueMakeNull(ctx);
 }
 
-JSValueRef JscCodeLoader::getExportedClassByNameInModule(JSContextRef ctx,
-                                                         JSValueRef moduleObj,
+JSValueRef JscCodeLoader::getExportedClassByNameInModule(const JSContextRef ctx,
+                                                         const JSValueRef moduleObj,
                                                          const char* className) {
   if (!JSValueIsObject(ctx, moduleObj)) {
     return JSValueMakeNull(ctx);
   }
 
-  JSObjectRef moduleObjRef = JSValueToObject(ctx, moduleObj, nullptr);
-  JSValueRef classObj = JSObjectGetProperty(ctx, moduleObjRef, JscStringRAII(className), nullptr);
+  const JSObjectRef moduleObjRef = JSValueToObject(ctx, moduleObj, nullptr);
+  const JSValueRef classObj =
+      JSObjectGetProperty(ctx, moduleObjRef, JscStringRAII(className), nullptr);
   return JSValueIsObject(ctx, classObj) ? classObj : JSValueMakeNull(ctx);
 }
 
-JSValueRef JscCodeLoader::getMethodByNameInClass(JSContextRef ctx,
-                                                 JSValueRef classObj,
+JSValueRef JscCodeLoader::getMethodByNameInClass(const JSContextRef ctx,
+                                                 const JSValueRef classObj,
                                                  const char* methodName) {
   if (!JSValueIsObject(ctx, classObj)) {
     return JSValueMakeNull(ctx);
   }
 
-  JSObjectRef classObjRef = JSValueToObject(ctx, classObj, nullptr);
-  JSValueRef method = JSObjectGetProperty(ctx, classObjRef, JscStringRAII(methodName), nullptr);
-
-  if (JSValueIsObject(ctx, method) &&
+  const JSObjectRef classObjRef = JSValueToObject(ctx, classObj, nullptr);
+  if (const JSValueRef method =
+          JSObjectGetProperty(ctx, classObjRef, JscStringRAII(methodName), nullptr);
+      JSValueIsObject(ctx, method) &&
       JSObjectIsFunction(ctx, JSValueToObject(ctx, method, nullptr))) {
     return method;
   }

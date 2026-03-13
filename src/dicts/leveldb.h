@@ -7,7 +7,7 @@
 
 #include "dicts/dictionary.h"
 
-class LevelDb : public Dictionary {
+class LevelDb final : public Dictionary {
 public:
   LevelDb() = default;
   LevelDb(const LevelDb&) = delete;

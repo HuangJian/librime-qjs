@@ -7,9 +7,6 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <cstddef>
-#include <cstdio>
-#include <memory>
 #include <string>
 #include <utility>
 #include "misc/system_info.h"
@@ -30,7 +27,7 @@ public:
   static bool fileExists(const std::string& path);
   static bool saveFile(const std::string& path, const std::string& content);
   static bool removeFile(const std::string& path);
-  static bool createDir(const std::string& path, bool exist_ok = false);
+  static bool createDir(const std::string& path, bool existOk = false);
   static bool removeDir(const std::string& path);
   static std::string getRimeInfo();
   static std::pair<std::string, std::string> popen(const std::string& command,
@@ -46,7 +43,7 @@ private:
 
   static std::string generateUuid() {
     boost::uuids::random_generator gen;
-    boost::uuids::uuid uuid = gen();
+    const boost::uuids::uuid uuid = gen();
     return boost::uuids::to_string(uuid);
   }
 };

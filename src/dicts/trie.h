@@ -2,7 +2,6 @@
 
 #include <marisa.h>
 
-#include <cstddef>
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -15,8 +14,7 @@
 
 namespace rime {
 
-class Trie : public Dictionary {
-private:
+class Trie final : public Dictionary {
   marisa::Trie trie_;
   std::vector<std::string> data_;
   std::string concatSeparator_;

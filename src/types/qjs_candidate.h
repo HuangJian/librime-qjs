@@ -11,7 +11,7 @@ using namespace rime;
 constexpr int MIN_ARGC_NEW_CANDIDATE = 5;
 
 template <>
-class JsWrapper<rime::Candidate> {
+class JsWrapper<Candidate> {
   DEFINE_GETTER(Candidate, text, obj->text())
   DEFINE_GETTER(Candidate, comment, obj->comment())
   DEFINE_GETTER(Candidate, type, obj->type())

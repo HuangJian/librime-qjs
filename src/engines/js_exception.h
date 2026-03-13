@@ -15,14 +15,14 @@ enum class JsErrorType : std::uint8_t {
   UNKNOWN,
 };
 
-class JsException : public std::exception {
+class JsException final : public std::exception {
 private:
   std::string message_;
   JsErrorType type_;
 
 public:
   // Constructor that takes an error message
-  explicit JsException(JsErrorType type, std::string message)
+  explicit JsException(const JsErrorType type, std::string message)
       : message_(std::move(message)), type_(type) {}
 
   // Override what() method from std::exception

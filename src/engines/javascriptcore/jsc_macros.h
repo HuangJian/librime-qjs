@@ -7,17 +7,17 @@
 #include <sstream>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage) function-like macro 'EXPORT_CLASS_IMPL' used; consider a 'constexpr' template function
-#define DEFINE_GETTER(T_RIME_TYPE, propertieyName, statement)                                    \
-                                                                                                 \
-  DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertieyName, statement);                                \
-                                                                                                 \
-  static JSValueRef get_##propertieyName##Jsc(JSContextRef ctx, JSObjectRef thisVal,             \
-                                              JSStringRef functionName, JSValueRef* exception) { \
-    auto& engine = JsEngine<JSValueRef>::instance();                                             \
-    if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                                        \
-      return engine.wrap(statement);                                                             \
-    }                                                                                            \
-    return engine.undefined();                                                                   \
+#define DEFINE_GETTER(T_RIME_TYPE, propertyName, statement)                                    \
+                                                                                               \
+  DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertyName, statement);                                \
+                                                                                               \
+  static JSValueRef get_##propertyName##Jsc(JSContextRef ctx, JSObjectRef thisVal,             \
+                                            JSStringRef functionName, JSValueRef* exception) { \
+    auto& engine = JsEngine<JSValueRef>::instance();                                           \
+    if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                                      \
+      return engine.wrap(statement);                                                           \
+    }                                                                                          \
+    return engine.undefined();                                                                 \
   }
 
 #define DEFINE_STRING_SETTER(T_RIME_TYPE, name, assignment)                                    \

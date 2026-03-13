@@ -296,7 +296,7 @@ char* loadFile(const char* absolutePath) {
   }
 
   fseek(file, 0, SEEK_END);
-  long length = ftell(file);
+  const long length = ftell(file);
   fseek(file, 0, SEEK_SET);
 
   if (length <= 0) {
@@ -305,14 +305,14 @@ char* loadFile(const char* absolutePath) {
     return NULL;
   }
 
-  char* content = (char*)malloc(length + 1);
+  char* content = malloc(length + 1);
   if (!content) {
     logError("Failed to allocate memory for file: %s", absolutePath);
     fclose(file);
     return NULL;
   }
 
-  size_t read = fread(content, 1, length, file);
+  const size_t read = fread(content, 1, length, file);
   fclose(file);
 
   if (read != (size_t)length) {
@@ -325,7 +325,7 @@ char* loadFile(const char* absolutePath) {
   return content;
 }
 bool isAbsolutePath(const char* path) {
-  size_t len = strlen(path);
+  const size_t len = strlen(path);
   return (len > 0 && path[0] == '/') ||  // Unix-style absolute path
          (len > 1 && isalpha(path[0]) && path[1] == ':') || // Windows drive letter (e.g., C:)
          (len > 1 && path[0] == '\\' && path[1] == '\\');  // Windows UNC path
@@ -352,19 +352,19 @@ JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
     LOG_AND_RETURN_ERROR(ctx, "Could not open %s", moduleName);
   }
 
-  size_t codeLen = strlen(code);
+  const size_t codeLen = strlen(code);
   if (codeLen == 0) {
     free(code);
     LOG_AND_RETURN_ERROR(ctx, "Empty module content: %s", moduleName);
   }
 
-  int flags = JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY;
-  JSValue funcObj = JS_Eval(ctx, code, codeLen, moduleName, flags);
+  const int flags = JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY;
+  const JSValue funcObj = JS_Eval(ctx, code, codeLen, moduleName, flags);
   free(code);
 
   if (JS_IsException(funcObj)) {
-    JSValue exception = JS_GetException(ctx);
-    JSValue message = JS_GetPropertyStr(ctx, exception, "message");
+    const JSValue exception = JS_GetException(ctx);
+    const JSValue message = JS_GetPropertyStr(ctx, exception, "message");
     const char* messageStr = JS_ToCString(ctx, message);
     logError("Module evaluation failed: %s", messageStr);
 
@@ -391,8 +391,8 @@ JSModuleDef* js_module_loader(JSContext* ctx,
 
     const char* actualPath = getActualFilePath(fullPath);
     if (actualPath) { // file exists, it's a js file outside node_modules
-      JSValue funcObj = loadJsModule(ctx, moduleName);
-      return (JSModuleDef*)JS_VALUE_GET_PTR(funcObj);
+      const JSValue funcObj = loadJsModule(ctx, moduleName);
+      return JS_VALUE_GET_PTR(funcObj);
     }
   }
 
@@ -407,6 +407,6 @@ JSModuleDef* js_module_loader(JSContext* ctx,
   snprintf(modulePath, sizeof(modulePath), "node_modules/%s/%s", moduleName, nodeModuleEntryFile);
   free(nodeModuleEntryFile);
 
-  JSValue funcObj = loadJsModule(ctx, modulePath);
-  return (JSModuleDef*)JS_VALUE_GET_PTR(funcObj);
+  const JSValue funcObj = loadJsModule(ctx, modulePath);
+  return JS_VALUE_GET_PTR(funcObj);
 }

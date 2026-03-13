@@ -4,8 +4,8 @@
 
 class JscStringRAII {
 public:
-  JscStringRAII(const char* str) : str_(JSStringCreateWithUTF8CString(str)) {}
-  JscStringRAII(JSStringRef str) : str_(str) {}
+  explicit JscStringRAII(const char* str) : str_(JSStringCreateWithUTF8CString(str)) {}
+  explicit JscStringRAII(const JSStringRef str) : str_(str) {}
 
   JscStringRAII(const JscStringRAII&) = delete;
   JscStringRAII(JscStringRAII&&) = delete;

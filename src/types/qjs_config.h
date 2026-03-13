@@ -1,6 +1,5 @@
 #pragma once
 
-#include <rime/config.h>
 #include <rime/config/config_types.h>
 #include <filesystem>
 #include <string>
@@ -12,7 +11,8 @@ using namespace rime;
 // Helper function to convert ConfigItem to JSValue recursively
 // Uses auto return type to automatically handle QuickJS and JavaScriptCore
 template <typename T_ENGINE>
-static auto configItemToJsValue(T_ENGINE& engine, an<ConfigItem> item) -> decltype(engine.null()) {
+static auto configItemToJsValue(T_ENGINE& engine, const an<ConfigItem> item)
+    -> decltype(engine.null()) {
   if (!item) {
     return engine.null();
   }
@@ -22,7 +22,7 @@ static auto configItemToJsValue(T_ENGINE& engine, an<ConfigItem> item) -> declty
       return engine.null();
 
     case ConfigItem::kScalar: {
-      auto value = std::dynamic_pointer_cast<ConfigValue>(item);
+      const auto value = std::dynamic_pointer_cast<ConfigValue>(item);
       if (!value) {
         return engine.null();
       }
@@ -46,7 +46,7 @@ static auto configItemToJsValue(T_ENGINE& engine, an<ConfigItem> item) -> declty
     }
 
     case ConfigItem::kList: {
-      auto list = std::dynamic_pointer_cast<ConfigList>(item);
+      const auto list = std::dynamic_pointer_cast<ConfigList>(item);
       if (!list) {
         return engine.null();
       }
@@ -60,15 +60,13 @@ static auto configItemToJsValue(T_ENGINE& engine, an<ConfigItem> item) -> declty
     }
 
     case ConfigItem::kMap: {
-      auto map = std::dynamic_pointer_cast<ConfigMap>(item);
+      const auto map = std::dynamic_pointer_cast<ConfigMap>(item);
       if (!map) {
         return engine.null();
       }
       auto jsObject = engine.newObject();
-      for (const auto& entry : *map) {
-        const std::string& key = entry.first;
-        auto mapItem = entry.second;
-        auto jsItem = configItemToJsValue(engine, mapItem);
+      for (const auto& [key, val] : *map) {
+        auto jsItem = configItemToJsValue(engine, val);
         engine.setObjectProperty(jsObject, key.c_str(), jsItem);
       }
       return jsObject;
@@ -80,7 +78,7 @@ static auto configItemToJsValue(T_ENGINE& engine, an<ConfigItem> item) -> declty
 }
 
 template <>
-class JsWrapper<rime::Config> {
+class JsWrapper<Config> {
   DEFINE_CFUNCTION_ARGC(loadFromFile, 1, {
     std::string path = engine.toStdString(argv[0]);
     auto obj = engine.unwrap<rime::Config>(thisVal);
@@ -164,7 +162,7 @@ class JsWrapper<rime::Config> {
     return engine.wrap(success);
   })
 
-  DEFINE_CFUNCTION_ARGC(getObject, -1, {
+  DEFINE_CFUNCTION(getObject, {
     auto obj = engine.unwrap<rime::Config>(thisVal);
 
     // If no argument, return the entire config as a JS object

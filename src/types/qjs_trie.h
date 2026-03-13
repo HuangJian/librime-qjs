@@ -9,7 +9,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::Trie> {
+class JsWrapper<Trie> {
   DEFINE_CFUNCTION_ARGC(loadTextFile, 1, {
     std::string absolutePath = engine.toStdString(argv[0]);
     ParseTextFileOptions options;

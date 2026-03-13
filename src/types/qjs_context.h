@@ -8,7 +8,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::Context> {
+class JsWrapper<Context> {
   DEFINE_GETTER(Context, input, obj->input())
   DEFINE_GETTER(Context, caretPos, obj->caret_pos())
 

@@ -48,8 +48,8 @@ void LevelDb::saveToBinaryFile(const std::string& filePath) {
   }
 
   leveldb::WriteBatch batch;
-  for (const auto& entry : map) {
-    batch.Put(entry.first, entry.second);
+  for (const auto& [key, val] : map) {
+    batch.Put(key, val);
   }
 
   leveldb::Options options;

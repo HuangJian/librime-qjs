@@ -1,8 +1,6 @@
 #pragma once
 
 #include <rime/engine.h>
-#include <rime/schema.h>
-#include <exception>
 
 #include "engines/js_exception.h"
 #include "engines/js_macros.h"

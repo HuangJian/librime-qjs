@@ -1,11 +1,8 @@
 #pragma once
 
-#include <rime/common.h>
-#include <rime/component.h>
 #include <rime/engine.h>
 #include <rime/schema.h>
 #include <rime/ticket.h>
-#include <rime/translator.h>
 
 #include <glog/logging.h>
 #include <map>
@@ -35,7 +32,7 @@ public:
   ComponentWrapperBase& operator=(ComponentWrapperBase&&) = delete;
 
 protected:
-  explicit ComponentWrapperBase(const rime::Ticket& ticket)
+  explicit ComponentWrapperBase(const Ticket& ticket)
       : T_BASE(ticket),
         environment_(std::make_unique<Environment>(ticket.engine, ticket.name_space)) {
     DLOG(INFO) << "[qjs] " << typeid(T_ACTUAL).name()
@@ -57,7 +54,7 @@ class QuickJSComponent : public T_BASE::Component {
 
 public:
   // NOLINTNEXTLINE(readability-identifier-naming)
-  ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>* Create(const rime::Ticket& ticket) override {
+  ComponentWrapper<T_ACTUAL, T_BASE, T_JS_VALUE>* Create(const Ticket& ticket) override {
     // The same plugin could have difference configurations for different schemas, and then behave differently.
     // So we need to create a new component for each schema.
     const std::string schemaId = ticket.engine->schema()->schema_id();

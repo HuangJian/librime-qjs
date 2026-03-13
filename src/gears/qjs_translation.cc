@@ -2,7 +2,7 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(rime::an<rime::Translation> translation,
+QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
                                                    const T_JS_VALUE& filterObj,
                                                    const T_JS_VALUE& filterFunc,
                                                    Environment* environment)
@@ -39,7 +39,7 @@ bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
     return false;
   }
 
-  size_t length = jsEngine.getArrayLength(resultArray);
+  const size_t length = jsEngine.getArrayLength(resultArray);
   for (size_t i = 0; i < length; i++) {
     T_JS_VALUE item = jsEngine.getArrayItem(resultArray, i);
     if (auto candidate = jsEngine.template unwrap<Candidate>(item)) {
@@ -55,11 +55,10 @@ bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
 }
 
 template <typename T_JS_VALUE>
-QuickJSFastTranslation<T_JS_VALUE>::QuickJSFastTranslation(
-    const rime::an<rime::Translation>& translation,
-    const T_JS_OBJECT& filterObj,
-    const T_JS_OBJECT& filterFunc,
-    Environment* environment) {
+QuickJSFastTranslation<T_JS_VALUE>::QuickJSFastTranslation(const an<Translation>& translation,
+                                                           const T_JS_OBJECT& filterObj,
+                                                           const T_JS_OBJECT& filterFunc,
+                                                           Environment* environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto iterator = jsEngine.wrap(translation);
   auto jsEnv = jsEngine.wrap(environment);
@@ -92,7 +91,7 @@ bool QuickJSFastTranslation<T_JS_VALUE>::Next() {
 
   if (upstream_ != nullptr) {
     // `return iter;` was called in js side, return the upstream data
-    auto ret = upstream_->Next();
+    const auto ret = upstream_->Next();
     this->set_exhausted(upstream_->exhausted());
     return ret;
   }
@@ -101,7 +100,7 @@ bool QuickJSFastTranslation<T_JS_VALUE>::Next() {
 }
 
 template <typename T_JS_VALUE>
-an<rime::Candidate> QuickJSFastTranslation<T_JS_VALUE>::Peek() {
+an<Candidate> QuickJSFastTranslation<T_JS_VALUE>::Peek() {
   if (!isGeneratorEverInvoked_) {
     invokeGenerator();
   }
@@ -115,7 +114,7 @@ an<rime::Candidate> QuickJSFastTranslation<T_JS_VALUE>::Peek() {
 
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto jsValue = jsEngine.getObjectProperty(nextResult_, "value");
-  auto ret = jsEngine.template unwrap<rime::Candidate>(jsValue);
+  auto ret = jsEngine.template unwrap<Candidate>(jsValue);
   jsEngine.freeValue(jsValue);
   return ret;
 }
@@ -142,7 +141,7 @@ void QuickJSFastTranslation<T_JS_VALUE>::invokeGenerator() {
   jsEngine.protectFromGC(nextResult_);
 
   auto jsDone = jsEngine.getObjectProperty(nextResult_, "done");
-  bool isDone = jsEngine.isBool(jsDone) && jsEngine.toBool(jsDone);
+  const bool isDone = jsEngine.isBool(jsDone) && jsEngine.toBool(jsDone);
   jsEngine.freeValue(jsDone);
   if (isDone) {
     // check the return value of the generator,

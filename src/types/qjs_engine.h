@@ -10,7 +10,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::Engine> {
+class JsWrapper<Engine> {
   DEFINE_GETTER(Engine, schema, obj->schema())
   DEFINE_GETTER(Engine, context, obj->context())
   DEFINE_GETTER(Engine, activeEngine, obj->active_engine())

@@ -8,7 +8,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::CommitHistory> {
+class JsWrapper<CommitHistory> {
   DEFINE_CFUNCTION_ARGC(push, 2, {
     auto type = engine.toStdString(argv[0]);
     auto text = engine.toStdString(argv[1]);

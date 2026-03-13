@@ -7,7 +7,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::Schema> {
+class JsWrapper<Schema> {
   DEFINE_GETTER(Schema, id, obj->schema_id())
   DEFINE_GETTER(Schema, name, obj->schema_name())
   DEFINE_GETTER(Schema, config, obj->config())

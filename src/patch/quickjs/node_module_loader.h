@@ -1,3 +1,6 @@
+#ifndef NODE_MODULE_LOADER_H
+#define NODE_MODULE_LOADER_H
+
 #include "quickjs.h"
 
 #ifdef __cplusplus
@@ -18,3 +21,4 @@ char* loadFile(const char* absolutePath);
 #ifdef __cplusplus
 }
 #endif
+#endif  // NODE_MODULE_LOADER_H

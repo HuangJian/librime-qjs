@@ -3,7 +3,6 @@
 #include <JavaScriptCore/JavaScript.h>
 #include <JavaScriptCore/JavaScriptCore.h>
 #include <glog/logging.h>
-#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -23,36 +22,39 @@ public:
   [[nodiscard]] std::string toStdString(const JSValueRef& value) const;
 
   void setBaseFolderPath(const char* absolutePath);
-  JSObjectRef createInstanceOfModule(const char* moduleName, const std::vector<JSValueRef>& args);
-  JSValueRef loadJsFile(const char* fileName);
-  JSValueRef eval(const char* code, const char* filename = "<eval>");
-  JSObjectRef getGlobalObject();
+  JSObjectRef createInstanceOfModule(const char* moduleName,
+                                     const std::vector<JSValueRef>& args) const;
+  JSValueRef loadJsFile(const char* fileName) const;
+  JSValueRef eval(const char* code, const char* filename = "<eval>") const;
+  JSObjectRef getGlobalObject() const;
 
   [[nodiscard]] size_t getArrayLength(const JSValueRef& array) const;
   void insertItemToArray(JSValueRef array, size_t index, const JSValueRef& value) const;
   [[nodiscard]] JSValueRef getArrayItem(const JSValueRef& array, size_t index) const;
 
   JSValueRef getObjectProperty(const JSObjectRef& obj, const char* propertyName) const;
-  int setObjectProperty(const JSObjectRef& obj, const char* propertyName, const JSValueRef& value);
+  int setObjectProperty(const JSObjectRef& obj,
+                        const char* propertyName,
+                        const JSValueRef& value) const;
   int setObjectFunction(JSObjectRef obj,
                         const char* functionName,
                         JSObjectCallAsFunctionCallback cppFunction,
-                        int expectingArgc);
+                        int expectingArgc) const;
 
   JSValueRef callFunction(const JSObjectRef& func,
                           const JSObjectRef& thisArg,
                           int argc,
-                          JSValueRef* argv);
-  JSObjectRef newClassInstance(const JSObjectRef& clazz, int argc, JSValueRef* argv);
+                          const JSValueRef* argv) const;
+  JSObjectRef newClassInstance(const JSObjectRef& clazz, int argc, const JSValueRef* argv) const;
 
   JSValueRef getJsClassHavingMethod(const JSValueRef& module, const char* methodName) const;
   JSObjectRef getMethodOfClassOrInstance(JSObjectRef jsClass,
                                          JSObjectRef instance,
-                                         const char* methodName);
+                                         const char* methodName) const;
 
   void logErrorStackTrace(const JSValueRef& exception,
                           const char* file = __FILE_NAME__,
-                          int line = __LINE__);
+                          int line = __LINE__) const;
 
   void registerType(const char* typeName,
                     JSClassRef& jsClass,
@@ -60,9 +62,9 @@ public:
                     void (*finalizer)(JSObjectRef),
                     JSStaticFunction* functions,
                     int numFunctions,
-                    JSStaticValue* properties,
+                    const JSStaticValue* properties,
                     int numProperties,
-                    JSStaticValue* getters,
+                    const JSStaticValue* getters,
                     int numGetters);
 
   [[nodiscard]] bool isTypeRegistered(const std::string& typeName) const;

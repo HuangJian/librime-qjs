@@ -12,7 +12,6 @@
 #include <fstream>
 #elif defined(__APPLE__)
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/utsname.h>
 #endif
 
@@ -44,7 +43,7 @@ std::string SystemInfo::getArchitecture() {
 #ifdef _WIN32
   return getWindowsArchitecture();
 #elif defined(__linux__) || defined(__APPLE__)
-  struct utsname sysInfo {};
+  struct utsname sysInfo{};
   uname(&sysInfo);
   return static_cast<char*>(sysInfo.machine);
 #else
@@ -221,10 +220,10 @@ void SystemInfo::trimQuotes(std::string& str) {
 
 #ifdef __APPLE__
 std::string SystemInfo::getMacOSVersion() {
-  constexpr const int STR_SIZE = 256;
+  constexpr int STR_SIZE = 256;
   char str[STR_SIZE];
   size_t size = sizeof(str);
-  char* ptr = static_cast<char*>(str);
+  const auto ptr = static_cast<char*>(str);
   if (sysctlbyname("kern.osproductversion", ptr, &size, nullptr, 0) == 0) {
     return ptr;
   }

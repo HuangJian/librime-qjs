@@ -1,6 +1,5 @@
 #pragma once
 
-#include <rime/config.h>
 #include <rime/config/config_types.h>
 #include "engines/js_macros.h"
 #include "js_wrapper.h"
@@ -8,7 +7,7 @@
 using namespace rime;
 
 template <>
-class JsWrapper<rime::ConfigMap> {
+class JsWrapper<ConfigMap> {
   DEFINE_CFUNCTION(getType, { return engine.wrap("map"); })
 
   DEFINE_CFUNCTION_ARGC(hasKey, 1, {

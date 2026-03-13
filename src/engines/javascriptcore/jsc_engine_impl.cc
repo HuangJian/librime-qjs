@@ -7,8 +7,8 @@ JscEngineImpl::JscEngineImpl() : ctx_(JSGlobalContextCreate(nullptr)) {
 }
 
 JscEngineImpl::~JscEngineImpl() {
-  for (auto& clazz : clazzes_) {
-    auto& clazzDef = clazz.second;
+  for (auto& [key, val] : clazzes_) {
+    auto& clazzDef = val;
     JSClassRelease(clazzDef);
   }
   JSGlobalContextRelease(ctx_);
@@ -26,10 +26,10 @@ void JscEngineImpl::setBaseFolderPath(const char* absolutePath) {
 }
 
 JSObjectRef JscEngineImpl::createInstanceOfModule(const char* moduleName,
-                                                  const std::vector<JSValueRef>& args) {
+                                                  const std::vector<JSValueRef>& args) const {
   JSValueRef exception = nullptr;
   for (auto& path : arrBaseFolderPath_) {
-    JSObjectRef instance =
+    const JSObjectRef instance =
         JscCodeLoader::createInstanceOfIifeBundledModule(ctx_, path, moduleName, args, &exception);
     if (exception == nullptr) {
       return instance;
@@ -42,7 +42,7 @@ JSObjectRef JscEngineImpl::createInstanceOfModule(const char* moduleName,
   return nullptr;
 }
 
-JSValueRef JscEngineImpl::loadJsFile(const char* fileName) {
+JSValueRef JscEngineImpl::loadJsFile(const char* fileName) const {
   JSValueRef exception = nullptr;
 
   for (auto& path : arrBaseFolderPath_) {
@@ -56,16 +56,16 @@ JSValueRef JscEngineImpl::loadJsFile(const char* fileName) {
   return nullptr;
 }
 
-JSValueRef JscEngineImpl::eval(const char* code, const char* filename) {
-  JscStringRAII jsCode = code;
-  JscStringRAII filenameStr = filename;
+JSValueRef JscEngineImpl::eval(const char* code, const char* filename) const {
+  const auto jsCode = JscStringRAII(code);
+  const auto filenameStr = JscStringRAII(filename);
   JSValueRef exception = nullptr;
-  JSValueRef result = JSEvaluateScript(ctx_, jsCode, nullptr, filenameStr, 0, &exception);
+  const JSValueRef result = JSEvaluateScript(ctx_, jsCode, nullptr, filenameStr, 0, &exception);
   logErrorStackTrace(exception, __FILE_NAME__, __LINE__);
   return result;
 }
 
-JSObjectRef JscEngineImpl::getGlobalObject() {
+JSObjectRef JscEngineImpl::getGlobalObject() const {
   return JSContextGetGlobalObject(ctx_);
 }
 
@@ -75,15 +75,15 @@ size_t JscEngineImpl::getArrayLength(const JSValueRef& array) const {
   return static_cast<size_t>(JSValueToNumber(ctx_, lengthValue, nullptr));
 }
 
-void JscEngineImpl::insertItemToArray(JSValueRef array,
-                                      size_t index,
+void JscEngineImpl::insertItemToArray(const JSValueRef array,
+                                      const size_t index,
                                       const JSValueRef& value) const {
   JSObjectRef arrayObj = JSValueToObject(ctx_, array, nullptr);
   JSObjectSetPropertyAtIndex(ctx_, arrayObj, index, value, nullptr);
 }
 
-JSValueRef JscEngineImpl::getArrayItem(const JSValueRef& array, size_t index) const {
-  JSObjectRef arrayObj = JSValueToObject(ctx_, array, nullptr);
+JSValueRef JscEngineImpl::getArrayItem(const JSValueRef& array, const size_t index) const {
+  const JSObjectRef arrayObj = JSValueToObject(ctx_, array, nullptr);
   return JSObjectGetPropertyAtIndex(ctx_, arrayObj, index, nullptr);
 }
 
@@ -94,29 +94,29 @@ JSValueRef JscEngineImpl::getObjectProperty(const JSObjectRef& obj,
 
 int JscEngineImpl::setObjectProperty(const JSObjectRef& obj,
                                      const char* propertyName,
-                                     const JSValueRef& value) {
+                                     const JSValueRef& value) const {
   JSObjectSetProperty(ctx_, obj, JscStringRAII(propertyName), value, kJSPropertyAttributeNone,
                       nullptr);
   return 0;
 }
 
-int JscEngineImpl::setObjectFunction(JSObjectRef obj,
+int JscEngineImpl::setObjectFunction(const JSObjectRef obj,
                                      const char* functionName,
                                      JSObjectCallAsFunctionCallback cppFunction,
-                                     int expectingArgc) {
-  JscStringRAII funcNameStr = functionName;
-  JSObjectRef func = JSObjectMakeFunctionWithCallback(ctx_, funcNameStr, cppFunction);
+                                     [[maybe_unused]] int expectingArgc) const {
+  const auto funcNameStr = JscStringRAII(functionName);
+  const JSObjectRef func = JSObjectMakeFunctionWithCallback(ctx_, funcNameStr, cppFunction);
   JSObjectSetProperty(ctx_, obj, funcNameStr, func, kJSPropertyAttributeNone, nullptr);
   return 0;
 }
 
 JSValueRef JscEngineImpl::callFunction(const JSObjectRef& func,
                                        const JSObjectRef& thisArg,
-                                       int argc,
-                                       JSValueRef* argv) {
+                                       const int argc,
+                                       const JSValueRef* argv) const {
   JSValueRef exception = nullptr;
   auto* thisVal = JSValueIsUndefined(ctx_, thisArg) ? getGlobalObject() : thisArg;
-  JSValueRef result = JSObjectCallAsFunction(ctx_, func, thisVal, argc, argv, &exception);
+  const JSValueRef result = JSObjectCallAsFunction(ctx_, func, thisVal, argc, argv, &exception);
   if (exception != nullptr) {
     logErrorStackTrace(exception, __FILE_NAME__, __LINE__);
     return nullptr;
@@ -124,9 +124,11 @@ JSValueRef JscEngineImpl::callFunction(const JSObjectRef& func,
   return result;
 }
 
-JSObjectRef JscEngineImpl::newClassInstance(const JSObjectRef& clazz, int argc, JSValueRef* argv) {
+JSObjectRef JscEngineImpl::newClassInstance(const JSObjectRef& clazz,
+                                            const int argc,
+                                            const JSValueRef* argv) const {
   JSValueRef exception = nullptr;
-  JSObjectRef result = JSObjectCallAsConstructor(ctx_, clazz, argc, argv, &exception);
+  const JSObjectRef result = JSObjectCallAsConstructor(ctx_, clazz, argc, argv, &exception);
   if (exception != nullptr) {
     logErrorStackTrace(exception, __FILE_NAME__, __LINE__);
     return nullptr;
@@ -136,21 +138,21 @@ JSObjectRef JscEngineImpl::newClassInstance(const JSObjectRef& clazz, int argc, 
 
 JSValueRef JscEngineImpl::getJsClassHavingMethod(const JSValueRef& module,
                                                  const char* methodName) const {
-  JSObjectRef moduleObj = JSValueToObject(ctx_, module, nullptr);
-  JSPropertyNameArrayRef propertyNames = JSObjectCopyPropertyNames(ctx_, moduleObj);
-  size_t count = JSPropertyNameArrayGetCount(propertyNames);
+  const JSObjectRef moduleObj = JSValueToObject(ctx_, module, nullptr);
+  const JSPropertyNameArrayRef propertyNames = JSObjectCopyPropertyNames(ctx_, moduleObj);
+  const size_t count = JSPropertyNameArrayGetCount(propertyNames);
 
-  for (size_t i = count - 1; i >= 0; i--) {
-    JSStringRef propertyName = JSPropertyNameArrayGetNameAtIndex(propertyNames, i);
-    JSValueRef value = JSObjectGetProperty(ctx_, moduleObj, propertyName, nullptr);
+  for (int i = count - 1; i >= 0; i--) {
+    const JSStringRef propertyName = JSPropertyNameArrayGetNameAtIndex(propertyNames, i);
+    if (const JSValueRef value = JSObjectGetProperty(ctx_, moduleObj, propertyName, nullptr);
+        JSValueIsObject(ctx_, value)) {
+      const JSObjectRef obj = JSValueToObject(ctx_, value, nullptr);
 
-    if (JSValueIsObject(ctx_, value)) {
-      JSObjectRef obj = JSValueToObject(ctx_, value, nullptr);
-      JSValueRef prototype = JSObjectGetProperty(ctx_, obj, JscStringRAII("prototype"), nullptr);
-
-      if (!JSValueIsUndefined(ctx_, prototype) && JSValueIsObject(ctx_, prototype)) {
-        JSObjectRef prototypeObj = JSValueToObject(ctx_, prototype, nullptr);
-        JSValueRef method =
+      if (const JSValueRef prototype =
+              JSObjectGetProperty(ctx_, obj, JscStringRAII("prototype"), nullptr);
+          !JSValueIsUndefined(ctx_, prototype) && JSValueIsObject(ctx_, prototype)) {
+        const JSObjectRef prototypeObj = JSValueToObject(ctx_, prototype, nullptr);
+        const JSValueRef method =
             JSObjectGetProperty(ctx_, prototypeObj, JscStringRAII(methodName), nullptr);
 
         if (!JSValueIsUndefined(ctx_, method) && JSValueIsObject(ctx_, method)) {
@@ -165,22 +167,25 @@ JSValueRef JscEngineImpl::getJsClassHavingMethod(const JSValueRef& module,
   return JSValueMakeUndefined(ctx_);
 }
 
-JSObjectRef JscEngineImpl::getMethodOfClassOrInstance(JSObjectRef jsClass,
-                                                      JSObjectRef instance,
-                                                      const char* methodName) {
+JSObjectRef JscEngineImpl::getMethodOfClassOrInstance([[maybe_unused]] JSObjectRef jsClass,
+                                                      const JSObjectRef instance,
+                                                      const char* methodName) const {
   JSValueRef exception = nullptr;
-  JSValueRef method = JSObjectGetProperty(ctx_, instance, JscStringRAII(methodName), &exception);
+  const JSValueRef method =
+      JSObjectGetProperty(ctx_, instance, JscStringRAII(methodName), &exception);
   logErrorStackTrace(exception, __FILE_NAME__, __LINE__);
   return JSValueToObject(ctx_, method, nullptr);
 }
 
-void JscEngineImpl::logErrorStackTrace(const JSValueRef& exception, const char* file, int line) {
+void JscEngineImpl::logErrorStackTrace(const JSValueRef& exception,
+                                       const char* file,
+                                       const int line) const {
   if (exception == nullptr) {
     return;
   }
 
   auto* objException = JSValueToObject(ctx_, exception, nullptr);
-  auto strStack = toStdString(getObjectProperty(objException, "stack"));
+  const auto strStack = toStdString(getObjectProperty(objException, "stack"));
   google::LogMessage(file, line, google::GLOG_ERROR).stream()
       << "[qjs] JSC exception: " << toStdString(exception) << "\n"
       << (strStack.empty() ? "No stack trace available." : strStack);
@@ -196,11 +201,11 @@ std::string JscEngineImpl::toStdString(const JSValueRef& value) const {
     return {};
   }
 
-  size_t maxBufferSize = JSStringGetMaximumUTF8CStringSize(jsString);
+  const size_t maxBufferSize = JSStringGetMaximumUTF8CStringSize(jsString);
   std::string result;
   result.resize(maxBufferSize);
 
-  size_t actualSize = JSStringGetUTF8CString(jsString, result.data(), maxBufferSize);
+  const size_t actualSize = JSStringGetUTF8CString(jsString, result.data(), maxBufferSize);
   result.resize(actualSize > 0 ? actualSize - 1 : 0);  // Remove null terminator if present
 
   JSStringRelease(jsString);
@@ -209,14 +214,14 @@ std::string JscEngineImpl::toStdString(const JSValueRef& value) const {
 
 void JscEngineImpl::registerType(const char* typeName,
                                  JSClassRef& jsClass,
-                                 JSObjectCallAsConstructorCallback constructor,
+                                 const JSObjectCallAsConstructorCallback constructor,
                                  void (*finalizer)(JSObjectRef),
                                  JSStaticFunction* functions,
                                  int numFunctions,
-                                 JSStaticValue* properties,
-                                 int numProperties,
-                                 JSStaticValue* getters,
-                                 int numGetters) {
+                                 const JSStaticValue* properties,
+                                 const int numProperties,
+                                 const JSStaticValue* getters,
+                                 const int numGetters) {
   if (clazzes_.find(typeName) != clazzes_.end()) {
     DLOG(INFO) << "[jsc] type: " << typeName << " has already been registered.";
     return;
@@ -233,23 +238,23 @@ void JscEngineImpl::registerType(const char* typeName,
   }
   staticValues.push_back({nullptr, nullptr, nullptr, 0});
 
-  JSClassDefinition classDef = {.version = 0,
-                                .attributes = kJSClassAttributeNone,
-                                .className = typeName,
-                                .parentClass = nullptr,
-                                .staticValues = staticValues.data(),
-                                .staticFunctions = functions,
-                                .initialize = nullptr,
-                                .finalize = finalizer,
-                                .hasProperty = nullptr,
-                                .getProperty = nullptr,
-                                .setProperty = nullptr,
-                                .deleteProperty = nullptr,
-                                .getPropertyNames = nullptr,
-                                .callAsFunction = nullptr,
-                                .callAsConstructor = constructor,
-                                .hasInstance = nullptr,
-                                .convertToType = nullptr};
+  const JSClassDefinition classDef = {.version = 0,
+                                      .attributes = kJSClassAttributeNone,
+                                      .className = typeName,
+                                      .parentClass = nullptr,
+                                      .staticValues = staticValues.data(),
+                                      .staticFunctions = functions,
+                                      .initialize = nullptr,
+                                      .finalize = finalizer,
+                                      .hasProperty = nullptr,
+                                      .getProperty = nullptr,
+                                      .setProperty = nullptr,
+                                      .deleteProperty = nullptr,
+                                      .getPropertyNames = nullptr,
+                                      .callAsFunction = nullptr,
+                                      .callAsConstructor = constructor,
+                                      .hasInstance = nullptr,
+                                      .convertToType = nullptr};
 
   DLOG(INFO) << "[jsc] registering type: " << typeName << " with " << (staticValues.size() - 1)
              << " properties and " << numFunctions << " functions";
@@ -258,8 +263,8 @@ void JscEngineImpl::registerType(const char* typeName,
   clazzes_[typeName] = jsClass;
 
   // Add the constructor to the global object
-  JSObjectRef globalObj = JSContextGetGlobalObject(ctx_);
-  JSObjectRef constructorObj = JSObjectMake(ctx_, jsClass, nullptr);
+  const JSObjectRef globalObj = JSContextGetGlobalObject(ctx_);
+  const JSObjectRef constructorObj = JSObjectMake(ctx_, jsClass, nullptr);
   JSObjectSetProperty(ctx_, globalObj, JscStringRAII(typeName), constructorObj,
                       kJSPropertyAttributeNone, nullptr);
 }
@@ -280,18 +285,18 @@ const JSClassRef& JscEngineImpl::getRegisteredClass(const std::string& typeName)
 }
 
 void JscEngineImpl::exposeLogToJsConsole(JSContextRef ctx) {
-  JSObjectRef globalObject = JSContextGetGlobalObject(ctx);
+  const JSObjectRef globalObject = JSContextGetGlobalObject(ctx);
 
   // Create console object
-  JSObjectRef consoleObj = JSObjectMake(ctx, nullptr, nullptr);
+  const JSObjectRef consoleObj = JSObjectMake(ctx, nullptr, nullptr);
 
   // Create log function
-  JscStringRAII logStr = "log";
-  JSObjectRef logFunc = JSObjectMakeFunctionWithCallback(ctx, logStr, jsLog);
+  const auto logStr = JscStringRAII("log");
+  const JSObjectRef logFunc = JSObjectMakeFunctionWithCallback(ctx, logStr, jsLog);
 
   // Create error function
-  JscStringRAII errorStr = "error";
-  JSObjectRef errorFunc = JSObjectMakeFunctionWithCallback(ctx, errorStr, jsError);
+  const auto errorStr = JscStringRAII("error");
+  const JSObjectRef errorFunc = JSObjectMakeFunctionWithCallback(ctx, errorStr, jsError);
 
   // Add functions to console object
   JSObjectSetProperty(ctx, consoleObj, logStr, logFunc, kJSPropertyAttributeNone, nullptr);
@@ -302,15 +307,15 @@ void JscEngineImpl::exposeLogToJsConsole(JSContextRef ctx) {
                       kJSPropertyAttributeNone, nullptr);
 }
 
-static std::string processJsArguments(JSContextRef ctx,
-                                      size_t argumentCount,
+static std::string processJsArguments(const JSContextRef ctx,
+                                      const size_t argumentCount,
                                       const JSValueRef arguments[],
                                       JSValueRef* exception) {
   std::stringstream ss;
   for (size_t i = 0; i < argumentCount; i++) {
-    JscStringRAII strRef = JSValueToStringCopy(ctx, arguments[i], exception);
-    size_t bufferSize = JSStringGetMaximumUTF8CStringSize(strRef);
-    char* buffer = new char[bufferSize];
+    auto strRef = JscStringRAII(JSValueToStringCopy(ctx, arguments[i], exception));
+    const size_t bufferSize = JSStringGetMaximumUTF8CStringSize(strRef);
+    auto* buffer = new char[bufferSize];
     JSStringGetUTF8CString(strRef, buffer, bufferSize);
     ss << buffer;
     if (i < argumentCount - 1) {
@@ -321,10 +326,10 @@ static std::string processJsArguments(JSContextRef ctx,
   return ss.str();
 }
 
-JSValueRef JscEngineImpl::jsLog(JSContextRef ctx,
-                                JSObjectRef function,
-                                JSObjectRef thisObject,
-                                size_t argumentCount,
+JSValueRef JscEngineImpl::jsLog(const JSContextRef ctx,
+                                [[maybe_unused]] JSObjectRef function,
+                                [[maybe_unused]] JSObjectRef thisObject,
+                                const size_t argumentCount,
                                 const JSValueRef arguments[],
                                 JSValueRef* exception) {
   std::string message = processJsArguments(ctx, argumentCount, arguments, exception);
@@ -332,13 +337,13 @@ JSValueRef JscEngineImpl::jsLog(JSContextRef ctx,
   return JSValueMakeUndefined(ctx);
 }
 
-JSValueRef JscEngineImpl::jsError(JSContextRef ctx,
-                                  JSObjectRef function,
-                                  JSObjectRef thisObject,
-                                  size_t argumentCount,
+JSValueRef JscEngineImpl::jsError(const JSContextRef ctx,
+                                  [[maybe_unused]] JSObjectRef function,
+                                  [[maybe_unused]] JSObjectRef thisObject,
+                                  const size_t argumentCount,
                                   const JSValueRef arguments[],
                                   JSValueRef* exception) {
-  std::string message = processJsArguments(ctx, argumentCount, arguments, exception);
+  const std::string message = processJsArguments(ctx, argumentCount, arguments, exception);
   google::LogMessage("$jsc$", 0, google::GLOG_ERROR).stream() << message;
   return JSValueMakeUndefined(ctx);
 }
