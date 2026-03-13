@@ -103,8 +103,8 @@
                         EXPAND(block4));                                           \
   inline static JSClassRef classDefJsc = nullptr;
 
-#define WITH_CONSTRUCTOR(funcName, expectingArgc)                                        \
-  WITH_CONSTRUCTOR_QJS(funcName, expectingArgc);                                         \
+#define WITH_CONSTRUCTOR(funcName)                                                       \
+  WITH_CONSTRUCTOR_QJS(funcName);                                                        \
   static JSObjectRef constructorJsc(JSContextRef ctx, JSObjectRef function, size_t argc, \
                                     const JSValueRef argv[], JSValueRef* exception) {    \
     auto val = funcName##Jsc(ctx, function, nullptr, argc, argv, exception);             \
@@ -151,12 +151,13 @@
   WITHOUT_GETTER_QJS;   \
   inline static JSStaticValue gettersJsc[] = {};
 
-#define DEFINE_FUNCTION_JSC(name, argc) {#name, name##Jsc, static_cast<JSPropertyAttributes>(argc)},
+#define DEFINE_FUNCTION_JSC(name) \
+  {#name, name##Jsc, static_cast<JSPropertyAttributes>(name##_argc)},
 
-#define WITH_FUNCTIONS(...)                                                 \
-  WITH_FUNCTIONS_QJS(__VA_ARGS__);                                          \
-  inline static JSStaticFunction functionsJsc[] = {                         \
-      FOR_EACH_PAIR(DEFINE_FUNCTION_JSC, __VA_ARGS__){nullptr, nullptr, 0}, \
+#define WITH_FUNCTIONS(...)                                            \
+  WITH_FUNCTIONS_QJS(__VA_ARGS__);                                     \
+  inline static JSStaticFunction functionsJsc[] = {                    \
+      FOR_EACH(DEFINE_FUNCTION_JSC, __VA_ARGS__){nullptr, nullptr, 0}, \
   };
 
 #define WITHOUT_FUNCTIONS \

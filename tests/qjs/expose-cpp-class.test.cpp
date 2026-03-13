@@ -211,10 +211,10 @@ class JsWrapper<MyClass> {
 
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(MyClass,
-                                   WITH_CONSTRUCTOR(makeMyClass, 1),
+                                   WITH_CONSTRUCTOR(makeMyClass),
                                    WITHOUT_PROPERTIES,
                                    WITHOUT_GETTERS,
-                                   WITH_FUNCTIONS(sayHello, 0, getName, 0, setName, 1));
+                                   WITH_FUNCTIONS(sayHello, getName, setName));
 };
 
 TEST_F(QuickJSExposeClassTest, TestExposeClassToQuickJSWithEngine) {

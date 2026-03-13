@@ -77,17 +77,8 @@ class JsWrapper<Trie> {
 
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(Trie,
-                                   WITH_CONSTRUCTOR(makeTrie, 0),
+                                   WITH_CONSTRUCTOR(makeTrie),
                                    WITHOUT_PROPERTIES,
                                    WITHOUT_GETTERS,
-                                   WITH_FUNCTIONS(loadTextFile,
-                                                  1,
-                                                  loadBinaryFile,
-                                                  1,
-                                                  saveToBinaryFile,
-                                                  1,
-                                                  find,
-                                                  1,
-                                                  prefixSearch,
-                                                  1));
+                                   WITH_FUNCTIONS(loadTextFile, loadBinaryFile, saveToBinaryFile, find, prefixSearch));
 };

@@ -46,10 +46,7 @@ function parseCppExports() {
         // Parse functions
         const functionsMatch = classBody.match(/WITH_FUNCTIONS\s*\((.+?)\)/s)
         if (functionsMatch) {
-          const functions = functionsMatch[1]
-            .split(',')
-            .filter((_, idx) => idx % 2 === 0)
-            .map((f) => f.trim())
+          const functions = functionsMatch[1].split(',').map((f) => f.trim())
 
           functions.forEach((f) => classExports.methods.add(f))
         }

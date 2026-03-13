@@ -25,7 +25,7 @@
 #define EXPORT_CLASS_IMPL(className, block1, block2, block3, block4) \
   EXPORT_CLASS_IMPL_QJS(className, EXPAND(block1), EXPAND(block2), EXPAND(block3), EXPAND(block4));
 
-#define WITH_CONSTRUCTOR(funcName, argc) WITH_CONSTRUCTOR_QJS(funcName, argc)
+#define WITH_CONSTRUCTOR(funcName) WITH_CONSTRUCTOR_QJS(funcName)
 #define WITHOUT_CONSTRUCTOR WITHOUT_CONSTRUCTOR_QJS
 
 #define WITH_FINALIZER WITH_FINALIZER_QJS
@@ -89,6 +89,7 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 // =============== FUNCTION ===============
 
 #define DEFINE_CFUNCTION_QJS(funcName, funcBody)                                      \
+  static constexpr int funcName##_argc = 0;                                           \
   static JSValue funcName(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv) { \
     auto& engine = JsEngine<JSValue>::instance();                                     \
     try {                                                                             \
@@ -99,6 +100,7 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   }
 
 #define DEFINE_CFUNCTION_ARGC_QJS(funcName, expectingArgc, statements)                           \
+  static constexpr int funcName##_argc = expectingArgc;                                          \
   static JSValue funcName(JSContext* ctx, JSValueConst thisVal, int argc, JSValueConst* argv) {  \
     if (argc < (expectingArgc)) {                                                                \
       return JS_ThrowSyntaxError(ctx, "%s(...) expects %d arguments", #funcName, expectingArgc); \
@@ -143,9 +145,9 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   EXPORT_CLASS_IMPL(className, EXPAND(block1), EXPAND(block2), EXPAND(block3), EXPAND(block4)); \
   WITH_FINALIZER;  // the attached shared pointer's reference count should be decremented when the js object is freed
 
-#define WITH_CONSTRUCTOR_QJS(funcName, argc)            \
+#define WITH_CONSTRUCTOR_QJS(funcName)                  \
   inline static JSCFunction* constructorQjs = funcName; \
-  inline static const int CONSTRUCTOR_ARGC = argc;
+  inline static const int CONSTRUCTOR_ARGC = funcName##_argc;
 #define WITHOUT_CONSTRUCTOR_QJS                        \
   inline static JSCFunction* constructorQjs = nullptr; \
   inline static const int CONSTRUCTOR_ARGC = 0;
@@ -181,11 +183,12 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   inline static const JSCFunctionListEntry GETTERS_QJS[] = {}; \
   inline static const size_t GETTERS_SIZE = 0;
 
-#define DEFINE_FUNCTION_QJS(name, argc) JS_CFUNC_DEF(#name, static_cast<uint8_t>(argc), name),
+#define DEFINE_FUNCTION_QJS(name) \
+  JS_CFUNC_DEF(#name, static_cast<uint8_t>(name##_argc), name),
 
 #define WITH_FUNCTIONS_QJS(...)                                \
   inline static const JSCFunctionListEntry FUNCTIONS_QJS[] = { \
-      FOR_EACH_PAIR(DEFINE_FUNCTION_QJS, __VA_ARGS__)};        \
+      FOR_EACH(DEFINE_FUNCTION_QJS, __VA_ARGS__)};             \
   inline static const size_t FUNCTIONS_SIZE = sizeof(FUNCTIONS_QJS) / sizeof(FUNCTIONS_QJS[0]);
 #define WITHOUT_FUNCTIONS_QJS                                    \
   inline static const JSCFunctionListEntry FUNCTIONS_QJS[] = {}; \
