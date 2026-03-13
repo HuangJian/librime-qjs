@@ -10,7 +10,7 @@
 
 #include <cpp-subprocess/subprocess.hpp>
 
-#include "process_memory.hpp"
+#include "process_memory.h"
 
 class ProcessManager {
 public:

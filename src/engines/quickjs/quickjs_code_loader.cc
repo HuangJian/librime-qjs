@@ -12,7 +12,7 @@
 
 #include <quickjs.h>
 
-#include "engines/jscode_utils.hpp"
+#include "engines/jscode_utils.h"
 #include "patch/quickjs/node_module_loader.h"
 
 void QuickJSCodeLoader::logJsError(JSContext* ctx, const char* prefix, const char* file, int line) {

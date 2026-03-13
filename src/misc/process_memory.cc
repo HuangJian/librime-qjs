@@ -1,5 +1,4 @@
-#pragma once
-
+#include "process_memory.h"
 #include <iostream>
 
 #ifdef __linux__
@@ -45,7 +44,7 @@ void getMemoryUsage(size_t& vm_usage, size_t& resident_set) {
 #include <mach/mach.h>
 #include <unistd.h>  // For getpid()
 
-inline void getMemoryUsage(size_t& vmUsage, size_t& residentSet) {
+void getMemoryUsage(size_t& vmUsage, size_t& residentSet) {
   vmUsage = 0;
   residentSet = 0;
 

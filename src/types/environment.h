@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "misc/system_info.hpp"
+#include "misc/system_info.h"
 
 class Environment {
 public:

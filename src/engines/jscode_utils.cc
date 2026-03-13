@@ -1,16 +1,11 @@
-#pragma once
-
+#include "jscode_utils.h"
 #include <glog/logging.h>
 #include <regex>
 #include <sstream>
-#include <string>
-#include <vector>
 
-// replace the last `new SortCandidatesByPinyinFilter()` with `new SortCandidatesByPinyinFilter_N(this.arg0, this.arg1,...)`
-// to load the iife-format bundled file in both JavaScriptCore and QuickJS
-static void replaceNewClassInstanceStatementInPlace(std::string& source,
-                                                    const std::string& instanceName,
-                                                    const std::vector<std::string>& argumentNames) {
+void replaceNewClassInstanceStatementInPlace(std::string& source,
+                                            const std::string& instanceName,
+                                            const std::vector<std::string>& argumentNames) {
   //  find the last statment in this format: `globalThis.sort_by_pinyin_js = new SortCandidatesByPinyinFilter()`
   std::regex pattern(R"(globalThis\.\w+\s*=\s*new\s*(\w+)\s*\(\))");
   std::sregex_iterator it(source.begin(), source.end(), pattern);
@@ -45,9 +40,7 @@ static void replaceNewClassInstanceStatementInPlace(std::string& source,
   source = std::regex_replace(source, pattern, newStatementString + ")");
 }
 
-// remove the statements like: `export { SortCandidatesByPinyinFilter }`
-// to load the esm-format bundled file in JavaScriptCore
-static void removeExportStatementsInPlace(std::string& source) {
+void removeExportStatementsInPlace(std::string& source) {
   size_t pos = 0;
   while ((pos = source.find("export", pos)) != std::string::npos) {
     size_t rightBracket = source.find('}', pos);

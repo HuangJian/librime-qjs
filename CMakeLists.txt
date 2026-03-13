@@ -133,6 +133,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/gears SRC_GEARS)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/dicts SRC_DICTS)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/types SRC_TYPES)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/patch/quickjs SRC_PATCHES)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/misc SRC_MISC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engines SRC_ENGINES)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engines/quickjs SRC_ENGINE_QUICKJS)
 
@@ -148,6 +149,7 @@ add_library(librime-qjs-objs OBJECT
   ${SRC_DICTS}
   ${SRC_TYPES}
   ${SRC_PATCHES}
+  ${SRC_MISC}
   ${SRC_ENGINES}
   ${SRC_ENGINE_QUICKJS}
   ${SRC_ENGINE_JAVASCRIPTCORE}

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "engines/javascriptcore/jsc_string_raii.hpp"
-#include "engines/jscode_utils.hpp"
+#include "engines/jscode_utils.h"
 
 std::pair<std::string, std::filesystem::path> JscCodeLoader::loadModuleSource(
     JSContextRef ctx,

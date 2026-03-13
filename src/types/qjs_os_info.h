@@ -2,7 +2,7 @@
 
 #include "engines/js_macros.h"
 #include "js_wrapper.h"
-#include "misc/system_info.hpp"
+#include "misc/system_info.h"
 
 template <>
 class JsWrapper<SystemInfo> {
