@@ -4,7 +4,7 @@
 
 #include "environment.h"
 #include "fake_translation.hpp"
-#include "qjs_translation.h"
+#include "gears/qjs_translation.h"
 #include "test_switch.h"
 
 using namespace rime;

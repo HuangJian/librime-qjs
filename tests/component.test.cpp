@@ -4,8 +4,8 @@
 #include <rime/ticket.h>
 
 #include "environment.h"
-#include "qjs_component.hpp"
-#include "qjs_filter.hpp"
+#include "qjs_component.h"
+#include "gears/qjs_filter.h"
 #include "test_switch.h"
 
 using namespace rime;

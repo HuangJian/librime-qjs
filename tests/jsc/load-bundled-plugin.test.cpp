@@ -8,7 +8,7 @@
 
 #include "../fake_translation.hpp"
 #include "engines/common.h"
-#include "qjs_translation.h"
+#include "gears/qjs_translation.h"
 #include "types/qjs_types.h"
 
 class JscLoadBundledPluginTest : public testing::Test {};

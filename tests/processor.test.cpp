@@ -7,7 +7,7 @@
 
 #include <memory>
 #include "environment.h"
-#include "qjs_processor.h"
+#include "gears/qjs_processor.h"
 #include "test_switch.h"
 
 using namespace rime;

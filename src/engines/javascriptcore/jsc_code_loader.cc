@@ -1,5 +1,6 @@
 #include "jsc_code_loader.h"
 #include <glog/logging.h>
+#include <algorithm>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>

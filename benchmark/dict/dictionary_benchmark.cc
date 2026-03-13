@@ -10,7 +10,7 @@
 #include "dicts/leveldb.h"
 #include "dicts/trie.h"
 #include "map.hpp"
-#include "process_memory.hpp"
+#include "misc/process_memory.h"
 
 constexpr const int REPEATATIONS = 10;
 

@@ -9,7 +9,7 @@
 #include <rime/translation.h>
 #include <memory>
 
-#include "qjs_translator.h"
+#include "gears/qjs_translator.h"
 #include "test_switch.h"
 
 using namespace rime;

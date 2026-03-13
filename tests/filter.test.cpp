@@ -7,7 +7,7 @@
 #include <rime/translation.h>
 
 #include "fake_translation.hpp"
-#include "qjs_filter.hpp"
+#include "gears/qjs_filter.h"
 #include "test_switch.h"
 
 using namespace rime;
