@@ -1,6 +1,6 @@
 #include "qjs_module.h"
-#include <filesystem>
 #include <rime_api.h>
+#include <filesystem>
 
 template <typename T_JS_VALUE>
 QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
@@ -15,7 +15,8 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
   const char* dataDirArray[2] = {rime_get_api()->get_user_data_dir(),
                                  rime_get_api()->get_shared_data_dir()};
   for (const auto* dataDir : dataDirArray) {
-    if (dataDir == nullptr) continue;
+    if (dataDir == nullptr)
+      continue;
     std::filesystem::path path(dataDir);
     path.append("js");
     jsEngine.setBaseFolderPath(path.generic_string().c_str());

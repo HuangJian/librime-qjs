@@ -6,10 +6,10 @@
 #include <string>
 
 #include "engines/common.h"
-#include "qjs_component.h"
 #include "gears/qjs_filter.h"
 #include "gears/qjs_processor.h"
 #include "gears/qjs_translator.h"
+#include "qjs_component.h"
 
 using namespace rime;
 

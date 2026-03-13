@@ -8,8 +8,8 @@
 // clang-format on
 #elif defined(__linux__)
 #include <sys/utsname.h>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 #elif defined(__APPLE__)
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -44,7 +44,7 @@ std::string SystemInfo::getArchitecture() {
 #ifdef _WIN32
   return getWindowsArchitecture();
 #elif defined(__linux__) || defined(__APPLE__)
-  struct utsname sysInfo{};
+  struct utsname sysInfo {};
   uname(&sysInfo);
   return static_cast<char*>(sysInfo.machine);
 #else
@@ -118,7 +118,9 @@ std::string SystemInfo::getLinuxVersion() {
   return "Unknown";
 }
 
-bool SystemInfo::checkOsRelease() { return std::ifstream("/etc/os-release").good(); }
+bool SystemInfo::checkOsRelease() {
+  return std::ifstream("/etc/os-release").good();
+}
 
 std::string SystemInfo::readOsRelease() {
   std::ifstream file("/etc/os-release");
@@ -136,7 +138,9 @@ std::string SystemInfo::readOsRelease() {
   return "Unknown";
 }
 
-bool SystemInfo::checkLsbRelease() { return std::ifstream("/etc/lsb-release").good(); }
+bool SystemInfo::checkLsbRelease() {
+  return std::ifstream("/etc/lsb-release").good();
+}
 
 std::string SystemInfo::readLsbRelease() {
   std::ifstream file("/etc/lsb-release");
@@ -153,7 +157,9 @@ std::string SystemInfo::readLsbRelease() {
   return "Unknown";
 }
 
-bool SystemInfo::checkRedHatRelease() { return std::ifstream("/etc/redhat-release").good(); }
+bool SystemInfo::checkRedHatRelease() {
+  return std::ifstream("/etc/redhat-release").good();
+}
 
 std::string SystemInfo::readRedHatRelease() {
   std::ifstream file("/etc/redhat-release");
@@ -164,7 +170,9 @@ std::string SystemInfo::readRedHatRelease() {
   return "Unknown";
 }
 
-bool SystemInfo::checkDebianVersion() { return std::ifstream("/etc/debian_version").good(); }
+bool SystemInfo::checkDebianVersion() {
+  return std::ifstream("/etc/debian_version").good();
+}
 
 std::string SystemInfo::readDebianVersion() {
   std::ifstream file("/etc/debian_version");
@@ -175,7 +183,9 @@ std::string SystemInfo::readDebianVersion() {
   return "Unknown";
 }
 
-bool SystemInfo::checkSuseRelease() { return std::ifstream("/etc/SuSE-release").good(); }
+bool SystemInfo::checkSuseRelease() {
+  return std::ifstream("/etc/SuSE-release").good();
+}
 
 std::string SystemInfo::readSuseRelease() {
   std::ifstream file("/etc/SuSE-release");
@@ -191,9 +201,13 @@ std::string SystemInfo::readSuseRelease() {
   return "Unknown";
 }
 
-bool SystemInfo::checkArchRelease() { return std::filesystem::exists("/etc/arch-release"); }
+bool SystemInfo::checkArchRelease() {
+  return std::filesystem::exists("/etc/arch-release");
+}
 
-std::string SystemInfo::readArchRelease() { return "Arch Linux"; }
+std::string SystemInfo::readArchRelease() {
+  return "Arch Linux";
+}
 
 void SystemInfo::trimQuotes(std::string& str) {
   if (!str.empty() && str.front() == '"') {

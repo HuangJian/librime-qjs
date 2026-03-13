@@ -177,9 +177,8 @@ std::string Environment::getRimeInfo() {
   getMemoryUsage(vmUsage, residentSet);
 
   std::stringstream ss{};
-  ss << "libRime v" << rime_get_api()->get_version() << " | "
-     << "libRime-qjs v" << RIME_QJS_VERSION << " | "
-     << "Process RSS Mem: " << formatMemoryUsage(residentSet);
+  ss << "libRime v" << rime_get_api()->get_version() << " | " << "libRime-qjs v" << RIME_QJS_VERSION
+     << " | " << "Process RSS Mem: " << formatMemoryUsage(residentSet);
 
   return ss.str();
 }

@@ -100,10 +100,24 @@ class JsWrapper<Environment> {
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(
-      Environment,
-      WITHOUT_CONSTRUCTOR,
-      WITHOUT_PROPERTIES,
-      WITH_GETTERS(id, engine, namespace, userDataDir, sharedDataDir, os),
-      WITH_FUNCTIONS(loadFile, 1, fileExists, 1, saveFile, 2, removeFile, 1, createDir, 1, removeDir, 1, getRimeInfo, 0, popen, 1));
+  EXPORT_CLASS_WITH_RAW_POINTER(Environment,
+                                WITHOUT_CONSTRUCTOR,
+                                WITHOUT_PROPERTIES,
+                                WITH_GETTERS(id, engine, namespace, userDataDir, sharedDataDir, os),
+                                WITH_FUNCTIONS(loadFile,
+                                               1,
+                                               fileExists,
+                                               1,
+                                               saveFile,
+                                               2,
+                                               removeFile,
+                                               1,
+                                               createDir,
+                                               1,
+                                               removeDir,
+                                               1,
+                                               getRimeInfo,
+                                               0,
+                                               popen,
+                                               1));
 };

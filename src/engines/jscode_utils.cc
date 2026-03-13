@@ -4,8 +4,8 @@
 #include <sstream>
 
 void replaceNewClassInstanceStatementInPlace(std::string& source,
-                                            const std::string& instanceName,
-                                            const std::vector<std::string>& argumentNames) {
+                                             const std::string& instanceName,
+                                             const std::vector<std::string>& argumentNames) {
   //  find the last statment in this format: `globalThis.sort_by_pinyin_js = new SortCandidatesByPinyinFilter()`
   std::regex pattern(R"(globalThis\.\w+\s*=\s*new\s*(\w+)\s*\(\))");
   std::sregex_iterator it(source.begin(), source.end(), pattern);
