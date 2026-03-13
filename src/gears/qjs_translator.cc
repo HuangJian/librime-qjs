@@ -2,14 +2,13 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const rime::Ticket& ticket,
-                                                 Environment* environment)
+QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket, Environment* environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "translate") {}
 
 template <typename T_JS_VALUE>
-rime::an<rime::Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
-                                                                 const rime::Segment& segment,
-                                                                 Environment* environment) {
+an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
+                                                     const Segment& segment,
+                                                     Environment* environment) {
   auto translation = New<FifoTranslation>();
   if (!this->isLoaded()) {
     return translation;
@@ -30,10 +29,10 @@ rime::an<rime::Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::stri
     return translation;
   }
 
-  size_t length = engine.getArrayLength(resultArray);
+  const size_t length = engine.getArrayLength(resultArray);
   for (uint32_t i = 0; i < length; i++) {
     T_JS_VALUE item = engine.getArrayItem(resultArray, i);
-    if (an<Candidate> candidate = engine.template unwrap<Candidate>(item)) {
+    if (const an<Candidate> candidate = engine.template unwrap<Candidate>(item)) {
       translation->Append(candidate);
     } else {
       LOG(ERROR) << "[qjs] Failed to unwrap candidate at index " << i;
@@ -46,12 +45,6 @@ rime::an<rime::Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::stri
 }
 
 namespace rime {
-template <typename T_ACTUAL, typename T_JS_VALUE>
-rime::an<rime::Translation> ComponentWrapper<T_ACTUAL, rime::Translator, T_JS_VALUE>::Query(
-    const std::string& input,
-    const rime::Segment& segment) {
-  return this->actual()->query(input, segment, this->environment());
-}
 
 template class ComponentWrapper<QuickJSTranslator<JSValue>, rime::Translator, JSValue>;
 #ifdef _ENABLE_JAVASCRIPTCORE

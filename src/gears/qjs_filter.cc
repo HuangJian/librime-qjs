@@ -91,12 +91,6 @@ std::shared_ptr<rime::Translation> QuickJSFilter<T_JS_VALUE>::apply(
 }
 
 namespace rime {
-template <typename T_ACTUAL, typename T_JS_VALUE>
-rime::an<rime::Translation> ComponentWrapper<T_ACTUAL, rime::Filter, T_JS_VALUE>::Apply(
-    rime::an<rime::Translation> translation,
-    rime::CandidateList* candidates) {
-  return this->actual()->apply(translation, this->environment());
-}
 
 template class ComponentWrapper<QuickJSFilter<JSValue>, rime::Filter, JSValue>;
 #ifdef _ENABLE_JAVASCRIPTCORE
