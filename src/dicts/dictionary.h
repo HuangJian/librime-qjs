@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>  // needed for Linux building
 #include <optional>
 #include <string>
 #include <unordered_map>
