@@ -12,8 +12,12 @@ protected:
   ~QjsModule();
 
   [[nodiscard]] bool isLoaded() const { return isLoaded_; }
-  [[nodiscard]] typename JsEngine<T_JS_VALUE>::T_JS_OBJECT getInstance() const { return instance_; }
-  [[nodiscard]] typename JsEngine<T_JS_VALUE>::T_JS_OBJECT getMainFunc() const { return mainFunc_; }
+  [[nodiscard]] const typename JsEngine<T_JS_VALUE>::T_JS_OBJECT& getInstance() const {
+    return instance_;
+  }
+  [[nodiscard]] const typename JsEngine<T_JS_VALUE>::T_JS_OBJECT& getMainFunc() const {
+    return mainFunc_;
+  }
   [[nodiscard]] std::string getNamespace() const { return namespace_; }
 
 private:

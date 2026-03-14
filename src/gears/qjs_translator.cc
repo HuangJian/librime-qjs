@@ -25,6 +25,7 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
   args[2] = std::move(jsEnvironment);
   T_JS_VALUE resultArray =
       engine.callFunction(this->getMainFunc(), this->getInstance(), countof(args), args);
+  engine.freeValue(args[0], args[1], args[2]);
   if (!engine.isArray(resultArray)) {
     LOG(ERROR) << "[qjs] A candidate array should be returned by `translate` of the plugin: "
                << this->getNamespace();
@@ -39,8 +40,10 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
     } else {
       LOG(ERROR) << "[qjs] Failed to unwrap candidate at index " << i;
     }
+    engine.freeValue(item);
   }
 
+  engine.freeValue(resultArray);
   return translation;
 }
 

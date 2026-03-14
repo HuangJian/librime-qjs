@@ -36,8 +36,10 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
     return;
   }
 
-  mainFunc_ = jsEngine.getObjectProperty(instance_, mainFuncName);
-  finalizer_ = jsEngine.getObjectProperty(instance_, "finalizer");
+  mainFunc_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, mainFuncName));
+  finalizer_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, "finalizer"));
+
+  jsEngine.protectFromGC(instance_, mainFunc_, finalizer_);
 
   isLoaded_ = true;
   LOG(INFO) << "[qjs] created an instance of the exported class in " << nameSpace;
@@ -54,7 +56,13 @@ QjsModule<T_JS_VALUE>::~QjsModule() {
     if (jsEngine.isException(finalizerResult)) {
       LOG(ERROR) << "[qjs] ~" << namespace_ << " Error running the finalizer function.";
     }
+    jsEngine.freeValue(finalizerResult);
   }
+
+  if (isLoaded_) {
+    jsEngine.unprotectFromGC(instance_, mainFunc_, finalizer_);
+  }
+  jsEngine.freeValue(instance_, mainFunc_, finalizer_);
 }
 
 template class QjsModule<QjsValueRAII>;

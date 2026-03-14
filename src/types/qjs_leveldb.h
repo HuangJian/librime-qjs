@@ -6,8 +6,8 @@
 #include "engines/js_macros.h"
 #include "js_wrapper.h"
 
-template <typename T>
-static ParseTextFileOptions parseTextFileOptions(const JsEngine<T>& engine, T jsOptions) {
+template <typename T, typename T_VAL>
+static ParseTextFileOptions parseTextFileOptions(const JsEngine<T>& engine, T_VAL jsOptions) {
   ParseTextFileOptions result;
   if (engine.isUndefined(jsOptions)) {
     return result;
