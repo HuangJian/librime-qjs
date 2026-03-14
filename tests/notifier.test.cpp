@@ -50,7 +50,7 @@ TYPED_TEST(QuickJSNotifierTest, ConnectToRimeNotifier) {
 
   the<Engine> engine(Engine::Create());
   engine->context()->set_input("hello");
-  auto environment = std::make_unique<Environment>(engine.get(), "namespace");
+  auto environment = std::make_unique<Environment>(*engine, "namespace");
   TypeParam env = jsEngine.wrap(environment.get());
 
   auto global = jsEngine.toObject(jsEngine.getGlobalObject());

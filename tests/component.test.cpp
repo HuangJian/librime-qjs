@@ -18,13 +18,13 @@ public:
   MockFilter& operator=(const MockFilter&) = delete;
   MockFilter& operator=(MockFilter&&) = delete;
 
-  explicit MockFilter(const Ticket& ticket, Environment* environment) {
+  explicit MockFilter(const Ticket& ticket, Environment& environment) {
     LOG(INFO) << "MockFilter created with ticket: " << ticket.name_space;
   };
   ~MockFilter() { LOG(INFO) << "MockFilter destroyed"; }
 
   // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-  an<Translation> apply(an<Translation> translation, Environment* environment) {
+  an<Translation> apply(an<Translation> translation, Environment& environment) {
     return translation;
   }
 };

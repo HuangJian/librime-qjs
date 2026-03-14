@@ -24,7 +24,7 @@ public:
   std::shared_ptr<T_ACTUAL> actual() { return actual_; }
   void setActual(const std::shared_ptr<T_ACTUAL> actual) { actual_ = actual; }
 
-  [[nodiscard]] Environment* environment() const { return environment_.get(); }
+  [[nodiscard]] Environment& environment() const { return *environment_; }
 
   ComponentWrapperBase(const ComponentWrapperBase&) = delete;
   ComponentWrapperBase& operator=(const ComponentWrapperBase&) = delete;
@@ -34,7 +34,7 @@ public:
 protected:
   explicit ComponentWrapperBase(const Ticket& ticket)
       : T_BASE(ticket),
-        environment_(std::make_unique<Environment>(ticket.engine, ticket.name_space)) {
+        environment_(std::make_unique<Environment>(*ticket.engine, ticket.name_space)) {
     DLOG(INFO) << "[qjs] " << typeid(T_ACTUAL).name()
                << " ComponentWrapper created with ticket: " << ticket.name_space;
   }

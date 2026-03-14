@@ -4,7 +4,7 @@
 
 template <typename T_JS_VALUE>
 QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
-                                 Environment* environment,
+                                 Environment& environment,
                                  const char* mainFuncName)
     : namespace_(nameSpace) {
   // the js engine is lazy loaded, so we need to register the types first
@@ -22,7 +22,7 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
     jsEngine.setBaseFolderPath(path.generic_string().c_str());
   }
 
-  auto jsEnvironment = jsEngine.wrap(environment);
+  auto jsEnvironment = jsEngine.wrap(&environment);
   std::vector<T_JS_VALUE> args = {jsEnvironment};
   instance_ = jsEngine.createInstanceOfModule(namespace_.c_str(), args, mainFuncName);
   jsEngine.freeValue(jsEnvironment);

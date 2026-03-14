@@ -2,13 +2,13 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket, Environment* environment)
+QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket, Environment& environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "translate") {}
 
 template <typename T_JS_VALUE>
 an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
                                                      const Segment& segment,
-                                                     Environment* environment) {
+                                                     Environment& environment) {
   auto translation = New<FifoTranslation>();
   if (!this->isLoaded()) {
     return translation;
@@ -18,7 +18,7 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
   T_JS_VALUE jsInput = engine.wrap(input);
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
   T_JS_VALUE jsSegment = engine.wrap(const_cast<Segment*>(&segment));
-  auto jsEnvironment = engine.wrap(environment);
+  auto jsEnvironment = engine.wrap(&environment);
   T_JS_VALUE args[] = {jsInput, jsSegment, jsEnvironment};
   T_JS_VALUE resultArray =
       engine.callFunction(this->getMainFunc(), this->getInstance(), countof(args), args);

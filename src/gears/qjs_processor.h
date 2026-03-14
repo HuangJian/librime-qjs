@@ -8,9 +8,9 @@
 template <typename T_JS_VALUE>
 class QuickJSProcessor : public QjsModule<T_JS_VALUE> {
 public:
-  explicit QuickJSProcessor(const Ticket& ticket, Environment* environment);
+  explicit QuickJSProcessor(const Ticket& ticket, Environment& environment);
 
-  ProcessResult processKeyEvent(const KeyEvent& keyEvent, Environment* environment);
+  ProcessResult processKeyEvent(const KeyEvent& keyEvent, Environment& environment);
 };
 
 // Specialization for Processor

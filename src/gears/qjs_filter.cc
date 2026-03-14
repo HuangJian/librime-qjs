@@ -2,7 +2,7 @@
 #include <type_traits>
 
 template <typename T_JS_VALUE>
-QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment* environment)
+QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment& environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "filter") {
   if (!this->isLoaded()) {
     return;
@@ -49,7 +49,7 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
 template <typename T_JS_VALUE>
 std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     std::shared_ptr<Translation> translation,
-    Environment* environment) {
+    Environment& environment) {
   if (this->getNamespace().find("benchmark_begin") != std::string::npos) {
     beginClock = std::chrono::steady_clock::now();
   } else if (this->getNamespace().find("benchmark_end") != std::string::npos) {
@@ -63,7 +63,7 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     constexpr int PADDING = 6;
     LOG(INFO) << "[benchmark] all " << engine << " filters run for " << std::setw(PADDING)
               << duration.count()
-              << " us, with input = " << environment->getEngine()->context()->input();
+              << " us, with input = " << environment.getEngine().context()->input();
   }
 
   if (!this->isLoaded()) {
@@ -72,7 +72,7 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
 
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   if (jsEngine.isFunction(funcIsApplicable_)) {
-    auto jsEvn = jsEngine.wrap(environment);
+    auto jsEvn = jsEngine.wrap(&environment);
     T_JS_VALUE args[1] = {jsEvn};
     auto result = jsEngine.callFunction(funcIsApplicable_, this->getInstance(), 1, args);
     const bool isApplicable = jsEngine.isBool(result) && jsEngine.toBool(result);

@@ -5,7 +5,7 @@ template <typename T_JS_VALUE>
 QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
                                                    const T_JS_VALUE& filterObj,
                                                    const T_JS_VALUE& filterFunc,
-                                                   Environment* environment)
+                                                   Environment& environment)
     : PrefetchTranslation(std::move(translation)), replenished_(true) {
   doFilter(filterObj, filterFunc, environment);
   set_exhausted(cache_.empty());
@@ -14,7 +14,7 @@ QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
 template <typename T_JS_VALUE>
 bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
                                               const T_JS_VALUE& filterFunc,
-                                              Environment* environment) {
+                                              Environment& environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto jsArray = jsEngine.newArray();
   size_t idx = 0;
@@ -27,7 +27,7 @@ bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
     return true;
   }
 
-  auto jsEnvironment = jsEngine.wrap(environment);
+  auto jsEnvironment = jsEngine.wrap(&environment);
   T_JS_VALUE args[] = {jsArray, jsEnvironment};
   T_JS_VALUE resultArray =
       jsEngine.callFunction(jsEngine.toObject(filterFunc), jsEngine.toObject(filterObj), 2, args);
@@ -58,10 +58,10 @@ template <typename T_JS_VALUE>
 QuickJSFastTranslation<T_JS_VALUE>::QuickJSFastTranslation(const an<Translation>& translation,
                                                            const T_JS_OBJECT& filterObj,
                                                            const T_JS_OBJECT& filterFunc,
-                                                           Environment* environment) {
+                                                           Environment& environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto iterator = jsEngine.wrap(translation);
-  auto jsEnv = jsEngine.wrap(environment);
+  auto jsEnv = jsEngine.wrap(&environment);
   T_JS_VALUE args[2] = {iterator, jsEnv};
   generator_ = jsEngine.toObject(jsEngine.callFunction(filterFunc, filterObj, 2, args));
   jsEngine.freeValue(jsEnv, iterator);

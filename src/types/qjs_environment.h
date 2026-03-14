@@ -12,7 +12,7 @@ using namespace rime;
 template <>
 class JsWrapper<Environment> {
   DEFINE_GETTER(Environment, id, obj->getId())
-  DEFINE_GETTER(Environment, engine, obj->getEngine())
+  DEFINE_GETTER(Environment, engine, &obj->getEngine())
   DEFINE_GETTER(Environment, namespace, obj->getNameSpace())
   DEFINE_GETTER(Environment, os, obj->getSystemInfo())
   DEFINE_GETTER(Environment, userDataDir, obj->getUserDataDir())
