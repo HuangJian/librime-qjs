@@ -1,6 +1,17 @@
-import { assert } from './testutils.js'
-
-export class TestFilter {
+var totalTests = 0
+var passedTests = 0
+function assert(condition, message = '') {
+  totalTests++
+  if (condition) {
+    passedTests++
+    console.log('\u2713 ' + message)
+  } else {
+    console.log('\u2717 ' + message)
+    console.log('  Expected true, but got false')
+    throw new Error('Assertion failed' + (message ? ': ' + message : ''))
+  }
+}
+var TestFilter = class {
   constructor(env) {
     console.log('filter_test init')
     assert(env.namespace === 'filter_test')
@@ -19,9 +30,9 @@ export class TestFilter {
     assert(env.namespace === 'filter_test')
     const config = env.engine.schema.config
     assert(config.getString('greet') === 'hello from c++')
-
     const expectingText = config.getString('expectingText')
     assert(expectingText === 'text2')
     return candidates.filter((it) => it.text === expectingText)
   }
 }
+export { TestFilter }

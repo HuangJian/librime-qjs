@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "./testutils.js"
+import { assert, assertEquals } from "./testutils"
 
 function testGetObject(config) {
   // Test getObject without arguments (returns full config object)
@@ -19,11 +19,48 @@ function testGetObject(config) {
 
   // Test getting a double as object
   const doubleVal = config.getObject('key4')
-  // // assertEquals(doubleVal, 0.999, 'getObject should return double value')
+  assertEquals(doubleVal, 0.999, 'getObject should return double value')
 
   // Test getting a string as object
   const strVal = config.getObject('key5')
   assertEquals(strVal, 'string', 'getObject should return string value')
+
+  // Test getting a list as object (array)
+  const listVal = config.getObject('list')
+  assert(Array.isArray(listVal), 'getObject should return array for list')
+  assertEquals(listVal.length, 3, 'list should have 3 items')
+  assertEquals(listVal[0], 'item1', 'first item should be item1')
+  assertEquals(listVal[1], 'item2', 'second item should be item2')
+  assertEquals(listVal[2], 'item3', 'third item should be item3')
+
+  // Test getting non-existent key returns null
+  const nullVal = config.getObject('nonexistent')
+  assertEquals(nullVal, null, 'getObject should return null for non-existent key')
+
+  // Test nested path (boolean)
+  const nestedBool = config.getObject('nested/bool')
+  assertEquals(nestedBool, true, 'getObject should return nested boolean value')
+
+  // Test nested path (string)
+  const nestedString = config.getObject('nested/string')
+  assertEquals(nestedString, 'nested_value', 'getObject should return nested string value')
+
+  // Test list access with @0 index
+  const listItem0 = config.getObject('nested/list/@0')
+  assertEquals(listItem0, 'item1', 'getObject should return list item by index @0')
+
+  // Test list access with @1 index
+  const listItem1 = config.getObject('nested/list/@1')
+  assertEquals(listItem1, 'item2', 'getObject should return list item by index @1')
+
+  // Test list access with @2 index
+  const listItem2 = config.getObject('nested/list/@2')
+  assertEquals(listItem2, 'item3', 'getObject should return list item by index @2')
+
+  // Test nested list (full list)
+  const nestedList = config.getObject('nested/list')
+  assert(Array.isArray(nestedList), 'getObject should return nested list as array')
+  assertEquals(nestedList.length, 3, 'nested list should have 3 items')
 
   console.log('testGetObject passed')
 }
@@ -153,14 +190,14 @@ function testCreateAndRemoveDir(env) {
 
   // Test createDir with exist_ok = false (should fail if exists)
   const createAgainNoExistOk = env.createDir(testDirPath, false)
-  // assert(createAgainNoExistOk === false, 'createDir with exist_ok=false should return false if exists')
+  assert(createAgainNoExistOk === false, 'createDir with exist_ok=false should return false if exists')
 
   // Test createDir - create nested directory
   const createNestedResult = env.createDir(testSubDirPath, true)
   assert(createNestedResult === true, 'createDir for nested dir should return true')
 
   // Test removeDir - remove directory
-  const removeResult = env.removeDir(testSubDirPath) && env.removeDir(testDirPath)
+  const removeResult = env.removeDir(testDirPath)
   assert(removeResult === true, 'removeDir should return true on success')
 
   // Verify directory is removed
@@ -247,9 +284,9 @@ function testLevelDb(env) {
 
 function checkTrieData(trie) {
   const result1 = trie.find('accord')
-  assertEquals(result1, "[ә'kɒ:d]; n. 一致, 调和, 协定\\n vt. 给与, 使一致\\n vi. 相符合")
+  assertEquals(result1, '[ә\'kɒ:d]; n. 一致, 调和, 协定\\n vt. 给与, 使一致\\n vi. 相符合')
   const result2 = trie.find('accordion')
-  assertEquals(result2, "[ә'kɒ:djәn]; n. 手风琴\\n a. 可折叠的")
+  assertEquals(result2, '[ә\'kɒ:djәn]; n. 手风琴\\n a. 可折叠的')
   const result3 = trie.find('nonexistent-word')
   assertEquals(result3, null)
   const prefix_results = trie.prefixSearch('accord')
