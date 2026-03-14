@@ -60,7 +60,13 @@ JSValue QuickJSCodeLoader::loadJsModuleToNamespace(JSContext* ctx, const char* m
 }
 
 JSValue QuickJSCodeLoader::loadJsModuleToGlobalThis(JSContext* ctx, const char* moduleName) {
-  char* jsCode = readJsCode(ctx, moduleName);
+  char* jsCode = loadFile(moduleName);
+  if (!jsCode) {
+    jsCode = readJsCode(ctx, moduleName);
+  }
+  if (!jsCode) {
+    return JS_ThrowInternalError(ctx, "Could not open the module file: %s", moduleName);
+  }
   std::string jsCodeStr(jsCode);
   // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
   free(jsCode);
