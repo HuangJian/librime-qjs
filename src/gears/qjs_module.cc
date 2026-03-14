@@ -23,25 +23,21 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
   }
 
   auto jsEnvironment = jsEngine.wrap(environment);
-  std::vector<T_JS_VALUE> args = {jsEnvironment};
+  std::vector<T_JS_VALUE> args;
+  args.emplace_back(std::move(jsEnvironment));
   instance_ = jsEngine.createInstanceOfModule(namespace_.c_str(), args, mainFuncName);
-  jsEngine.freeValue(jsEnvironment);
 
   if (jsEngine.isException(instance_) || !jsEngine.isObject(instance_)) {
-    jsEngine.freeValue(instance_);
     LOG(ERROR) << "[qjs] Error creating an instance of the exported class in " << nameSpace;
 
-    // set the fields to "undefined" to avoid crashing in destruction when calling `jsEngine.freeValue(instance_, mainFunc_, finalizer_)`
-    instance_ = jsEngine.toObject(jsEngine.undefined());
-    mainFunc_ = jsEngine.toObject(jsEngine.undefined());
-    finalizer_ = jsEngine.toObject(jsEngine.undefined());
+    instance_ = jsEngine.undefined();
+    mainFunc_ = jsEngine.undefined();
+    finalizer_ = jsEngine.undefined();
     return;
   }
 
-  mainFunc_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, mainFuncName));
-  finalizer_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, "finalizer"));
-
-  jsEngine.protectFromGC(instance_, mainFunc_, finalizer_);
+  mainFunc_ = jsEngine.getObjectProperty(instance_, mainFuncName);
+  finalizer_ = jsEngine.getObjectProperty(instance_, "finalizer");
 
   isLoaded_ = true;
   LOG(INFO) << "[qjs] created an instance of the exported class in " << nameSpace;
@@ -58,13 +54,7 @@ QjsModule<T_JS_VALUE>::~QjsModule() {
     if (jsEngine.isException(finalizerResult)) {
       LOG(ERROR) << "[qjs] ~" << namespace_ << " Error running the finalizer function.";
     }
-    jsEngine.freeValue(finalizerResult);
   }
-
-  if (isLoaded_) {
-    jsEngine.unprotectFromGC(instance_, mainFunc_, finalizer_);
-  }
-  jsEngine.freeValue(instance_, mainFunc_, finalizer_);
 }
 
 template class QjsModule<QjsValueRAII>;

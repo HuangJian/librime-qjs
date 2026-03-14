@@ -8,25 +8,13 @@ QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment* envi
     return;
   }
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
-  funcIsApplicable_ =
-      jsEngine.toObject(jsEngine.getObjectProperty(this->getInstance(), "isApplicable"));
-  jsEngine.protectFromGC(funcIsApplicable_);
+  funcIsApplicable_ = jsEngine.getObjectProperty(this->getInstance(), "isApplicable");
 
   isFilterFuncGenerator_ = isFilterFuncGenerator();
 }
 
 template <typename T_JS_VALUE>
-QuickJSFilter<T_JS_VALUE>::~QuickJSFilter() {
-  if (!this->isLoaded()) {
-    return;
-  }
-
-  auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
-  if (jsEngine.isFunction(funcIsApplicable_)) {
-    jsEngine.unprotectFromGC(funcIsApplicable_);
-    jsEngine.freeValue(funcIsApplicable_);
-  }
-}
+QuickJSFilter<T_JS_VALUE>::~QuickJSFilter() = default;
 
 template <typename T_JS_VALUE>
 bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
@@ -35,13 +23,10 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
   if (jsEngine.isFunction(filterFunc)) {
     auto proto = jsEngine.getObjectProperty(filterFunc, "constructor");
     if (jsEngine.isObject(proto)) {
-      auto jsName = jsEngine.getObjectProperty(jsEngine.toObject(proto), "name");
+      auto jsName = jsEngine.getObjectProperty(proto, "name");
       auto name = jsEngine.toStdString(jsName);
-      jsEngine.freeValue(jsName, proto);
       return name == "GeneratorFunction";
     }
-
-    jsEngine.freeValue(proto);
   }
   return false;
 }
@@ -73,10 +58,10 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   if (jsEngine.isFunction(funcIsApplicable_)) {
     auto jsEvn = jsEngine.wrap(environment);
-    T_JS_VALUE args[1] = {jsEvn};
+    T_JS_VALUE args[1];
+    args[0] = std::move(jsEvn);
     auto result = jsEngine.callFunction(funcIsApplicable_, this->getInstance(), 1, args);
     const bool isApplicable = jsEngine.isBool(result) && jsEngine.toBool(result);
-    jsEngine.freeValue(jsEvn, result);
     if (!isApplicable) {
       return translation;
     }

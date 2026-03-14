@@ -19,10 +19,12 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
   T_JS_VALUE jsSegment = engine.wrap(const_cast<Segment*>(&segment));
   auto jsEnvironment = engine.wrap(environment);
-  T_JS_VALUE args[] = {jsInput, jsSegment, jsEnvironment};
+  T_JS_VALUE args[3];
+  args[0] = std::move(jsInput);
+  args[1] = std::move(jsSegment);
+  args[2] = std::move(jsEnvironment);
   T_JS_VALUE resultArray =
       engine.callFunction(this->getMainFunc(), this->getInstance(), countof(args), args);
-  engine.freeValue(jsInput, jsSegment, jsEnvironment);
   if (!engine.isArray(resultArray)) {
     LOG(ERROR) << "[qjs] A candidate array should be returned by `translate` of the plugin: "
                << this->getNamespace();
@@ -37,10 +39,8 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
     } else {
       LOG(ERROR) << "[qjs] Failed to unwrap candidate at index " << i;
     }
-    engine.freeValue(item);
   }
 
-  engine.freeValue(resultArray);
   return translation;
 }
 
