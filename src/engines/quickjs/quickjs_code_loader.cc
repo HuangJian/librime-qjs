@@ -1,6 +1,7 @@
 #include "quickjs_code_loader.h"
 
 #include <glog/logging.h>
+#include "engines/quickjs/qjs_value_raii.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -21,24 +22,19 @@ void QuickJSCodeLoader::logJsError(JSContext* ctx, const char* prefix, const cha
     return;
   }
 
-  const JSValue exception = JS_GetException(ctx);
-  const char* message = JS_ToCString(ctx, exception);
+  const QjsValueRAII exception(ctx, JS_GetException(ctx));
+  const QjsCStringRAII message(ctx, JS_ToCString(ctx, exception));
   google::LogMessage(file, line, google::GLOG_ERROR).stream()
-      << "[qjs]" << prefix << ' ' << message;
-  JS_FreeCString(ctx, message);  // Free the C string
+      << "[qjs]" << prefix << ' ' << (message.get() ? message.get() : "");
 
-  const JSValue stack = JS_GetPropertyStr(ctx, exception, "stack");
-  if (const char* stackTrace = JS_ToCString(ctx, stack);
-      stackTrace != nullptr && *stackTrace != '\0') {
+  const QjsValueRAII stack(ctx, JS_GetPropertyStr(ctx, exception, "stack"));
+  const QjsCStringRAII stackTrace(ctx, JS_ToCString(ctx, stack));
+  if (stackTrace.get() != nullptr && *stackTrace.get() != '\0') {
     google::LogMessage(file, line, google::GLOG_ERROR).stream()
-        << "[qjs] JS stack trace: " << stackTrace;
-    JS_FreeCString(ctx, stackTrace);  // Free the C string
+        << "[qjs] JS stack trace: " << stackTrace.get();
   } else {
     google::LogMessage(file, line, google::GLOG_ERROR).stream() << "[qjs] JS stack trace is null.";
   }
-
-  JS_FreeValue(ctx, stack);
-  JS_FreeValue(ctx, exception);
 }
 
 JSValue QuickJSCodeLoader::loadJsModuleToNamespace(JSContext* ctx, const char* moduleName) {
@@ -71,28 +67,24 @@ JSValue QuickJSCodeLoader::createInstanceOfEsmBundledModule(JSContext* ctx,
                                                             const std::string& moduleName,
                                                             std::vector<JSValue>& args,
                                                             const std::string& mainFuncName) {
-  const auto module = loadJsModuleToNamespace(ctx, moduleName.c_str());
+  QjsValueRAII module(ctx, loadJsModuleToNamespace(ctx, moduleName.c_str()));
   if (JS_IsException(module)) {
     logJsError(ctx, "Failed to load js module:", __FILE__, __LINE__);
-    return module;
+    return module.release();
   }
 
-  const JSValue jsClass =
-      getExportedClassHavingMethodNameInModule(ctx, module, mainFuncName.c_str());
-  JS_FreeValue(ctx, module);
+  const QjsValueRAII jsClass(ctx,
+                             getExportedClassHavingMethodNameInModule(ctx, module, mainFuncName.c_str()));
 
   if (JS_IsException(jsClass)) {
-    JS_FreeValue(ctx, jsClass);
     const std::string message =
         "No exported class having a `" + mainFuncName + "` function in " + moduleName;
     logJsError(ctx, message.c_str(), __FILE__, __LINE__);
     return JS_ThrowPlainError(ctx, "%s", message.c_str());
   }
 
-  const JSValue constructor = getMethodByNameInClass(ctx, jsClass, "constructor");
+  const QjsValueRAII constructor(ctx, getMethodByNameInClass(ctx, jsClass, "constructor"));
   if (JS_IsException(constructor)) {
-    JS_FreeValue(ctx, jsClass);
-    JS_FreeValue(ctx, constructor);
     const std::string message = "No `constructor` function in " + moduleName;
     logJsError(ctx, message.c_str(), __FILE__, __LINE__);
     return JS_ThrowPlainError(ctx, "%s", message.c_str());
@@ -100,8 +92,6 @@ JSValue QuickJSCodeLoader::createInstanceOfEsmBundledModule(JSContext* ctx,
 
   const int argc = static_cast<int>(args.size());
   const JSValue instance = JS_CallConstructor(ctx, constructor, argc, args.data());
-  JS_FreeValue(ctx, jsClass);
-  JS_FreeValue(ctx, constructor);
 
   if (JS_IsException(instance)) {
     const std::string message = "Failed to create an instance of " + moduleName;

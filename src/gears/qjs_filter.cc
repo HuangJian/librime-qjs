@@ -57,7 +57,7 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     const auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(endClock - beginClock);
     std::string engine = "jsc";
-    if constexpr (std::is_same_v<T_JS_VALUE, JSValue>) {
+    if constexpr (std::is_same_v<T_JS_VALUE, QjsValueRAII>) {
       engine = "qjs";
     }
     constexpr int PADDING = 6;
@@ -93,13 +93,13 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
 
 namespace rime {
 
-template class ComponentWrapper<QuickJSFilter<JSValue>, Filter, JSValue>;
+template class ComponentWrapper<QuickJSFilter<QjsValueRAII>, Filter, QjsValueRAII>;
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class ComponentWrapper<QuickJSFilter<JSValueRef>, Filter, JSValueRef>;
 #endif
 }  // namespace rime
 
-template class QuickJSFilter<JSValue>;
+template class QuickJSFilter<QjsValueRAII>;
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class QuickJSFilter<JSValueRef>;
 #endif

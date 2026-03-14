@@ -27,18 +27,18 @@ static void rime_qjs_initialize() {
   LOG(INFO) << "[qjs] registering components from module 'qjs'.";
   Registry& r = Registry::instance();
 
-  setupJsEngine<JSValue>(r, "qjs");
+  setupJsEngine<QjsValueRAII>(r, "qjs");
 
 #ifdef _ENABLE_JAVASCRIPTCORE
   setupJsEngine<JSValueRef>(r, "jsc");
 #else
   // fallback to the quickjs implementation, to share the same Rime schemas across platforms
-  setupJsEngine<JSValue>(r, "jsc");
+  setupJsEngine<QjsValueRAII>(r, "jsc");
 #endif
 }
 
 static void rime_qjs_finalize() {
-  JsEngine<JSValue>::shutdown();
+  JsEngine<QjsValueRAII>::shutdown();
 
 #ifdef _ENABLE_JAVASCRIPTCORE
   JsEngine<JSValueRef>::shutdown();

@@ -1,6 +1,8 @@
 #include "engines/quickjs/quickjs_engine_impl.h"
 #include "engines/quickjs/quickjs_code_loader.h"
+#include "engines/quickjs/qjs_value_raii.h"
 #include "quickjs.h"
+#include <sstream>
 
 QuickJsEngineImpl::QuickJsEngineImpl()
     : runtime_(JS_NewRuntime()), context_(JS_NewContext(runtime_)) {
@@ -86,9 +88,9 @@ JSValue QuickJsEngineImpl::callFunction(const JSValue& func,
 JSValue QuickJsEngineImpl::newClassInstance(const JSValue& clazz,
                                             const int argc,
                                             JSValue* argv) const {
-  const JSValue constructor = getMethodOfClassOrInstance(clazz, JS_UNDEFINED, "constructor");
+  const QjsValueRAII constructor(context_,
+                                 getMethodOfClassOrInstance(clazz, JS_UNDEFINED, "constructor"));
   const auto instance = JS_CallConstructor(context_, constructor, argc, argv);
-  JS_FreeValue(context_, constructor);
   return instance;
 }
 
@@ -176,14 +178,13 @@ void QuickJsEngineImpl::registerType(const char* typeName,
 
   registeredTypes_[typeName] = classId;
 
-  JSValue proto = JS_NewObject(context_);
+  QjsValueRAII proto(context_, JS_NewObject(context_));
   if (constructor != nullptr) {
     const JSValue jsConstructor =
         JS_NewCFunction2(context_, constructor, typeName, constructorArgc, JS_CFUNC_constructor, 0);
     JS_SetConstructor(context_, jsConstructor, proto);
-    const auto jsGlobal = JS_GetGlobalObject(context_);
+    const QjsValueRAII jsGlobal(context_, JS_GetGlobalObject(context_));
     JS_SetPropertyStr(context_, jsGlobal, typeName, jsConstructor);
-    JS_FreeValue(context_, jsGlobal);
   }
 
   if (properties != nullptr) {
@@ -196,7 +197,7 @@ void QuickJsEngineImpl::registerType(const char* typeName,
     JS_SetPropertyFunctionList(context_, proto, functions, functionCount);
   }
 
-  JS_SetClassProto(context_, classId, proto);
+  JS_SetClassProto(context_, classId, proto.release());
   DLOG(INFO) << "registered type [" << typeName << "] with classId = " << classId;
 }
 

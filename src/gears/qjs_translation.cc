@@ -158,8 +158,8 @@ void QuickJSFastTranslation<T_JS_VALUE>::invokeGenerator() {
   }
 }
 
-template class QuickJSTranslation<JSValue>;
-template class QuickJSFastTranslation<JSValue>;
+template class QuickJSTranslation<QjsValueRAII>;
+template class QuickJSFastTranslation<QjsValueRAII>;
 
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class QuickJSTranslation<JSValueRef>;

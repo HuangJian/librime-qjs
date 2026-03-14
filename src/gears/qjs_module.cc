@@ -67,7 +67,7 @@ QjsModule<T_JS_VALUE>::~QjsModule() {
   jsEngine.freeValue(instance_, mainFunc_, finalizer_);
 }
 
-template class QjsModule<JSValue>;
+template class QjsModule<QjsValueRAII>;
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class QjsModule<JSValueRef>;
 #endif

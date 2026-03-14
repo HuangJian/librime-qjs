@@ -44,13 +44,13 @@ ProcessResult QuickJSProcessor<T_JS_VALUE>::processKeyEvent(const KeyEvent& keyE
 }
 
 namespace rime {
-template class ComponentWrapper<QuickJSProcessor<JSValue>, Processor, JSValue>;
+template class ComponentWrapper<QuickJSProcessor<QjsValueRAII>, Processor, QjsValueRAII>;
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class ComponentWrapper<QuickJSProcessor<JSValueRef>, Processor, JSValueRef>;
 #endif
 }  // namespace rime
 
-template class QuickJSProcessor<JSValue>;
+template class QuickJSProcessor<QjsValueRAII>;
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class QuickJSProcessor<JSValueRef>;
 #endif
