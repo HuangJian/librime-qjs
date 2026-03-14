@@ -35,20 +35,20 @@ TYPED_TEST(QuickJSProcessorTest, ProcessKeyEvent) {
   this->addSegment(engine.get(), "prompt");
 
   Ticket ticket(engine.get(), "processor_test", "qjs_processor@processor_test");
-  auto env = std::make_unique<Environment>(*engine, "processor_test");
-  auto processor = New<QuickJSProcessor<TypeParam>>(ticket, *env);
+  Environment env(*engine, "processor_test");
+  auto processor = New<QuickJSProcessor<TypeParam>>(ticket, env);
 
   // Test key event that should be accepted
   KeyEvent acceptEvent("space");
-  EXPECT_EQ(processor->processKeyEvent(acceptEvent, *env), kAccepted);
+  EXPECT_EQ(processor->processKeyEvent(acceptEvent, env), kAccepted);
 
   // Test key event that should be rejected
   KeyEvent rejectEvent("Return");
-  EXPECT_EQ(processor->processKeyEvent(rejectEvent, *env), kRejected);
+  EXPECT_EQ(processor->processKeyEvent(rejectEvent, env), kRejected);
 
   // Test key event that should result in noop
   KeyEvent noopEvent("invalid_key");
-  EXPECT_EQ(processor->processKeyEvent(noopEvent, *env), kNoop);
+  EXPECT_EQ(processor->processKeyEvent(noopEvent, env), kNoop);
 }
 
 TYPED_TEST(QuickJSProcessorTest, NonExistentModule) {
@@ -59,10 +59,10 @@ TYPED_TEST(QuickJSProcessorTest, NonExistentModule) {
 
   // Create a ticket with a non-existent module
   Ticket ticket(engine.get(), "non_existent", "qjs_processor@non_existent");
-  auto env = std::make_unique<Environment>(*engine, "non_existent");
-  auto processor = New<QuickJSProcessor<TypeParam>>(ticket, *env);
+  Environment env(*engine, "non_existent");
+  auto processor = New<QuickJSProcessor<TypeParam>>(ticket, env);
 
   // Test key event - should return noop due to unloaded module
   KeyEvent event("space");
-  EXPECT_EQ(processor->processKeyEvent(event, *env), kNoop);
+  EXPECT_EQ(processor->processKeyEvent(event, env), kNoop);
 }

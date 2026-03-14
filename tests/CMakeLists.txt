@@ -23,7 +23,7 @@ target_link_libraries(librime-qjs-tests PUBLIC
   ${rime_library}
   qjs
   librime-qjs-objs
-  GTest::gtest glog rime leveldb marisa glog rime leveldb marisa
+  GTest::gtest glog rime leveldb marisa
   ${Marisa_LIBRARY}
 )
 
