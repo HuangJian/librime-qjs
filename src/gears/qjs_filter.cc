@@ -2,7 +2,7 @@
 #include <type_traits>
 
 template <typename T_JS_VALUE>
-QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment& environment)
+QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, const Environment& environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "filter") {
   if (!this->isLoaded()) {
     return;
@@ -49,7 +49,7 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
 template <typename T_JS_VALUE>
 std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     std::shared_ptr<Translation> translation,
-    Environment& environment) {
+    const Environment& environment) {
   if (this->getNamespace().find("benchmark_begin") != std::string::npos) {
     beginClock = std::chrono::steady_clock::now();
   } else if (this->getNamespace().find("benchmark_end") != std::string::npos) {

@@ -2,13 +2,14 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket, Environment& environment)
+QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket,
+                                                 const Environment& environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "translate") {}
 
 template <typename T_JS_VALUE>
 an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
                                                      const Segment& segment,
-                                                     Environment& environment) {
+                                                     const Environment& environment) {
   auto translation = New<FifoTranslation>();
   if (!this->isLoaded()) {
     return translation;

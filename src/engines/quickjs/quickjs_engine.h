@@ -195,8 +195,15 @@ public:
 
   template <typename T>
   [[nodiscard]] std::enable_if_t<!is_shared_ptr_v<T>, JSValue> wrap(T* ptrValue) const {
+    if (ptrValue == nullptr) {
+      return JS_NULL;
+    }
     using DereferencedType = std::decay_t<decltype(*ptrValue)>;
-    return impl_->wrap(JsWrapper<DereferencedType>::typeName, ptrValue, "raw");
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    return impl_->wrap(JsWrapper<DereferencedType>::typeName,
+                       const_cast<std::remove_const_t<DereferencedType>*>(
+                           reinterpret_cast<const DereferencedType*>(ptrValue)),
+                       "raw");
   }
 
   template <typename T>

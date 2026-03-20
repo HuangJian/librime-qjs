@@ -4,7 +4,7 @@
 
 template <typename T_JS_VALUE>
 QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
-                                 Environment& environment,
+                                 const Environment& environment,
                                  const char* mainFuncName)
     : namespace_(nameSpace) {
   // the js engine is lazy loaded, so we need to register the types first

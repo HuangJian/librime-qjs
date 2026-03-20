@@ -13,9 +13,11 @@ using namespace rime;
 template <typename T_JS_VALUE>
 class QuickJSTranslator : public QjsModule<T_JS_VALUE> {
 public:
-  explicit QuickJSTranslator(const Ticket& ticket, Environment& environment);
+  explicit QuickJSTranslator(const Ticket& ticket, const Environment& environment);
 
-  an<Translation> query(const std::string& input, const Segment& segment, Environment& environment);
+  an<Translation> query(const std::string& input,
+                        const Segment& segment,
+                        const Environment& environment);
 };
 
 // Specialization for Translator

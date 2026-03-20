@@ -2,12 +2,12 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSProcessor<T_JS_VALUE>::QuickJSProcessor(const Ticket& ticket, Environment& environment)
+QuickJSProcessor<T_JS_VALUE>::QuickJSProcessor(const Ticket& ticket, const Environment& environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "process") {}
 
 template <typename T_JS_VALUE>
 ProcessResult QuickJSProcessor<T_JS_VALUE>::processKeyEvent(const KeyEvent& keyEvent,
-                                                            Environment& environment) {
+                                                            const Environment& environment) {
   if (!this->isLoaded()) {
     return kNoop;
   }
