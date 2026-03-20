@@ -25,7 +25,7 @@
 #define EXPORT_CLASS_IMPL(className, block1, block2, block3, block4) \
   EXPORT_CLASS_IMPL_QJS(className, EXPAND(block1), EXPAND(block2), EXPAND(block3), EXPAND(block4));
 
-#define WITH_CONSTRUCTOR(funcName, argc) WITH_CONSTRUCTOR_QJS(funcName, argc)
+#define WITH_CONSTRUCTOR(funcName, argc) WITH_CONSTRUCTOR_QJS(funcName)
 #define WITHOUT_CONSTRUCTOR WITHOUT_CONSTRUCTOR_QJS
 
 #define WITH_FINALIZER WITH_FINALIZER_QJS
@@ -51,7 +51,6 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 #define DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertieyName, statement)        \
   static JSValue get_##propertieyName(JSContext* ctx, JSValueConst thisVal) { \
     auto& engine = JsEngine<QjsValueRAII>::instance();                        \
-    (void)ctx;                                                                \
     if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                     \
       return engine.wrap(statement).release();                                \
     }                                                                         \
@@ -62,49 +61,49 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 #define DEFINE_STRING_SETTER_IMPL_QJS(T_RIME_TYPE, name, assignment)             \
   static JSValue set_##name(JSContext* ctx, JSValueConst thisVal, JSValue val) { \
     auto& engine = JsEngine<QjsValueRAII>::instance();                        \
-    (void)ctx;                                                                \
     if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                        \
       auto str = engine.toStdString(val);                                        \
       if (!str.empty()) {                                                        \
         assignment;                                                              \
         return JS_UNDEFINED;                                                     \
       }                                                                          \
-      auto* format = "%s.%s = rvalue: rvalue is not a string";                   \
-      return JS_ThrowTypeError(ctx, format, #T_RIME_TYPE, #name);                \
+      return JS_ThrowTypeError(ctx, "%s.%s = rvalue: rvalue is not a string",    \
+                                #T_RIME_TYPE, #name);                            \
     }                                                                            \
-    auto* format = "Failed to unwrap the js object to a cpp %s object";          \
-    return JS_ThrowTypeError(ctx, format, #T_RIME_TYPE);                         \
+    return JS_ThrowTypeError(ctx, "Failed to unwrap the js object to a cpp %s object", \
+                              #T_RIME_TYPE);                                     \
   }
 
 #define DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, converter, assignment)         \
   static JSValue set_##jsName(JSContext* ctx, JSValueConst thisVal, JSValue val) { \
     auto& engine = JsEngine<QjsValueRAII>::instance();                        \
-    (void)ctx;                                                                \
     if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                          \
       auto value = converter(val);                                                 \
       assignment;                                                                  \
       return JS_UNDEFINED;                                                         \
     }                                                                              \
-    auto* format = "Failed to unwrap the js object to a cpp %s object";            \
-    return JS_ThrowTypeError(ctx, format, #T_RIME_TYPE);                           \
+    return JS_ThrowTypeError(ctx, "Failed to unwrap the js object to a cpp %s object", \
+                              #T_RIME_TYPE);                                     \
   }
 
 // =============== FUNCTION ===============
 
 #define DEFINE_CFUNCTION_QJS(funcName, funcBody)                                           \
+  static constexpr int funcName##_argc = 0;                                                \
   static JSValue funcName(JSContext* ctx, JSValueConst thisVal, int argc,                  \
                           JSValueConst* argv) {                                            \
     auto& engine = JsEngine<QjsValueRAII>::instance();                                    \
-    (void)ctx;                                                                             \
     try {                                                                                  \
-      auto body = [&](JSValueConst* argv) -> QjsValueRAII funcBody;                        \
-      return body(argv).release();                                                         \
+      return (JSValue)[&](JSValueConst* argv) -> QjsValueRAII {                            \
+        funcBody;                                                                          \
+      }(argv);                                                                             \
     } catch (const JsException& e) {                                                       \
       return JS_ThrowTypeError(ctx, "%s", e.what());                                       \
     }                                                                                      \
   }
 
 #define DEFINE_CFUNCTION_ARGC_QJS(funcName, expectingArgc, statements)                     \
+  static constexpr int funcName##_argc = expectingArgc;                                    \
   static JSValue funcName(JSContext* ctx, JSValueConst thisVal, int argc,                  \
                           JSValueConst* argv) {                                            \
     if (argc < (expectingArgc)) {                                                          \
@@ -112,10 +111,10 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
                                  expectingArgc);                                           \
     }                                                                                      \
     auto& engine = JsEngine<QjsValueRAII>::instance();                                    \
-    (void)ctx;                                                                             \
     try {                                                                                  \
-      auto body = [&](JSValueConst* argv) -> QjsValueRAII statements;                      \
-      return body(argv).release();                                                         \
+      return (JSValue)[&](JSValueConst* argv) -> QjsValueRAII {                            \
+        statements;                                                                        \
+      }(argv);                                                                             \
     } catch (const JsException& e) {                                                       \
       return JS_ThrowTypeError(ctx, "%s", e.what());                                       \
     }                                                                                      \
@@ -153,21 +152,21 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   EXPORT_CLASS_IMPL(className, EXPAND(block1), EXPAND(block2), EXPAND(block3), EXPAND(block4)); \
   WITH_FINALIZER;  // the attached shared pointer's reference count should be decremented when the js object is freed
 
-#define WITH_CONSTRUCTOR_QJS(funcName, argc)            \
+#define WITH_CONSTRUCTOR_QJS(funcName)                  \
   inline static JSCFunction* constructorQjs = funcName; \
-  inline static const int CONSTRUCTOR_ARGC = argc;
+  inline static const int CONSTRUCTOR_ARGC = funcName##_argc;
 #define WITHOUT_CONSTRUCTOR_QJS                        \
   inline static JSCFunction* constructorQjs = nullptr; \
   inline static const int CONSTRUCTOR_ARGC = 0;
 
-#define WITH_FINALIZER_QJS                                                             \
-  inline static JSClassFinalizer* finalizerQjs = [](JSRuntime* rt, JSValueConst val) { \
-    (void)rt;                                                                          \
-    if (void* ptr = JS_GetOpaque(val, jsClassId)) {                                    \
-      if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) {             \
-        delete ppObj;                                                                  \
-      }                                                                                \
-    }                                                                                  \
+#define WITH_FINALIZER_QJS                                                       \
+  inline static JSClassFinalizer* finalizerQjs = [](JSRuntime* rt, JSValue val) { \
+    if (void* ptr = JS_GetOpaque(val, jsClassId)) {                              \
+      if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) {        \
+        delete ppObj;                                                            \
+        JS_SetOpaque(val, nullptr);                                              \
+      }                                                                          \
+    }                                                                            \
   };
 #define WITHOUT_FINALIZER_QJS inline static JSClassFinalizer* finalizerQjs = nullptr;
 

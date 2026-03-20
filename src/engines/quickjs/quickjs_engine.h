@@ -18,7 +18,7 @@ class JsEngine<QjsValueRAII> {
   inline static std::mutex instanceMutex;
   inline static bool isInitialized = false;
 
-  std::unique_ptr<QuickJsEngineImpl> impl_{std::make_unique<QuickJsEngineImpl>()};
+  std::shared_ptr<QuickJsEngineImpl> impl_{std::make_shared<QuickJsEngineImpl>()};
 
   JsEngine() { isInitialized = true; };
 
@@ -50,19 +50,25 @@ public:
     auto& sharedInstance = instance();
 
     std::lock_guard lock(instanceMutex);
-    sharedInstance.impl_ = std::make_unique<QuickJsEngineImpl>();
+    sharedInstance.impl_ = std::make_shared<QuickJsEngineImpl>();
   }
 
   [[nodiscard]] int64_t getMemoryUsage() const { return impl_->getMemoryUsage(); }
 
   // NOLINTBEGIN(readability-convert-member-functions-to-static)
-  [[nodiscard]] QjsValueRAII null() const { return QjsValueRAII(impl_->getContext(), JS_NULL); }
+  [[nodiscard]] QjsValueRAII null() const {
+    return QjsValueRAII(impl_->getContext(), JS_NULL, impl_);
+  }
   [[nodiscard]] QjsValueRAII undefined() const {
-    return QjsValueRAII(impl_->getContext(), JS_UNDEFINED);
+    return QjsValueRAII(impl_->getContext(), JS_UNDEFINED, impl_);
   }
 
-  [[nodiscard]] QjsValueRAII jsTrue() const { return QjsValueRAII(impl_->getContext(), JS_TRUE); }
-  [[nodiscard]] QjsValueRAII jsFalse() const { return QjsValueRAII(impl_->getContext(), JS_FALSE); }
+  [[nodiscard]] QjsValueRAII jsTrue() const {
+    return QjsValueRAII(impl_->getContext(), JS_TRUE, impl_);
+  }
+  [[nodiscard]] QjsValueRAII jsFalse() const {
+    return QjsValueRAII(impl_->getContext(), JS_FALSE, impl_);
+  }
 
   [[nodiscard]] bool isArray(JSValueConst value) const { return JS_IsArray(value); }
   [[nodiscard]] bool isObject(JSValueConst value) const { return JS_IsObject(value); }
@@ -73,16 +79,18 @@ public:
 
   [[nodiscard]] QjsValueRAII toObject(JSValueConst value) const {
     if (JS_IsObject(value) || JS_IsNull(value) || JS_IsUndefined(value)) {
-      return QjsValueRAII(impl_->getContext(), JS_DupValue(impl_->getContext(), value));
+      return QjsValueRAII(impl_->getContext(), JS_DupValue(impl_->getContext(), value),
+                          impl_);
     }
-    return QjsValueRAII(impl_->getContext(), JS_ToObject(impl_->getContext(), value));
+    return QjsValueRAII(impl_->getContext(), JS_ToObject(impl_->getContext(), value),
+                        impl_);
   }
 
   void setBaseFolderPath(const char* absolutePath) const { impl_->setBaseFolderPath(absolutePath); }
   // NOLINTEND(readability-convert-member-functions-to-static)
 
   [[nodiscard]] QjsValueRAII newArray() const {
-    return QjsValueRAII(impl_->getContext(), JS_NewArray(impl_->getContext()));
+    return QjsValueRAII(impl_->getContext(), JS_NewArray(impl_->getContext()), impl_);
   }
 
   [[nodiscard]] size_t getArrayLength(JSValueConst array) const {
@@ -94,15 +102,16 @@ public:
   }
 
   [[nodiscard]] QjsValueRAII getArrayItem(JSValueConst array, const size_t index) const {
-    return QjsValueRAII(impl_->getContext(), impl_->getArrayItem(array, index));
+    return QjsValueRAII(impl_->getContext(), impl_->getArrayItem(array, index), impl_);
   }
 
   [[nodiscard]] QjsValueRAII newObject() const {
-    return QjsValueRAII(impl_->getContext(), JS_NewObject(impl_->getContext()));
+    return QjsValueRAII(impl_->getContext(), JS_NewObject(impl_->getContext()), impl_);
   }
 
   [[nodiscard]] QjsValueRAII getObjectProperty(JSValueConst obj, const char* propertyName) const {
-    return QjsValueRAII(impl_->getContext(), impl_->getObjectProperty(obj, propertyName));
+    return QjsValueRAII(impl_->getContext(), impl_->getObjectProperty(obj, propertyName),
+                        impl_);
   }
 
   int setObjectProperty(JSValueConst obj, const char* propertyName, const QjsValueRAII& value) const {
@@ -138,7 +147,7 @@ public:
       args[i] = argv[i];
     }
     return QjsValueRAII(impl_->getContext(),
-                        impl_->callFunction(func, thisArg, argc, args.data()));
+                        impl_->callFunction(func, thisArg, argc, args.data()), impl_);
   }
 
   [[nodiscard]] QjsValueRAII newClassInstance(JSValueConst clazz,
@@ -148,26 +157,30 @@ public:
     for (int i = 0; i < argc; ++i) {
       args[i] = argv[i];
     }
-    return QjsValueRAII(impl_->getContext(), impl_->newClassInstance(clazz, argc, args.data()));
+    return QjsValueRAII(impl_->getContext(), impl_->newClassInstance(clazz, argc, args.data()),
+                        impl_);
   }
 
   [[nodiscard]] QjsValueRAII getJsClassHavingMethod(JSValueConst module,
                                                     const char* methodName) const {
-    return QjsValueRAII(impl_->getContext(), impl_->getJsClassHavingMethod(module, methodName));
+    return QjsValueRAII(impl_->getContext(), impl_->getJsClassHavingMethod(module, methodName),
+                        impl_);
   }
 
   [[nodiscard]] QjsValueRAII getMethodOfClassOrInstance(JSValueConst jsClass,
                                                         JSValueConst instance,
                                                         const char* methodName) const {
     return QjsValueRAII(impl_->getContext(),
-                        impl_->getMethodOfClassOrInstance(jsClass, instance, methodName));
+                        impl_->getMethodOfClassOrInstance(jsClass, instance, methodName),
+                        impl_);
   }
 
   [[nodiscard]] bool isFunction(JSValueConst value) const {
     return JS_IsFunction(impl_->getContext(), value);
   }
   [[nodiscard]] QjsValueRAII getLatestException() const {
-    return QjsValueRAII(impl_->getContext(), JS_GetException(impl_->getContext()));
+    return QjsValueRAII(impl_->getContext(), JS_GetException(impl_->getContext()),
+                        impl_);
   }
 
   void logErrorStackTrace(JSValueConst exception, const char* file, const int line) const {
@@ -175,7 +188,8 @@ public:
   }
 
   [[nodiscard]] QjsValueRAII duplicateValue(JSValueConst value) const {
-    return QjsValueRAII(impl_->getContext(), JS_DupValue(impl_->getContext(), value));
+    return QjsValueRAII(impl_->getContext(), JS_DupValue(impl_->getContext(), value),
+                        impl_);
   }
 
   template <typename... Args>
@@ -220,7 +234,7 @@ public:
   template <typename T>
   [[nodiscard]] std::enable_if_t<!is_shared_ptr_v<T>, QjsValueRAII> wrap(T* ptrValue) const {
     if (ptrValue == nullptr) {
-      return QjsValueRAII(impl_->getContext(), JS_NULL);
+      return null();
     }
     using DereferencedType = std::decay_t<decltype(*ptrValue)>;
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
@@ -228,68 +242,77 @@ public:
                         impl_->wrap(JsWrapper<DereferencedType>::typeName,
                                     const_cast<std::remove_const_t<DereferencedType>*>(
                                         reinterpret_cast<const DereferencedType*>(ptrValue)),
-                                    "raw"));
+                                    "raw"),
+                        impl_);
   }
 
   template <typename T>
   [[nodiscard]] std::enable_if_t<is_shared_ptr_v<T>, QjsValueRAII> wrap(T ptrValue) const {
     if (ptrValue == nullptr) {
-      return QjsValueRAII(impl_->getContext(), JS_NULL);
+      return null();
     }
     using Inner = shared_ptr_inner_t<decltype(ptrValue)>;
     auto ptr = std::make_unique<std::shared_ptr<Inner>>(ptrValue);
     return QjsValueRAII(impl_->getContext(),
-                        impl_->wrap(JsWrapper<Inner>::typeName, ptr.release(), "shared"));
+                        impl_->wrap(JsWrapper<Inner>::typeName, ptr.release(), "shared"),
+                        impl_);
   }
 
   [[nodiscard]] QjsValueRAII wrap(const char* str) const {
-    return QjsValueRAII(impl_->getContext(), impl_->toJsString(str));
+    return QjsValueRAII(impl_->getContext(), impl_->toJsString(str), impl_);
   }
   [[nodiscard]] QjsValueRAII wrap(const std::string& str) const {
-    return QjsValueRAII(impl_->getContext(), impl_->toJsString(str));
+    return QjsValueRAII(impl_->getContext(), impl_->toJsString(str), impl_);
   }
   [[nodiscard]] QjsValueRAII wrap(const bool value) const {
-    return QjsValueRAII(impl_->getContext(), JS_NewBool(impl_->getContext(), value));
+    return QjsValueRAII(impl_->getContext(), JS_NewBool(impl_->getContext(), value),
+                        impl_);
   }
   [[nodiscard]] QjsValueRAII wrap(const size_t value) const {
-    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(static_cast<int64_t>(value)));
+    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(static_cast<int64_t>(value)),
+                        impl_);
   }
   [[nodiscard]] QjsValueRAII wrap(const int value) const {
-    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(static_cast<int64_t>(value)));
+    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(static_cast<int64_t>(value)),
+                        impl_);
   }
   [[nodiscard]] QjsValueRAII wrap(const double value) const {
-    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(value));
+    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(value), impl_);
   }
   [[nodiscard]] QjsValueRAII wrap(const int64_t value) const {
-    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(value));
+    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(value), impl_);
   }
 
   [[nodiscard]] QjsValueRAII createInstanceOfModule(const char* moduleName,
                                                     std::vector<QjsValueRAII>& args,
-                                                    const std::string& mainFuncName) const {
+                                                    const std::string& mainFuncName) {
     std::vector<JSValue> qjsArgs(args.size());
     for (size_t i = 0; i < args.size(); ++i) {
       qjsArgs[i] = args[i];
     }
     return QjsValueRAII(impl_->getContext(),
-                        impl_->createInstanceOfModule(moduleName, qjsArgs, mainFuncName));
+                        impl_->createInstanceOfModule(moduleName, qjsArgs, mainFuncName),
+                        impl_);
   }
-  [[nodiscard]] QjsValueRAII loadJsFile(const char* fileName) const {
-    return QjsValueRAII(impl_->getContext(), impl_->loadJsFile(fileName));
-  }
-
-  [[nodiscard]] QjsValueRAII eval(const char* code, const char* filename = "<eval>") const {
-    return QjsValueRAII(impl_->getContext(), JS_Eval(impl_->getContext(), code, strlen(code),
-                                                     filename, JS_EVAL_TYPE_GLOBAL));
+  [[nodiscard]] QjsValueRAII loadJsFile(const char* fileName) {
+    return QjsValueRAII(impl_->getContext(), impl_->loadJsFile(fileName), impl_);
   }
 
-  [[nodiscard]] QjsValueRAII getGlobalObject() const {
-    return QjsValueRAII(impl_->getContext(), JS_GetGlobalObject(impl_->getContext()));
+  [[nodiscard]] QjsValueRAII eval(const char* code, const char* filename = "<eval>") {
+    return QjsValueRAII(impl_->getContext(),
+                        JS_Eval(impl_->getContext(), code, strlen(code), filename,
+                                JS_EVAL_TYPE_GLOBAL),
+                        impl_);
   }
 
-  [[nodiscard]] QjsValueRAII throwError(const JsErrorType errorType,
-                                        const std::string& message) const {
-    return QjsValueRAII(impl_->getContext(), impl_->throwError(errorType, message));
+  [[nodiscard]] QjsValueRAII getGlobalObject() {
+    return QjsValueRAII(impl_->getContext(), JS_GetGlobalObject(impl_->getContext()),
+                        impl_);
+  }
+
+  [[nodiscard]] QjsValueRAII throwError(const JsErrorType errorType, const std::string& message) {
+    return QjsValueRAII(impl_->getContext(), impl_->throwError(errorType, message),
+                        impl_);
   }
 
   [[nodiscard]] JSContext* getContext() const { return impl_->getContext(); }

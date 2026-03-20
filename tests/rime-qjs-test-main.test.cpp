@@ -45,6 +45,7 @@ public:
     userDataDir_ = path.generic_string();
     LOG(INFO) << "setting up user data dir: " << userDataDir_;
 
+
     RimeTraits traits = {
         .data_size = sizeof(RimeTraits) - sizeof((traits).data_size),
         .shared_data_dir = userDataDir_.c_str(),

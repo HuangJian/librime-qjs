@@ -31,7 +31,11 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
   args.emplace_back(std::move(jsEnvironment));
   instance_ = jsEngine.createInstanceOfModule(namespace_.c_str(), args, mainFuncName);
 
-  if (jsEngine.isException(instance_) || !jsEngine.isObject(instance_)) {
+  if (jsEngine.isException(instance_)) {
+    jsEngine.getLatestException();
+  }
+
+  if (!jsEngine.isObject(instance_)) {
     LOG(ERROR) << "[qjs] Error creating an instance of the exported class in " << nameSpace;
 
     instance_ = jsEngine.undefined();

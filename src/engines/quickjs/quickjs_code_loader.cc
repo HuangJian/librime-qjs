@@ -207,16 +207,17 @@ JSValue QuickJSCodeLoader::getExportedClassByNameInModule(JSContext* ctx,
       const QjsCStringRAII propName(ctx, JS_AtomToCString(ctx, props[i].atom));
       const bool isMatched = !JS_IsException(propVal) && strncmp(propName, className, n) == 0;
 
-      JS_FreeAtom(ctx, props[i].atom);
-
       if (isMatched) {
+        for (uint32_t j = i; j < propCount; j++) {
+          JS_FreeAtom(ctx, props[j].atom);
+        }
         js_free(ctx, props);
         return propVal.release();
       }
+      JS_FreeAtom(ctx, props[i].atom);
     }
+    js_free(ctx, props);
   }
-
-  js_free(ctx, props);
   return JS_UNDEFINED;
 }
 
@@ -237,15 +238,16 @@ JSValue QuickJSCodeLoader::getExportedClassHavingMethodNameInModule(JSContext* c
         found = !JS_IsException(method) && !JS_IsUndefined(method) && JS_IsFunction(ctx, method);
       }
 
-      JS_FreeAtom(ctx, props[i].atom);
-
       if (found) {
+        for (uint32_t j = i; j < propCount; j++) {
+          JS_FreeAtom(ctx, props[j].atom);
+        }
         js_free(ctx, props);
         return propVal.release();
       }
+      JS_FreeAtom(ctx, props[i].atom);
     }
+    js_free(ctx, props);
   }
-
-  js_free(ctx, props);
   return JS_UNDEFINED;
 }

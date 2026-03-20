@@ -171,8 +171,10 @@ endif()
 # Link QuickJS to librime-qjs
 target_link_libraries(librime-qjs-objs PRIVATE qjs)
 
-if(BUILD_TEST)
-  add_subdirectory(tests)
+if(BUILD_SHARED_LIBS)
+  if(BUILD_TEST)
+    add_subdirectory(tests)
+  endif()
 endif()
 
 # cmake -S . -B build -DBUILD_BENCHMARKS=ON

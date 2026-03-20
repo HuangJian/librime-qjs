@@ -31,7 +31,8 @@ class JsWrapper<Notifier> {
 
     // IMPORTANT: jsListenerFunc should be duplicated before passing to JS_Call,
     // otherwise it will be released by the quickjs engine and the function will not be called
-    auto duplicatedFunc = std::make_shared<QjsValueRAII>(engine.duplicateValue(jsListenerFunc));
+    auto duplicatedFunc = std::make_shared<decltype(engine.duplicateValue(jsListenerFunc))>(
+        engine.duplicateValue(jsListenerFunc));
 
     auto obj = engine.unwrap<Notifier>(thisVal);
     auto connection = std::make_shared<NotifierConnection>(

@@ -29,8 +29,8 @@ var TestTranslator = class {
   constructor(env) {
     console.log('translator_test init')
     assertEquals(env.namespace, 'translator_test')
-    assert(env.userDataDir.endsWith('tests/'))
-    assert(env.sharedDataDir.endsWith('tests/'))
+    assert(env.userDataDir.endsWith('qjs/tests/'))
+    assert(env.sharedDataDir.endsWith('qjs/tests/'))
     const config = env.engine.schema.config
     assertEquals(config.getString('greet'), 'hello from c++')
     console.log('translator_test init done')

@@ -20,6 +20,7 @@ QuickJsEngineImpl::QuickJsEngineImpl()
 }
 
 QuickJsEngineImpl::~QuickJsEngineImpl() {
+  JS_RunGC(runtime_);
   JS_FreeContext(context_);
   JS_FreeRuntime(runtime_);
   registeredTypes_.clear();
