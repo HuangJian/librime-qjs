@@ -66,14 +66,14 @@ public:
   [[nodiscard]] QjsValueRAII jsTrue() const { return QjsValueRAII(impl_->getContext(), JS_TRUE); }
   [[nodiscard]] QjsValueRAII jsFalse() const { return QjsValueRAII(impl_->getContext(), JS_FALSE); }
 
-  [[nodiscard]] bool isArray(JSValue value) const { return JS_IsArray(value); }
-  [[nodiscard]] bool isObject(JSValue value) const { return JS_IsObject(value); }
-  [[nodiscard]] bool isBool(JSValue value) const { return JS_IsBool(value); }
-  [[nodiscard]] bool isNull(JSValue value) const { return JS_IsNull(value); }
-  [[nodiscard]] bool isUndefined(JSValue value) const { return JS_IsUndefined(value); }
-  [[nodiscard]] bool isException(JSValue value) const { return JS_IsException(value); }
+  [[nodiscard]] bool isArray(JSValueConst value) const { return JS_IsArray(value); }
+  [[nodiscard]] bool isObject(JSValueConst value) const { return JS_IsObject(value); }
+  [[nodiscard]] bool isBool(JSValueConst value) const { return JS_IsBool(value); }
+  [[nodiscard]] bool isNull(JSValueConst value) const { return JS_IsNull(value); }
+  [[nodiscard]] bool isUndefined(JSValueConst value) const { return JS_IsUndefined(value); }
+  [[nodiscard]] bool isException(JSValueConst value) const { return JS_IsException(value); }
 
-  [[nodiscard]] QjsValueRAII toObject(JSValue value) const {
+  [[nodiscard]] QjsValueRAII toObject(JSValueConst value) const {
     if (JS_IsObject(value) || JS_IsNull(value) || JS_IsUndefined(value)) {
       return QjsValueRAII(impl_->getContext(), JS_DupValue(impl_->getContext(), value));
     }
@@ -87,13 +87,15 @@ public:
     return QjsValueRAII(impl_->getContext(), JS_NewArray(impl_->getContext()));
   }
 
-  [[nodiscard]] size_t getArrayLength(JSValue array) const { return impl_->getArrayLength(array); }
+  [[nodiscard]] size_t getArrayLength(JSValueConst array) const {
+    return impl_->getArrayLength(array);
+  }
 
-  void insertItemToArray(JSValue array, size_t index, JSValue value) const {
+  void insertItemToArray(JSValueConst array, size_t index, JSValue value) const {
     impl_->insertItemToArray(array, index, JS_DupValue(impl_->getContext(), value));
   }
 
-  [[nodiscard]] QjsValueRAII getArrayItem(JSValue array, const size_t index) const {
+  [[nodiscard]] QjsValueRAII getArrayItem(JSValueConst array, const size_t index) const {
     return QjsValueRAII(impl_->getContext(), impl_->getArrayItem(array, index));
   }
 
@@ -101,34 +103,36 @@ public:
     return QjsValueRAII(impl_->getContext(), JS_NewObject(impl_->getContext()));
   }
 
-  [[nodiscard]] QjsValueRAII getObjectProperty(JSValue obj, const char* propertyName) const {
+  [[nodiscard]] QjsValueRAII getObjectProperty(JSValueConst obj, const char* propertyName) const {
     return QjsValueRAII(impl_->getContext(), impl_->getObjectProperty(obj, propertyName));
   }
 
-  int setObjectProperty(JSValue obj, const char* propertyName, JSValue value) const {
+  int setObjectProperty(JSValueConst obj, const char* propertyName, JSValue value) const {
     return impl_->setObjectProperty(obj, propertyName, JS_DupValue(impl_->getContext(), value));
   }
 
   using ExposeFunction = JSCFunction*;
-  int setObjectFunction(JSValue obj,
+  int setObjectFunction(JSValueConst obj,
                         const char* functionName,
                         const ExposeFunction cppFunction,
                         const int expectingArgc) const {
     return impl_->setObjectFunction(obj, functionName, cppFunction, expectingArgc);
   }
 
-  [[nodiscard]] std::string toStdString(JSValue value) const { return impl_->toStdString(value); }
+  [[nodiscard]] std::string toStdString(JSValueConst value) const {
+    return impl_->toStdString(value);
+  }
 
-  [[nodiscard]] bool toBool(JSValue value) const {
+  [[nodiscard]] bool toBool(JSValueConst value) const {
     return JS_ToBool(impl_->getContext(), value) != 0;
   }
 
-  [[nodiscard]] size_t toInt(JSValue value) const { return impl_->toInt(value); }
+  [[nodiscard]] size_t toInt(JSValueConst value) const { return impl_->toInt(value); }
 
-  [[nodiscard]] double toDouble(JSValue value) const { return impl_->toDouble(value); }
+  [[nodiscard]] double toDouble(JSValueConst value) const { return impl_->toDouble(value); }
 
-  [[nodiscard]] QjsValueRAII callFunction(JSValue func,
-                                          JSValue thisArg,
+  [[nodiscard]] QjsValueRAII callFunction(JSValueConst func,
+                                          JSValueConst thisArg,
                                           const int argc,
                                           QjsValueRAII* argv) const {
     std::vector<JSValue> args(argc);
@@ -139,7 +143,7 @@ public:
                         impl_->callFunction(func, thisArg, argc, args.data()));
   }
 
-  [[nodiscard]] QjsValueRAII newClassInstance(JSValue clazz,
+  [[nodiscard]] QjsValueRAII newClassInstance(JSValueConst clazz,
                                               const int argc,
                                               QjsValueRAII* argv) const {
     std::vector<JSValue> args(argc);
@@ -149,29 +153,30 @@ public:
     return QjsValueRAII(impl_->getContext(), impl_->newClassInstance(clazz, argc, args.data()));
   }
 
-  [[nodiscard]] QjsValueRAII getJsClassHavingMethod(JSValue module, const char* methodName) const {
+  [[nodiscard]] QjsValueRAII getJsClassHavingMethod(JSValueConst module,
+                                                    const char* methodName) const {
     return QjsValueRAII(impl_->getContext(), impl_->getJsClassHavingMethod(module, methodName));
   }
 
-  [[nodiscard]] QjsValueRAII getMethodOfClassOrInstance(JSValue jsClass,
-                                                        JSValue instance,
+  [[nodiscard]] QjsValueRAII getMethodOfClassOrInstance(JSValueConst jsClass,
+                                                        JSValueConst instance,
                                                         const char* methodName) const {
     return QjsValueRAII(impl_->getContext(),
                         impl_->getMethodOfClassOrInstance(jsClass, instance, methodName));
   }
 
-  [[nodiscard]] bool isFunction(JSValue value) const {
+  [[nodiscard]] bool isFunction(JSValueConst value) const {
     return JS_IsFunction(impl_->getContext(), value);
   }
   [[nodiscard]] QjsValueRAII getLatestException() const {
     return QjsValueRAII(impl_->getContext(), JS_GetException(impl_->getContext()));
   }
 
-  void logErrorStackTrace(JSValue exception, const char* file, const int line) const {
+  void logErrorStackTrace(JSValueConst exception, const char* file, const int line) const {
     impl_->logErrorStackTrace(exception, file, line);
   }
 
-  [[nodiscard]] QjsValueRAII duplicateValue(JSValue value) const {
+  [[nodiscard]] QjsValueRAII duplicateValue(JSValueConst value) const {
     return QjsValueRAII(impl_->getContext(), JS_DupValue(impl_->getContext(), value));
   }
 
@@ -200,7 +205,7 @@ public:
   }
 
   template <typename T>
-  [[nodiscard]] typename JsWrapper<T>::T_UNWRAP_TYPE unwrap(const JSValue& value) const {
+  [[nodiscard]] typename JsWrapper<T>::T_UNWRAP_TYPE unwrap(JSValueConst value) const {
     if constexpr (is_shared_ptr_v<typename JsWrapper<T>::T_UNWRAP_TYPE>) {
       if (auto* ptr = JS_GetOpaque(value, JsWrapper<T>::jsClassId)) {
         auto sharedPtr = static_cast<std::shared_ptr<T>*>(ptr);
@@ -216,9 +221,16 @@ public:
 
   template <typename T>
   [[nodiscard]] std::enable_if_t<!is_shared_ptr_v<T>, QjsValueRAII> wrap(T* ptrValue) const {
+    if (ptrValue == nullptr) {
+      return QjsValueRAII(impl_->getContext(), JS_NULL);
+    }
     using DereferencedType = std::decay_t<decltype(*ptrValue)>;
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     return QjsValueRAII(impl_->getContext(),
-                        impl_->wrap(JsWrapper<DereferencedType>::typeName, ptrValue, "raw"));
+                        impl_->wrap(JsWrapper<DereferencedType>::typeName,
+                                    const_cast<std::remove_const_t<DereferencedType>*>(
+                                        reinterpret_cast<const DereferencedType*>(ptrValue)),
+                                    "raw"));
   }
 
   template <typename T>

@@ -23,14 +23,14 @@ public:
   QuickJSFilter& operator=(const QuickJSFilter&) = delete;
   QuickJSFilter& operator=(QuickJSFilter&&) = delete;
 
-  explicit QuickJSFilter(const Ticket& ticket, Environment* environment);
+  explicit QuickJSFilter(const Ticket& ticket, const Environment* environment);
 
   ~QuickJSFilter();
 
   [[nodiscard]] bool isFilterFuncGenerator() const;
 
   std::shared_ptr<Translation> apply(std::shared_ptr<Translation> translation,
-                                     Environment* environment);
+                                     const Environment* environment);
 };
 
 // Specialization for Filter

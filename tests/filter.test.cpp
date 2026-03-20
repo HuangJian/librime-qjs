@@ -36,10 +36,10 @@ static std::shared_ptr<rime::Translation> doFilterInJs(const std::string& nameSp
   config->SetString("expectingText", "text2");
 
   Ticket ticket(engine.get(), "filter", std::string("qjs_filter@") + nameSpace);
-  auto env = std::make_unique<Environment>(engine.get(), nameSpace);
-  auto filter = New<QuickJSFilter<T>>(ticket, env.get());
+  Environment env(*engine, nameSpace);
+  auto filter = New<QuickJSFilter<T>>(ticket, env);
   auto translation = QuickJSFilterTest<T>::createMockTranslation();
-  return filter->apply(translation, env.get());
+  return filter->apply(translation, env);
 }
 
 static void checkFilteredValues(const std::shared_ptr<rime::Translation>& filtered) {

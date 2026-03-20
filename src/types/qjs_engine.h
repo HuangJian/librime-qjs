@@ -43,5 +43,5 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
                                 WITH_GETTERS(schema, context, activeEngine),
-                                WITH_FUNCTIONS(processKey, 1, commitText, 1, applySchema, 1));
+                                WITH_FUNCTIONS(processKey, commitText, applySchema));
 };

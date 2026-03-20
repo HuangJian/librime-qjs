@@ -64,7 +64,7 @@ class JsWrapper<Candidate> {
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(
       Candidate,
-      WITH_CONSTRUCTOR(makeCandidate, MIN_ARGC_NEW_CANDIDATE),
+      WITH_CONSTRUCTOR(makeCandidate),
       WITH_PROPERTIES(text, comment, type, start, end, quality, preedit),
       WITHOUT_GETTERS,
       WITHOUT_FUNCTIONS);

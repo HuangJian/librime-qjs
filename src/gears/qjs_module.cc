@@ -4,7 +4,7 @@
 
 template <typename T_JS_VALUE>
 QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
-                                 Environment* environment,
+                                 const Environment* environment,
                                  const char* mainFuncName)
     : namespace_(nameSpace) {
   // the js engine is lazy loaded, so we need to register the types first
@@ -23,7 +23,7 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
   }
 
   auto jsEnvironment = jsEngine.wrap(environment);
-  std::vector<T_JS_VALUE> args;
+  std::vector<typename JsEngine<T_JS_VALUE>::T_JS_OBJECT> args;
   args.emplace_back(std::move(jsEnvironment));
   instance_ = jsEngine.createInstanceOfModule(namespace_.c_str(), args, mainFuncName);
 
@@ -38,8 +38,6 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
 
   mainFunc_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, mainFuncName));
   finalizer_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, "finalizer"));
-
-  jsEngine.protectFromGC(instance_, mainFunc_, finalizer_);
 
   isLoaded_ = true;
   LOG(INFO) << "[qjs] created an instance of the exported class in " << nameSpace;
@@ -56,13 +54,7 @@ QjsModule<T_JS_VALUE>::~QjsModule() {
     if (jsEngine.isException(finalizerResult)) {
       LOG(ERROR) << "[qjs] ~" << namespace_ << " Error running the finalizer function.";
     }
-    jsEngine.freeValue(finalizerResult);
   }
-
-  if (isLoaded_) {
-    jsEngine.unprotectFromGC(instance_, mainFunc_, finalizer_);
-  }
-  jsEngine.freeValue(instance_, mainFunc_, finalizer_);
 }
 
 template class QjsModule<QjsValueRAII>;

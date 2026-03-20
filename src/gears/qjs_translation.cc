@@ -5,7 +5,7 @@ template <typename T_JS_VALUE>
 QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
                                                    const T_JS_VALUE& filterObj,
                                                    const T_JS_VALUE& filterFunc,
-                                                   Environment* environment)
+                                                   const Environment* environment)
     : PrefetchTranslation(std::move(translation)), replenished_(true) {
   doFilter(filterObj, filterFunc, environment);
   set_exhausted(cache_.empty());
@@ -14,7 +14,7 @@ QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
 template <typename T_JS_VALUE>
 bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
                                               const T_JS_VALUE& filterFunc,
-                                              Environment* environment) {
+                                              const Environment* environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto jsArray = jsEngine.newArray();
   size_t idx = 0;
@@ -60,7 +60,7 @@ template <typename T_JS_VALUE>
 QuickJSFastTranslation<T_JS_VALUE>::QuickJSFastTranslation(const an<Translation>& translation,
                                                            const T_JS_OBJECT& filterObj,
                                                            const T_JS_OBJECT& filterFunc,
-                                                           Environment* environment) {
+                                                           const Environment* environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto iterator = jsEngine.wrap(translation);
   auto jsEnv = jsEngine.wrap(environment);
@@ -79,7 +79,7 @@ QuickJSFastTranslation<T_JS_VALUE>::~QuickJSFastTranslation() {
   jsEngine.unprotectFromGC(generator_, nextFunction_);
   jsEngine.freeValue(generator_, nextFunction_);
 
-  if (isGeneratorEverInvoked_ && jsEngine.isObject(nextResult_)) {
+  if (isGeneratorEverInvoked_) {
     jsEngine.unprotectFromGC(nextResult_);
     jsEngine.freeValue(nextResult_);
   }

@@ -26,5 +26,5 @@ public:
                                    WITHOUT_CONSTRUCTOR,
                                    WITHOUT_PROPERTIES,
                                    WITH_GETTERS(isConnected),
-                                   WITH_FUNCTIONS(disconnect, 0));
+                                   WITH_FUNCTIONS(disconnect));
 };

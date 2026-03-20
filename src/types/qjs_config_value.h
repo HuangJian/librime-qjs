@@ -44,5 +44,5 @@ public:
       WITHOUT_CONSTRUCTOR,
       WITHOUT_PROPERTIES,
       WITHOUT_GETTERS,
-      WITH_FUNCTIONS(getType, 0, getBool, 0, getInt, 0, getDouble, 0, getString, 0));
+      WITH_FUNCTIONS(getType, getBool, getInt, getDouble, getString));
 };

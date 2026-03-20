@@ -51,5 +51,5 @@ public:
       WITHOUT_CONSTRUCTOR,
       WITHOUT_PROPERTIES,
       WITHOUT_GETTERS,
-      WITH_FUNCTIONS(getType, 0, hasKey, 1, getItem, 1, getValue, 1, setItem, 2));
+      WITH_FUNCTIONS(getType, hasKey, getItem, getValue, setItem));
 };

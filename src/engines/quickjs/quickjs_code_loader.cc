@@ -1,7 +1,6 @@
 #include "quickjs_code_loader.h"
 
 #include <glog/logging.h>
-#include "engines/quickjs/qjs_value_raii.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -11,6 +10,7 @@
 #include <vector>
 
 #include <quickjs.h>
+#include "engines/quickjs/qjs_value_raii.h"
 
 #include "engines/jscode_utils.h"
 #include "patch/quickjs/node_module_loader.h"
@@ -56,7 +56,13 @@ JSValue QuickJSCodeLoader::loadJsModuleToNamespace(JSContext* ctx, const char* m
 }
 
 JSValue QuickJSCodeLoader::loadJsModuleToGlobalThis(JSContext* ctx, const char* moduleName) {
-  char* jsCode = readJsCode(ctx, moduleName);
+  char* jsCode = loadFile(moduleName);
+  if (!jsCode) {
+    jsCode = readJsCode(ctx, moduleName);
+  }
+  if (!jsCode) {
+    return JS_ThrowInternalError(ctx, "Could not open the module file: %s", moduleName);
+  }
   std::string jsCodeStr(jsCode);
   // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
   free(jsCode);

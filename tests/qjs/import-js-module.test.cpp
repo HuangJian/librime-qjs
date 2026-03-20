@@ -4,6 +4,7 @@
 
 #include "engines/common.h"
 #include "engines/quickjs/quickjs_code_loader.h"
+#include "patch/quickjs/node_module_loader.h"
 
 class QuickJSModuleTest : public testing::Test {
 protected:
@@ -171,4 +172,42 @@ TEST_F(QuickJSModuleTest, ImportNodeModule) {
   JSValue module = QuickJSCodeLoader::loadJsModuleToGlobalThis(ctx, "node-modules.test");
   ASSERT_FALSE(JS_IsException(module));
   JS_FreeValue(ctx, module);
+}
+
+TEST_F(QuickJSModuleTest, RelativePathImport) {
+  auto* ctx = getContext();
+
+  // Save current working directory
+  std::error_code ec;
+  auto originalCwd = std::filesystem::current_path(ec);
+
+  // Change working directory to tests directory
+  std::filesystem::path testPath(__FILE__);
+  testPath = testPath.parent_path().parent_path();
+  std::filesystem::current_path(testPath, ec);  // avoid current path is QjsBaseFolder
+
+  // Print current working directory for debugging
+  LOG(INFO) << "Current working directory: " << std::filesystem::current_path().generic_string()
+            << std::endl;
+
+  // Load modules with path relative to the new CWD (tests directory)
+  JSValue module1 =
+      QuickJSCodeLoader::loadJsModuleToNamespace(ctx, "js/modules/relative-import.test");
+  EXPECT_FALSE(JS_IsException(module1));
+  JS_FreeValue(ctx, module1);
+
+  JSValue module2 =
+      QuickJSCodeLoader::loadJsModuleToNamespace(ctx, "js/modules/nested/relative-import.test");
+  EXPECT_FALSE(JS_IsException(module2));
+  JS_FreeValue(ctx, module2);
+
+  // Restore original working directory
+  std::filesystem::current_path(originalCwd, ec);
+}
+
+TEST_F(QuickJSModuleTest, LoadDirectoryForAsan) {
+  char* file_content = loadFile("lib");  // lib is a directory, not a file.
+  if (file_content) {
+    free(file_content);
+  }
 }

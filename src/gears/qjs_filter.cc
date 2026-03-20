@@ -2,7 +2,7 @@
 #include <type_traits>
 
 template <typename T_JS_VALUE>
-QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment* environment)
+QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, const Environment* environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "filter") {
   if (!this->isLoaded()) {
     return;
@@ -10,22 +10,13 @@ QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment* envi
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   funcIsApplicable_ =
       jsEngine.toObject(jsEngine.getObjectProperty(this->getInstance(), "isApplicable"));
-  jsEngine.protectFromGC(funcIsApplicable_);
 
   isFilterFuncGenerator_ = isFilterFuncGenerator();
 }
 
 template <typename T_JS_VALUE>
 QuickJSFilter<T_JS_VALUE>::~QuickJSFilter() {
-  if (!this->isLoaded()) {
-    return;
-  }
-
-  auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
-  if (jsEngine.isFunction(funcIsApplicable_)) {
-    jsEngine.unprotectFromGC(funcIsApplicable_);
-    jsEngine.freeValue(funcIsApplicable_);
-  }
+  // RAII handles cleanup
 }
 
 template <typename T_JS_VALUE>
@@ -37,11 +28,8 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
     if (jsEngine.isObject(proto)) {
       auto jsName = jsEngine.getObjectProperty(jsEngine.toObject(proto), "name");
       auto name = jsEngine.toStdString(jsName);
-      jsEngine.freeValue(jsName, proto);
       return name == "GeneratorFunction";
     }
-
-    jsEngine.freeValue(proto);
   }
   return false;
 }
@@ -49,7 +37,7 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
 template <typename T_JS_VALUE>
 std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     std::shared_ptr<Translation> translation,
-    Environment* environment) {
+    const Environment* environment) {
   if (this->getNamespace().find("benchmark_begin") != std::string::npos) {
     beginClock = std::chrono::steady_clock::now();
   } else if (this->getNamespace().find("benchmark_end") != std::string::npos) {
@@ -63,7 +51,7 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     constexpr int PADDING = 6;
     LOG(INFO) << "[benchmark] all " << engine << " filters run for " << std::setw(PADDING)
               << duration.count()
-              << " us, with input = " << environment->getEngine()->context()->input();
+              << " us, with input = " << environment->getEngine().context()->input();
   }
 
   if (!this->isLoaded()) {
@@ -77,7 +65,6 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     args[0] = std::move(jsEvn);
     auto result = jsEngine.callFunction(funcIsApplicable_, this->getInstance(), 1, args);
     const bool isApplicable = jsEngine.isBool(result) && jsEngine.toBool(result);
-    jsEngine.freeValue(args[0], result);
     if (!isApplicable) {
       return translation;
     }

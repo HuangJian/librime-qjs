@@ -12,7 +12,7 @@ using namespace rime;
 template <>
 class JsWrapper<Environment> {
   DEFINE_GETTER(Environment, id, obj->getId())
-  DEFINE_GETTER(Environment, engine, obj->getEngine())
+  DEFINE_GETTER(Environment, engine, &obj->getEngine())
   DEFINE_GETTER(Environment, namespace, obj->getNameSpace())
   DEFINE_GETTER(Environment, os, obj->getSystemInfo())
   DEFINE_GETTER(Environment, userDataDir, obj->getUserDataDir())
@@ -102,20 +102,5 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
                                 WITH_GETTERS(id, engine, namespace, userDataDir, sharedDataDir, os),
-                                WITH_FUNCTIONS(loadFile,
-                                               1,
-                                               fileExists,
-                                               1,
-                                               saveFile,
-                                               2,
-                                               removeFile,
-                                               1,
-                                               createDir,
-                                               1,
-                                               removeDir,
-                                               1,
-                                               getRimeInfo,
-                                               0,
-                                               popen,
-                                               1));
+                                WITH_FUNCTIONS(loadFile, fileExists, saveFile, removeFile, createDir, removeDir, getRimeInfo, popen));
 };

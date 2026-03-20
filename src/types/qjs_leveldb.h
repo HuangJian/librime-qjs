@@ -6,8 +6,8 @@
 #include "engines/js_macros.h"
 #include "js_wrapper.h"
 
-template <typename T, typename T_VAL>
-static ParseTextFileOptions parseTextFileOptions(const JsEngine<T>& engine, T_VAL jsOptions) {
+template <typename T>
+static ParseTextFileOptions parseTextFileOptions(const JsEngine<T>& engine, JSValueConst jsOptions) {
   ParseTextFileOptions result;
   if (engine.isUndefined(jsOptions)) {
     return result;
@@ -118,19 +118,8 @@ class JsWrapper<LevelDb> {
 
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(LevelDb,
-                                   WITH_CONSTRUCTOR(makeLevelDb, 0),
+                                   WITH_CONSTRUCTOR(makeLevelDb),
                                    WITHOUT_PROPERTIES,
                                    WITHOUT_GETTERS,
-                                   WITH_FUNCTIONS(loadTextFile,
-                                                  1,
-                                                  loadBinaryFile,
-                                                  1,
-                                                  saveToBinaryFile,
-                                                  1,
-                                                  find,
-                                                  1,
-                                                  prefixSearch,
-                                                  1,
-                                                  close,
-                                                  0));
+                                   WITH_FUNCTIONS(loadTextFile, loadBinaryFile, saveToBinaryFile, find, prefixSearch, close));
 };

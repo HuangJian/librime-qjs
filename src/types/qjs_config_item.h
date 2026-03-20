@@ -35,5 +35,5 @@ public:
                                    WITHOUT_CONSTRUCTOR,
                                    WITHOUT_PROPERTIES,
                                    WITHOUT_GETTERS,
-                                   WITH_FUNCTIONS(getType, 0));
+                                   WITH_FUNCTIONS(getType));
 };

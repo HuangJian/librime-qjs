@@ -54,5 +54,5 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
                                 WITHOUT_GETTERS,
-                                WITH_FUNCTIONS(connect, 1));
+                                WITH_FUNCTIONS(connect));
 };

@@ -26,5 +26,5 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
                                 WITH_GETTERS(last, repr),
-                                WITH_FUNCTIONS(push, 2));
+                                WITH_FUNCTIONS(push));
 };

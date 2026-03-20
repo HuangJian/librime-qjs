@@ -72,8 +72,8 @@ TYPED_TEST(QuickJSTypesTest, WrapUnwrapRimeTypes) {
 
   auto& jsEngine = JsEngine<TypeParam>::instance();
 
-  auto env = std::make_unique<Environment>(engine.get(), "namespace");
-  TypeParam environment = jsEngine.wrap(env.get());
+  Environment env(*engine, "namespace");
+  TypeParam environment = jsEngine.wrap(&env);
 
   auto folderPath = getFolderPath(__FILE__);
   auto jsEnvironment = jsEngine.toObject(environment);
