@@ -41,5 +41,5 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITH_PROPERTIES(selectedIndex, prompt),
                                 WITH_GETTERS(start, end, selectedCandidate, candidateSize),
-                                WITH_FUNCTIONS(getCandidateAt, hasTag));
+                                WITH_FUNCTIONS(getCandidateAt, 1, hasTag, 1));
 };

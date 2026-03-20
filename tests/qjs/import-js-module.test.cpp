@@ -4,7 +4,6 @@
 
 #include "engines/common.h"
 #include "engines/quickjs/quickjs_code_loader.h"
-#include "patch/quickjs/node_module_loader.h"
 
 class QuickJSModuleTest : public testing::Test {
 protected:
@@ -63,32 +62,32 @@ TEST_F(QuickJSModuleTest, ImportJsModuleFromAnotherJsFile) {
 }
 
 TEST_F(QuickJSModuleTest, ImportJsModuleFromAnotherJsFileWithEngine) {
-  auto& engine = JsEngine<JSValue>::instance();
+  auto& engine = JsEngine<QjsValueRAII>::instance();
   std::filesystem::path path = __FILE__;
   path = path.parent_path().parent_path() / "js";
   engine.setBaseFolderPath(path.generic_string().c_str());
 
-  JSValue module = engine.loadJsFile("main.js");
+  auto module = engine.loadJsFile("main.js");
 
-  JSValue globalObj = engine.getGlobalObject();
-  JSValue myClass = engine.getObjectProperty(globalObj, "MyClass");
+  auto globalObj = engine.getGlobalObject();
+  auto myClass = engine.getObjectProperty(globalObj, "MyClass");
   ASSERT_FALSE(engine.isException(myClass));
 
   constexpr int A_NAMED_INT = 10;
-  JSValue arg = engine.wrap(A_NAMED_INT);
-  JSValue obj = engine.newClassInstance(myClass, 1, &arg);
+  auto arg = engine.wrap(A_NAMED_INT);
+  QjsValueRAII args[] = {std::move(arg)};
+  auto obj = engine.newClassInstance(myClass, 1, args);
   ASSERT_FALSE(engine.isException(obj));
 
-  JSValue greetArg = engine.wrap("QuickJS");
-  JSValue greeFunction = engine.getMethodOfClassOrInstance(myClass, obj, "greet");
-  JSValue greetResult = engine.callFunction(greeFunction, obj, 1, &greetArg);
-  ASSERT_FALSE(JS_IsException(greetResult));
+  auto greetArg = engine.wrap("QuickJS");
+  auto greeFunction = engine.getMethodOfClassOrInstance(myClass, obj, "greet");
+  QjsValueRAII greetArgs[] = {std::move(greetArg)};
+  auto greetResult = engine.callFunction(greeFunction, obj, 1, greetArgs);
+  ASSERT_FALSE(engine.isException(greetResult));
 
   auto str = engine.toStdString(greetResult);
   ASSERT_FALSE(str.empty());
   EXPECT_STREQ(str.c_str(), "Hello QuickJS!");
-
-  engine.freeValue(module, globalObj, myClass, arg, obj, greetArg, greeFunction, greetResult);
 }
 
 TEST_F(QuickJSModuleTest, ImportJsModuleToNamespace) {
@@ -172,42 +171,4 @@ TEST_F(QuickJSModuleTest, ImportNodeModule) {
   JSValue module = QuickJSCodeLoader::loadJsModuleToGlobalThis(ctx, "node-modules.test");
   ASSERT_FALSE(JS_IsException(module));
   JS_FreeValue(ctx, module);
-}
-
-TEST_F(QuickJSModuleTest, RelativePathImport) {
-  auto* ctx = getContext();
-
-  // Save current working directory
-  std::error_code ec;
-  auto originalCwd = std::filesystem::current_path(ec);
-
-  // Change working directory to tests directory
-  std::filesystem::path testPath(__FILE__);
-  testPath = testPath.parent_path().parent_path();
-  std::filesystem::current_path(testPath, ec);  // avoid current path is QjsBaseFolder
-
-  // Print current working directory for debugging
-  LOG(INFO) << "Current working directory: " << std::filesystem::current_path().generic_string()
-            << std::endl;
-
-  // Load modules with path relative to the new CWD (tests directory)
-  JSValue module1 =
-      QuickJSCodeLoader::loadJsModuleToNamespace(ctx, "js/modules/relative-import.test");
-  EXPECT_FALSE(JS_IsException(module1));
-  JS_FreeValue(ctx, module1);
-
-  JSValue module2 =
-      QuickJSCodeLoader::loadJsModuleToNamespace(ctx, "js/modules/nested/relative-import.test");
-  EXPECT_FALSE(JS_IsException(module2));
-  JS_FreeValue(ctx, module2);
-
-  // Restore original working directory
-  std::filesystem::current_path(originalCwd, ec);
-}
-
-TEST_F(QuickJSModuleTest, LoadDirectoryForAsan) {
-  char* file_content = loadFile("lib");  // lib is a directory, not a file.
-  if (file_content) {
-    free(file_content);
-  }
 }

@@ -13,11 +13,11 @@
 
 class Environment {
 public:
-  explicit Environment(const rime::Engine& engine, std::string nameSpace)
+  explicit Environment(rime::Engine* engine, std::string nameSpace)
       : id_(generateUuid()), engine_(engine), nameSpace_(std::move(nameSpace)) {}
 
   [[nodiscard]] std::string getId() const { return id_; }
-  [[nodiscard]] const rime::Engine& getEngine() const { return engine_; }
+  [[nodiscard]] rime::Engine* getEngine() const { return engine_; }
   [[nodiscard]] const std::string& getNameSpace() const { return nameSpace_; }
   [[nodiscard]] SystemInfo* getSystemInfo() { return &systemInfo_; }
   static std::string getUserDataDir() { return rime_get_api()->get_user_data_dir(); }
@@ -37,7 +37,7 @@ public:
 
 private:
   std::string id_;
-  const rime::Engine& engine_;
+  rime::Engine* engine_;
   std::string nameSpace_;
   SystemInfo systemInfo_{};
 

@@ -4,7 +4,7 @@
 
 template <typename T_JS_VALUE>
 QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
-                                 const Environment* environment,
+                                 Environment* environment,
                                  const char* mainFuncName)
     : namespace_(nameSpace) {
   // the js engine is lazy loaded, so we need to register the types first
@@ -12,12 +12,16 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
 
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
 
-  const char* dataDirArray[2] = {rime_get_api()->get_user_data_dir(),
-                                 rime_get_api()->get_shared_data_dir()};
-  for (const auto* dataDir : dataDirArray) {
-    if (dataDir == nullptr)
-      continue;
-    std::filesystem::path path(dataDir);
+  const char* userDataDir = rime_get_api()->get_user_data_dir();
+  if (userDataDir) {
+    std::filesystem::path path(userDataDir);
+    path.append("js");
+    jsEngine.setBaseFolderPath(path.generic_string().c_str());
+  }
+
+  const char* sharedDataDir = rime_get_api()->get_shared_data_dir();
+  if (sharedDataDir) {
+    std::filesystem::path path(sharedDataDir);
     path.append("js");
     jsEngine.setBaseFolderPath(path.generic_string().c_str());
   }
@@ -39,6 +43,8 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
   mainFunc_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, mainFuncName));
   finalizer_ = jsEngine.toObject(jsEngine.getObjectProperty(instance_, "finalizer"));
 
+  jsEngine.protectFromGC(instance_, mainFunc_, finalizer_);
+
   isLoaded_ = true;
   LOG(INFO) << "[qjs] created an instance of the exported class in " << nameSpace;
 }
@@ -54,6 +60,10 @@ QjsModule<T_JS_VALUE>::~QjsModule() {
     if (jsEngine.isException(finalizerResult)) {
       LOG(ERROR) << "[qjs] ~" << namespace_ << " Error running the finalizer function.";
     }
+  }
+
+  if (isLoaded_) {
+    jsEngine.unprotectFromGC(instance_, mainFunc_, finalizer_);
   }
 }
 

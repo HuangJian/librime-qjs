@@ -24,8 +24,8 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledTranslator) {
   EXPECT_TRUE(clazz != nullptr);
 
   the<Engine> rimeEngine(Engine::Create());
-  Environment env(*rimeEngine, "help_menu");
-  const auto* jsEnv = engine.wrap(&env);
+  auto env = std::make_unique<Environment>(rimeEngine.get(), "help_menu");
+  const auto* jsEnv = engine.wrap(env.get());
   JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), 1, &jsEnv);
   EXPECT_TRUE(instance != nullptr) << "Failed to create instance of class with translate method";
 
@@ -60,8 +60,8 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledFilter) {
 
   the<Engine> rimeEngine(Engine::Create());
   rimeEngine->context()->set_input("pinyin");
-  Environment env(*rimeEngine, "sort_by_pinyin");
-  const auto* jsEnv = engine.wrap(&env);
+  auto env = std::make_unique<Environment>(rimeEngine.get(), "sort_by_pinyin");
+  const auto* jsEnv = engine.wrap(env.get());
   JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), 1, &jsEnv);
   EXPECT_TRUE(instance != nullptr) << "Failed to create instance of class with filter method";
 
@@ -104,7 +104,7 @@ TEST_F(JscLoadBundledPluginTest, FilterTranslationWithJavaScriptCore) {
 
   the<Engine> rimeEngine(Engine::Create());
   rimeEngine->context()->set_input("pinyin");
-  Environment env(*rimeEngine, "sort_by_pinyin");
+  auto env = std::make_unique<Environment>(rimeEngine.get(), "sort_by_pinyin");
 
   auto fakeTranslation = New<FakeTranslation>();
   fakeTranslation->append(New<SimpleCandidate>("mock", 0, 1, "text1", "[pinyin]"));
@@ -113,12 +113,12 @@ TEST_F(JscLoadBundledPluginTest, FilterTranslationWithJavaScriptCore) {
   fakeTranslation->append(New<SimpleCandidate>("user_phrase", 0, 1, "text4", ""));
   fakeTranslation->append(New<SimpleCandidate>("user_phrase", 0, 1, "text5"));
 
-  const auto* jsEnv = engine.wrap(&env);
+  const auto* jsEnv = engine.wrap(env.get());
   JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), 1, &jsEnv);
   JSValueRef filterMethod = engine.getObjectProperty(instance, "filter");
   EXPECT_TRUE(engine.isFunction(filterMethod));
 
-  QuickJSTranslation<JSValueRef> translation(fakeTranslation, instance, filterMethod, env);
+  QuickJSTranslation<JSValueRef> translation(fakeTranslation, instance, filterMethod, env.get());
 
   EXPECT_FALSE(translation.exhausted());
   EXPECT_TRUE(translation.Next());
@@ -131,8 +131,8 @@ TEST_F(JscLoadBundledPluginTest, RunIifeBundledFilter) {
 
   the<Engine> rimeEngine(Engine::Create());
   rimeEngine->context()->set_input("pinyin");
-  Environment env(*rimeEngine, "sort_by_pinyin");
-  const auto* jsEnv = engine.wrap(&env);
+  auto env = std::make_unique<Environment>(rimeEngine.get(), "sort_by_pinyin");
+  const auto* jsEnv = engine.wrap(env.get());
   std::vector<JSValueRef> args = {jsEnv};
   JSObjectRef instance = engine.createInstanceOfModule("sort_by_pinyin", args, "");
   EXPECT_TRUE(engine.isObject(instance));
@@ -146,7 +146,7 @@ TEST_F(JscLoadBundledPluginTest, RunIifeBundledFilter) {
   fakeTranslation->append(New<SimpleCandidate>("user_phrase", 0, 1, "text4", ""));
   fakeTranslation->append(New<SimpleCandidate>("user_phrase", 0, 1, "text5"));
 
-  QuickJSTranslation<JSValueRef> translation(fakeTranslation, instance, filterMethod, env);
+  QuickJSTranslation<JSValueRef> translation(fakeTranslation, instance, filterMethod, env.get());
 
   EXPECT_FALSE(translation.exhausted());
   EXPECT_TRUE(translation.Next());

@@ -75,5 +75,16 @@ public:
                                              updateNotifier,
                                              deleteNotifier,
                                              commitHistory),
-                                WITH_FUNCTIONS(commit, getCommitText, clear, hasMenu, getOption, setOption));
+                                WITH_FUNCTIONS(commit,
+                                               0,
+                                               getCommitText,
+                                               0,
+                                               clear,
+                                               0,
+                                               hasMenu,
+                                               0,
+                                               getOption,
+                                               1,
+                                               setOption,
+                                               2));
 };

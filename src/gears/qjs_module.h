@@ -8,7 +8,7 @@
 template <typename T_JS_VALUE>
 class QjsModule {
 protected:
-  QjsModule(const std::string& nameSpace, const Environment* environment, const char* mainFuncName);
+  QjsModule(const std::string& nameSpace, Environment* environment, const char* mainFuncName);
   ~QjsModule();
 
   [[nodiscard]] bool isLoaded() const { return isLoaded_; }

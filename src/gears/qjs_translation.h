@@ -18,7 +18,7 @@ public:
   QuickJSTranslation(an<Translation> translation,
                      const T_JS_VALUE& filterObj,
                      const T_JS_VALUE& filterFunc,
-                     const Environment* environment);
+                     Environment* environment);
   ~QuickJSTranslation() override = default;
 
 protected:
@@ -27,7 +27,7 @@ protected:
 private:
   bool doFilter(const T_JS_VALUE& filterObj,
                 const T_JS_VALUE& filterFunc,
-                const Environment* environment);
+                Environment* environment);
 
   bool replenished_ = false;
 };
@@ -52,7 +52,7 @@ public:
   QuickJSFastTranslation(const an<Translation>& translation,
                          const T_JS_OBJECT& filterObj,
                          const T_JS_OBJECT& filterFunc,
-                         const Environment* environment);
+                         Environment* environment);
 
   ~QuickJSFastTranslation() override;
 

@@ -42,14 +42,14 @@ TYPED_TEST(QuickJSTranslatorTest, QueryTranslation) {
   config->SetString("expectedInput", "test_input");
 
   Ticket ticket(engine.get(), "translator", "qjs_translator@translator_test");
-  Environment env(*engine, "translator_test");
-  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env);
+  auto env = std::make_unique<Environment>(engine.get(), "translator_test");
+  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env.get());
 
   // Create a segment for testing
   Segment segment = this->createSegment();
 
   // Test the translator with the expected input
-  auto translation = translator->query("test_input", segment, env);
+  auto translation = translator->query("test_input", segment, env.get());
   ASSERT_TRUE(translation != nullptr);
 
   // Verify the first candidate
@@ -92,14 +92,14 @@ TYPED_TEST(QuickJSTranslatorTest, EmptyResult) {
   config->SetString("expectedInput", "empty_input");
 
   Ticket ticket(engine.get(), "translator", "qjs_translator@translator_test");
-  Environment env(*engine, "translator_test");
-  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env);
+  auto env = std::make_unique<Environment>(engine.get(), "translator_test");
+  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env.get());
 
   // Create a segment for testing
   Segment segment = this->createSegment();
 
   // Test the translator with input that should return empty results
-  auto translation = translator->query("empty_input", segment, env);
+  auto translation = translator->query("empty_input", segment, env.get());
   ASSERT_TRUE(translation != nullptr);
   EXPECT_TRUE(translation->exhausted());
 
@@ -114,14 +114,14 @@ TYPED_TEST(QuickJSTranslatorTest, NonExistentModule) {
 
   // Create a ticket with a non-existent module
   Ticket ticket(engine.get(), "translator", "qjs_translator@non_existent");
-  Environment env(*engine, "non_existent");
-  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env);
+  auto env = std::make_unique<Environment>(engine.get(), "non_existent");
+  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env.get());
 
   // Create a segment for testing
   Segment segment = this->createSegment();
 
   // Test the translator - should return an empty translation
-  auto translation = translator->query("test_input", segment, env);
+  auto translation = translator->query("test_input", segment, env.get());
   ASSERT_TRUE(translation != nullptr);
   EXPECT_TRUE(translation->exhausted());
 
@@ -134,10 +134,10 @@ TYPED_TEST(QuickJSTranslatorTest, NoReturnShouldNotCrash) {
 
   // Create a ticket with a poor implemented plugin
   Ticket ticket(engine.get(), "translator", "qjs_translator@translator_no_return");
-  Environment env(*engine, "translator_no_return");
-  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env);
+  auto env = std::make_unique<Environment>(engine.get(), "translator_no_return");
+  auto translator = New<QuickJSTranslator<TypeParam>>(ticket, env.get());
   Segment segment = this->createSegment();
-  auto translation = translator->query("test_input", segment, env);
+  auto translation = translator->query("test_input", segment, env.get());
   ASSERT_TRUE(translation != nullptr);
   EXPECT_TRUE(translation->exhausted());
   EXPECT_FALSE(translation->Next());

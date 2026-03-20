@@ -45,24 +45,17 @@ JSValue QuickJSCodeLoader::loadJsModuleToNamespace(JSContext* ctx, const char* m
   }
 
   auto* md = reinterpret_cast<JSModuleDef*>(JS_VALUE_GET_PTR(funcObj));
-  const JSValue evalResult = JS_EvalFunction(ctx, funcObj);
+  const QjsValueRAII evalResult(ctx, JS_EvalFunction(ctx, funcObj));
   if (JS_IsException(evalResult)) {
     logJsError(ctx, "Failed to evaluate the module:", __FILE__, __LINE__);
-    return evalResult;
+    return evalResult.release();
   }
 
-  JS_FreeValue(ctx, evalResult);
   return JS_GetModuleNamespace(ctx, md);
 }
 
 JSValue QuickJSCodeLoader::loadJsModuleToGlobalThis(JSContext* ctx, const char* moduleName) {
-  char* jsCode = loadFile(moduleName);
-  if (!jsCode) {
-    jsCode = readJsCode(ctx, moduleName);
-  }
-  if (!jsCode) {
-    return JS_ThrowInternalError(ctx, "Could not open the module file: %s", moduleName);
-  }
+  char* jsCode = readJsCode(ctx, moduleName);
   std::string jsCodeStr(jsCode);
   // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
   free(jsCode);
@@ -79,8 +72,8 @@ JSValue QuickJSCodeLoader::createInstanceOfEsmBundledModule(JSContext* ctx,
     return module.release();
   }
 
-  const QjsValueRAII jsClass(ctx,
-                             getExportedClassHavingMethodNameInModule(ctx, module, mainFuncName.c_str()));
+  const QjsValueRAII jsClass(
+      ctx, getExportedClassHavingMethodNameInModule(ctx, module, mainFuncName.c_str()));
 
   if (JS_IsException(jsClass)) {
     const std::string message =
@@ -97,7 +90,7 @@ JSValue QuickJSCodeLoader::createInstanceOfEsmBundledModule(JSContext* ctx,
   }
 
   const int argc = static_cast<int>(args.size());
-  const JSValue instance = JS_CallConstructor(ctx, constructor, argc, args.data());
+  const QjsValueRAII instance(ctx, JS_CallConstructor(ctx, constructor, argc, args.data()));
 
   if (JS_IsException(instance)) {
     const std::string message = "Failed to create an instance of " + moduleName;
@@ -106,7 +99,7 @@ JSValue QuickJSCodeLoader::createInstanceOfEsmBundledModule(JSContext* ctx,
   }
 
   DLOG(INFO) << "[qjs] Created an instance of " << moduleName;
-  return instance;
+  return instance.release();
 }
 
 JSValue QuickJSCodeLoader::createInstanceOfIifeBundledModule(JSContext* ctx,
@@ -188,19 +181,17 @@ JSValue QuickJSCodeLoader::createInstanceOfIifeBundledModule(JSContext* ctx,
 JSValue QuickJSCodeLoader::getMethodByNameInClass(JSContext* ctx,
                                                   const JSValue classObj,
                                                   const char* methodName) {
-  const auto proto = JS_GetPropertyStr(ctx, classObj, "prototype");
+  const QjsValueRAII proto(ctx, JS_GetPropertyStr(ctx, classObj, "prototype"));
   if (JS_IsException(proto)) {
     return JS_UNDEFINED;
   }
 
-  const JSValue method = JS_GetPropertyStr(ctx, proto, methodName);
-  JS_FreeValue(ctx, proto);
+  const QjsValueRAII method(ctx, JS_GetPropertyStr(ctx, proto, methodName));
   if (JS_IsException(method) || !JS_IsFunction(ctx, method)) {
-    JS_FreeValue(ctx, method);
     return JS_UNDEFINED;
   }
 
-  return method;
+  return method.release();
 }
 
 JSValue QuickJSCodeLoader::getExportedClassByNameInModule(JSContext* ctx,
@@ -212,19 +203,16 @@ JSValue QuickJSCodeLoader::getExportedClassByNameInModule(JSContext* ctx,
       JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
     const size_t n = strlen(className);
     for (uint32_t i = 0; i < propCount; i++) {
-      const JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
-      const char* propName = JS_AtomToCString(ctx, props[i].atom);
+      const QjsValueRAII propVal(ctx, JS_GetProperty(ctx, moduleObj, props[i].atom));
+      const QjsCStringRAII propName(ctx, JS_AtomToCString(ctx, props[i].atom));
       const bool isMatched = !JS_IsException(propVal) && strncmp(propName, className, n) == 0;
 
-      JS_FreeCString(ctx, propName);
       JS_FreeAtom(ctx, props[i].atom);
 
       if (isMatched) {
         js_free(ctx, props);
-        return propVal;
+        return propVal.release();
       }
-
-      JS_FreeValue(ctx, propVal);
     }
   }
 
@@ -240,25 +228,21 @@ JSValue QuickJSCodeLoader::getExportedClassHavingMethodNameInModule(JSContext* c
   if (constexpr int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
       JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
     for (uint32_t i = 0; i < propCount; i++) {
-      const JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
-      const char* propName = JS_AtomToCString(ctx, props[i].atom);
+      const QjsValueRAII propVal(ctx, JS_GetProperty(ctx, moduleObj, props[i].atom));
+      const QjsCStringRAII propName(ctx, JS_AtomToCString(ctx, props[i].atom));
 
       bool found = false;
       if (JS_IsObject(propVal)) {
-        const auto method = getMethodByNameInClass(ctx, propVal, methodName);
+        const QjsValueRAII method(ctx, getMethodByNameInClass(ctx, propVal, methodName));
         found = !JS_IsException(method) && !JS_IsUndefined(method) && JS_IsFunction(ctx, method);
-        JS_FreeValue(ctx, method);
       }
 
-      JS_FreeCString(ctx, propName);
       JS_FreeAtom(ctx, props[i].atom);
 
       if (found) {
         js_free(ctx, props);
-        return propVal;
+        return propVal.release();
       }
-
-      JS_FreeValue(ctx, propVal);
     }
   }
 

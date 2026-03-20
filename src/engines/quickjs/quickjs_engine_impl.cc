@@ -2,7 +2,6 @@
 #include "engines/quickjs/quickjs_code_loader.h"
 #include "engines/quickjs/qjs_value_raii.h"
 #include "quickjs.h"
-#include <sstream>
 
 QuickJsEngineImpl::QuickJsEngineImpl()
     : runtime_(JS_NewRuntime()), context_(JS_NewContext(runtime_)) {
@@ -88,8 +87,7 @@ JSValue QuickJsEngineImpl::callFunction(const JSValue& func,
 JSValue QuickJsEngineImpl::newClassInstance(const JSValue& clazz,
                                             const int argc,
                                             JSValue* argv) const {
-  const QjsValueRAII constructor(context_,
-                                 getMethodOfClassOrInstance(clazz, JS_UNDEFINED, "constructor"));
+  const QjsValueRAII constructor(context_, getMethodOfClassOrInstance(clazz, JS_UNDEFINED, "constructor"));
   const auto instance = JS_CallConstructor(context_, constructor, argc, argv);
   return instance;
 }
@@ -232,30 +230,28 @@ JSValue QuickJsEngineImpl::wrap(const char* typeName, void* ptr, const char* poi
     return JS_ThrowInternalError(context_, "Type %s is not registered", typeName);
   }
 
-  const JSValue jsobj = JS_NewObjectClass(context_, static_cast<int>(it->second));
+  const QjsValueRAII jsobj(context_, JS_NewObjectClass(context_, static_cast<int>(it->second)));
   if (JS_IsUndefined(jsobj)) {
     LOG(ERROR) << "Failed to create a new object of type " << typeName
                << " with classId = " << it->second;
-    return jsobj;
+    return jsobj.release();
   }
   if (JS_IsException(jsobj)) {
     logErrorStackTrace(jsobj, __FILE_NAME__, __LINE__);
   }
   if (JS_SetOpaque(jsobj, ptr) < 0) {
-    JS_FreeValue(context_, jsobj);
     const auto format = "Failed to set a %s pointer to a %s object with classId = %d";
     return JS_ThrowInternalError(context_, format, pointerType, typeName, it->second);
   }
-  return jsobj;
+  return jsobj.release();
 }
 
 void QuickJsEngineImpl::exposeLogToJsConsole(JSContext* ctx) {
-  JSValue globalObj = JS_GetGlobalObject(ctx);
-  JSValue console = JS_NewObject(ctx);
+  const QjsValueRAII globalObj(ctx, JS_GetGlobalObject(ctx));
+  const QjsValueRAII console(ctx, JS_NewObject(ctx));
   JS_SetPropertyStr(ctx, console, "log", JS_NewCFunction(ctx, jsLog, "log", 1));
   JS_SetPropertyStr(ctx, console, "error", JS_NewCFunction(ctx, jsError, "error", 1));
-  JS_SetPropertyStr(ctx, globalObj, "console", console);
-  JS_FreeValue(ctx, globalObj);
+  JS_SetPropertyStr(ctx, globalObj, "console", JS_DupValue(ctx, console));
 }
 
 static std::string logToStringStream(JSContext* ctx, const int argc, JSValueConst* argv) {
@@ -278,7 +274,8 @@ JSValue QuickJsEngineImpl::jsLog(JSContext* ctx,
                                  JSValueConst thisVal,
                                  const int argc,
                                  JSValueConst* argv) {
-  google::LogMessage("$qjs$", 0, google::GLOG_INFO).stream() << logToStringStream(ctx, argc, argv);
+  const std::string message = logToStringStream(ctx, argc, argv);
+  google::LogMessage("$qjs$", 0, google::GLOG_INFO).stream() << message;
   return JS_UNDEFINED;
 }
 
@@ -286,6 +283,7 @@ JSValue QuickJsEngineImpl::jsError(JSContext* ctx,
                                    JSValueConst thisVal,
                                    const int argc,
                                    JSValueConst* argv) {
-  google::LogMessage("$qjs$", 0, google::GLOG_ERROR).stream() << logToStringStream(ctx, argc, argv);
+  const std::string message = logToStringStream(ctx, argc, argv);
+  google::LogMessage("$qjs$", 0, google::GLOG_ERROR).stream() << message;
   return JS_UNDEFINED;
 }

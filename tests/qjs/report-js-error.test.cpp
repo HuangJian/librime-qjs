@@ -21,7 +21,7 @@ class QuickJSErrorTest : public ::testing::Test {};
 SETUP_JS_ENGINES(QuickJSErrorTest);
 
 TYPED_TEST(QuickJSErrorTest, TestJsRuntimeError) {
-  auto& jsEngine = JsEngine<JSValue>::instance();
+  auto& jsEngine = JsEngine<QjsValueRAII>::instance();
   auto module = jsEngine.loadJsFile("runtime-error.js");
   auto globalObj = jsEngine.getGlobalObject();
   auto func = jsEngine.getObjectProperty(globalObj, "funcWithRuntimeError");
@@ -33,6 +33,4 @@ TYPED_TEST(QuickJSErrorTest, TestJsRuntimeError) {
   // The exception is alredy captured in the js engine logger. The log should be:
   // ReferenceError: abcdefg is not defined
   //      at <anonymous> (runtime-error.js:7:21)
-
-  jsEngine.freeValue(module, globalObj, func, result);
 }

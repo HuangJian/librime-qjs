@@ -257,20 +257,14 @@ public:
 
   template <typename T>
   std::enable_if_t<!is_shared_ptr_v<T>, JSObjectRef> wrap(T ptrValue) const {
-    if (!ptrValue) {
-      return nullptr;
-    }
     using DereferencedType = std::decay_t<decltype(*ptrValue)>;
-    if (!isTypeRegistered<DereferencedType>()) {
+    if (!ptrValue || !isTypeRegistered<DereferencedType>()) {
       return nullptr;
     }
 
     auto typeName = JsWrapper<DereferencedType>::typeName;
     const JSClassRef& jsClass = impl_->getRegisteredClass(typeName);
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-    return JSObjectMake(impl_->getContext(), jsClass,
-                        const_cast<std::remove_const_t<DereferencedType>*>(
-                            reinterpret_cast<const DereferencedType*>(ptrValue)));
+    return JSObjectMake(impl_->getContext(), jsClass, ptrValue);
   }
 
   template <typename T>

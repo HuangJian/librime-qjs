@@ -2,7 +2,7 @@
 #include <type_traits>
 
 template <typename T_JS_VALUE>
-QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, const Environment* environment)
+QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, Environment* environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "filter") {
   if (!this->isLoaded()) {
     return;
@@ -10,13 +10,19 @@ QuickJSFilter<T_JS_VALUE>::QuickJSFilter(const Ticket& ticket, const Environment
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   funcIsApplicable_ =
       jsEngine.toObject(jsEngine.getObjectProperty(this->getInstance(), "isApplicable"));
+  jsEngine.protectFromGC(funcIsApplicable_);
 
   isFilterFuncGenerator_ = isFilterFuncGenerator();
 }
 
 template <typename T_JS_VALUE>
 QuickJSFilter<T_JS_VALUE>::~QuickJSFilter() {
-  // RAII handles cleanup
+  if (!this->isLoaded()) {
+    return;
+  }
+
+  auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
+  jsEngine.unprotectFromGC(funcIsApplicable_);
 }
 
 template <typename T_JS_VALUE>
@@ -37,7 +43,7 @@ bool QuickJSFilter<T_JS_VALUE>::isFilterFuncGenerator() const {
 template <typename T_JS_VALUE>
 std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     std::shared_ptr<Translation> translation,
-    const Environment* environment) {
+    Environment* environment) {
   if (this->getNamespace().find("benchmark_begin") != std::string::npos) {
     beginClock = std::chrono::steady_clock::now();
   } else if (this->getNamespace().find("benchmark_end") != std::string::npos) {
@@ -51,7 +57,7 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
     constexpr int PADDING = 6;
     LOG(INFO) << "[benchmark] all " << engine << " filters run for " << std::setw(PADDING)
               << duration.count()
-              << " us, with input = " << environment->getEngine().context()->input();
+              << " us, with input = " << environment->getEngine()->context()->input();
   }
 
   if (!this->isLoaded()) {

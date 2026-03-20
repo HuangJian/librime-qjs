@@ -2,45 +2,51 @@
 #include <glog/logging.h>
 
 template <typename T_JS_VALUE>
-QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket,
-                                                 const Environment* environment)
+QuickJSTranslator<T_JS_VALUE>::QuickJSTranslator(const Ticket& ticket, Environment* environment)
     : QjsModule<T_JS_VALUE>(ticket.name_space, environment, "translate") {}
 
 template <typename T_JS_VALUE>
 an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
                                                      const Segment& segment,
-                                                     const Environment* environment) {
+                                                     Environment* environment) {
+  auto translation = New<FifoTranslation>();
   if (!this->isLoaded()) {
-    return nullptr;
-  }
-
-  auto& engine = JsEngine<T_JS_VALUE>::instance();
-  auto jsInput = engine.wrap(input);
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-  auto jsSegment = engine.wrap(const_cast<Segment*>(&segment));
-  auto jsEnv = engine.wrap(environment);
-  T_JS_VALUE args[3];
-  args[0] = std::move(jsInput);
-  args[1] = std::move(jsSegment);
-  args[2] = std::move(jsEnv);
-
-  T_JS_VALUE jsResult = engine.callFunction(this->getMainFunc(), this->getInstance(), 3, args);
-
-  if (engine.isException(jsResult)) {
-    LOG(ERROR) << "[qjs] Exception thrown while querying translator " << this->getNamespace();
-    return nullptr;
-  }
-
-  if (auto translation = engine.template unwrap<Translation>(jsResult)) {
     return translation;
   }
 
-  // fallback to a generator based approach if the return value is not a Translation
-  return std::make_shared<QuickJSFastTranslation<T_JS_VALUE>>(nullptr, this->getInstance(),
-                                                              this->getMainFunc(), environment);
+  auto& engine = JsEngine<T_JS_VALUE>::instance();
+  T_JS_VALUE jsInput = engine.wrap(input);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  T_JS_VALUE jsSegment = engine.wrap(const_cast<Segment*>(&segment));
+  auto jsEnvironment = engine.wrap(environment);
+  T_JS_VALUE args[3];
+  args[0] = std::move(jsInput);
+  args[1] = std::move(jsSegment);
+  args[2] = std::move(jsEnvironment);
+
+  T_JS_VALUE resultArray =
+      engine.callFunction(this->getMainFunc(), this->getInstance(), 3, args);
+  if (!engine.isArray(resultArray)) {
+    LOG(ERROR) << "[qjs] A candidate array should be returned by `translate` of the plugin: "
+               << this->getNamespace();
+    return translation;
+  }
+
+  const size_t length = engine.getArrayLength(resultArray);
+  for (uint32_t i = 0; i < length; i++) {
+    T_JS_VALUE item = engine.getArrayItem(resultArray, i);
+    if (const an<Candidate> candidate = engine.template unwrap<Candidate>(item)) {
+      translation->Append(candidate);
+    } else {
+      LOG(ERROR) << "[qjs] Failed to unwrap candidate at index " << i;
+    }
+  }
+
+  return translation;
 }
 
 namespace rime {
+
 template class ComponentWrapper<QuickJSTranslator<QjsValueRAII>, Translator, QjsValueRAII>;
 #ifdef _ENABLE_JAVASCRIPTCORE
 template class ComponentWrapper<QuickJSTranslator<JSValueRef>, Translator, JSValueRef>;

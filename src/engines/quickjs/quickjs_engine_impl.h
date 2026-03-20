@@ -4,7 +4,6 @@
 #include <quickjs.h>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "engines/js_exception.h"
 #include "patch/quickjs/node_module_loader.h"

@@ -4,7 +4,7 @@ export class TestFilter {
   constructor(env) {
     console.log('filter_test init')
     assert(env.namespace === 'filter_test')
-    assert(env.userDataDir.endsWith('qjs/tests/'))
+    assert(env.userDataDir.endsWith('tests/'))
     console.log(`env = ${env}`)
     console.log(`env.engine.schema = ${env.engine.schema}`)
     console.log(`env.engine.schema.config = ${env.engine.schema.config}`)

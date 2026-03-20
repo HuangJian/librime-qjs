@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <rime/candidate.h>
-#include <rime/engine.h>
 #include <rime/translation.h>
 
 #include "environment.h"
@@ -27,10 +26,9 @@ SETUP_JS_ENGINES(QuickJSTranslationTest);
 TYPED_TEST(QuickJSTranslationTest, Initialize) {
   auto& jsEngine = JsEngine<TypeParam>::instance();
   auto translation = this->createMockTranslation();
-  the<Engine> engine(Engine::Create());
-  Environment env(*engine, "test");
+  Environment env(nullptr, "test");
   auto qjsTranslation =
-      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), TypeParam(), env);
+      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), TypeParam(), &env);
   EXPECT_TRUE(qjsTranslation->exhausted());
   EXPECT_FALSE(qjsTranslation->Next());
   EXPECT_EQ(qjsTranslation->Peek(), nullptr);
@@ -57,10 +55,9 @@ TYPED_TEST(QuickJSTranslationTest, FilterCandidates) {
   auto global = jsEngine.getGlobalObject();
   auto filterFunc = jsEngine.getObjectProperty(jsEngine.toObject(global), "filterCandidates");
 
-  the<Engine> engine(Engine::Create());
-  Environment env(*engine, "test");
+  Environment env(nullptr, "test");
   auto qjsTranslation =
-      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), filterFunc, env);
+      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), filterFunc, &env);
   auto candidate = qjsTranslation->Peek();
 
   ASSERT_TRUE(candidate != nullptr);
@@ -79,10 +76,9 @@ TYPED_TEST(QuickJSTranslationTest, FilterCandidates) {
 TYPED_TEST(QuickJSTranslationTest, EmptyTranslation) {
   auto& jsEngine = JsEngine<TypeParam>::instance();
   auto translation = New<FakeTranslation>();
-  the<Engine> engine(Engine::Create());
-  Environment env(*engine, "test");
+  Environment env(nullptr, "test");
   auto qjsTranslation =
-      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), TypeParam(), env);
+      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), TypeParam(), &env);
   EXPECT_TRUE(qjsTranslation->exhausted());
   EXPECT_FALSE(qjsTranslation->Next());
   EXPECT_EQ(qjsTranslation->Peek(), nullptr);
@@ -97,10 +93,9 @@ TYPED_TEST(QuickJSTranslationTest, NoReturnValueShouldNotCrash) {
   auto global = jsEngine.getGlobalObject();
   auto filterFunc = jsEngine.getObjectProperty(jsEngine.toObject(global), "noReturn");
 
-  the<Engine> engine(Engine::Create());
-  Environment env(*engine, "test");
+  Environment env(nullptr, "test");
   auto qjsTranslation =
-      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), filterFunc, env);
+      New<QuickJSTranslation<TypeParam>>(translation, TypeParam(), filterFunc, &env);
   EXPECT_TRUE(qjsTranslation->exhausted());
   EXPECT_FALSE(qjsTranslation->Next());
   EXPECT_EQ(qjsTranslation->Peek(), nullptr);

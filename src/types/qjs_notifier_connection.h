@@ -14,8 +14,6 @@ class JsWrapper<NotifierConnection> {
   DEFINE_CFUNCTION(disconnect, {
     auto obj = engine.unwrap<NotifierConnection>(thisVal);
     obj->disconnect();
-    auto jsListenerFunc = engine.getObjectProperty(thisVal, JS_LISTENER_PROPERTY_NAME);
-    engine.freeValue(jsListenerFunc);
     return engine.undefined();
   })
 
@@ -26,5 +24,5 @@ public:
                                    WITHOUT_CONSTRUCTOR,
                                    WITHOUT_PROPERTIES,
                                    WITH_GETTERS(isConnected),
-                                   WITH_FUNCTIONS(disconnect));
+                                   WITH_FUNCTIONS(disconnect, 0));
 };

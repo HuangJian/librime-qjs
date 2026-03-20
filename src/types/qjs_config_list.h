@@ -65,5 +65,5 @@ public:
       WITHOUT_CONSTRUCTOR,
       WITHOUT_PROPERTIES,
       WITHOUT_GETTERS,
-      WITH_FUNCTIONS(getType, getSize, getItemAt, getValueAt, pushBack, clear));
+      WITH_FUNCTIONS(getType, 0, getSize, 0, getItemAt, 1, getValueAt, 1, pushBack, 1, clear, 0));
 };

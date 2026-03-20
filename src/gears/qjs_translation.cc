@@ -5,7 +5,7 @@ template <typename T_JS_VALUE>
 QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
                                                    const T_JS_VALUE& filterObj,
                                                    const T_JS_VALUE& filterFunc,
-                                                   const Environment* environment)
+                                                   Environment* environment)
     : PrefetchTranslation(std::move(translation)), replenished_(true) {
   doFilter(filterObj, filterFunc, environment);
   set_exhausted(cache_.empty());
@@ -14,7 +14,7 @@ QuickJSTranslation<T_JS_VALUE>::QuickJSTranslation(an<Translation> translation,
 template <typename T_JS_VALUE>
 bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
                                               const T_JS_VALUE& filterFunc,
-                                              const Environment* environment) {
+                                              Environment* environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto jsArray = jsEngine.newArray();
   size_t idx = 0;
@@ -23,21 +23,16 @@ bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
     jsEngine.insertItemToArray(jsArray, idx++, jsEngine.wrap(candidate));
   }
   if (idx == 0) {
-    jsEngine.freeValue(jsArray);
     return true;
   }
 
   auto jsEnvironment = jsEngine.wrap(environment);
-  T_JS_VALUE args[2];
-  args[0] = std::move(jsArray);
-  args[1] = std::move(jsEnvironment);
+  T_JS_VALUE args[] = {std::move(jsArray), std::move(jsEnvironment)};
   T_JS_VALUE resultArray =
-      jsEngine.callFunction(jsEngine.toObject(filterFunc), jsEngine.toObject(filterObj), 2, args);
-  jsEngine.freeValue(args[0], args[1]);
+      jsEngine.callFunction(filterFunc, filterObj, 2, args);
 
   if (!jsEngine.isArray(resultArray)) {
     LOG(ERROR) << "[qjs] Failed to filter candidates";
-    jsEngine.freeValue(resultArray);
     return false;
   }
 
@@ -49,10 +44,8 @@ bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
     } else {
       LOG(ERROR) << "[qjs] Failed to unwrap candidate at index " << i;
     }
-    jsEngine.freeValue(item);
   }
 
-  jsEngine.freeValue(resultArray);
   return true;
 }
 
@@ -60,15 +53,12 @@ template <typename T_JS_VALUE>
 QuickJSFastTranslation<T_JS_VALUE>::QuickJSFastTranslation(const an<Translation>& translation,
                                                            const T_JS_OBJECT& filterObj,
                                                            const T_JS_OBJECT& filterFunc,
-                                                           const Environment* environment) {
+                                                           Environment* environment) {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto iterator = jsEngine.wrap(translation);
   auto jsEnv = jsEngine.wrap(environment);
-  T_JS_VALUE args[2];
-  args[0] = std::move(iterator);
-  args[1] = std::move(jsEnv);
+  T_JS_VALUE args[2] = {std::move(iterator), std::move(jsEnv)};
   generator_ = jsEngine.toObject(jsEngine.callFunction(filterFunc, filterObj, 2, args));
-  jsEngine.freeValue(args[1], args[0]);
   nextFunction_ = jsEngine.toObject(jsEngine.getObjectProperty(generator_, "next"));
   jsEngine.protectFromGC(generator_, nextFunction_);
 }
@@ -77,11 +67,9 @@ template <typename T_JS_VALUE>
 QuickJSFastTranslation<T_JS_VALUE>::~QuickJSFastTranslation() {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   jsEngine.unprotectFromGC(generator_, nextFunction_);
-  jsEngine.freeValue(generator_, nextFunction_);
 
-  if (isGeneratorEverInvoked_) {
+  if (isGeneratorEverInvoked_ && jsEngine.isObject(nextResult_)) {
     jsEngine.unprotectFromGC(nextResult_);
-    jsEngine.freeValue(nextResult_);
   }
 }
 
@@ -119,7 +107,6 @@ an<Candidate> QuickJSFastTranslation<T_JS_VALUE>::Peek() {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto jsValue = jsEngine.getObjectProperty(nextResult_, "value");
   auto ret = jsEngine.template unwrap<Candidate>(jsValue);
-  jsEngine.freeValue(jsValue);
   return ret;
 }
 
@@ -132,7 +119,6 @@ void QuickJSFastTranslation<T_JS_VALUE>::invokeGenerator() {
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   if (isGeneratorEverInvoked_) {
     jsEngine.unprotectFromGC(nextResult_);
-    jsEngine.freeValue(nextResult_);
   }
 
   nextResult_ = jsEngine.toObject(jsEngine.callFunction(nextFunction_, generator_, 0, nullptr));
@@ -146,7 +132,6 @@ void QuickJSFastTranslation<T_JS_VALUE>::invokeGenerator() {
 
   auto jsDone = jsEngine.getObjectProperty(nextResult_, "done");
   const bool isDone = jsEngine.isBool(jsDone) && jsEngine.toBool(jsDone);
-  jsEngine.freeValue(jsDone);
   if (isDone) {
     // check the return value of the generator,
     auto jsValue = jsEngine.getObjectProperty(nextResult_, "value");
@@ -158,7 +143,6 @@ void QuickJSFastTranslation<T_JS_VALUE>::invokeGenerator() {
       // it returned undefined with `return;` in js side
       set_exhausted(true);
     }
-    jsEngine.freeValue(jsValue);
   }
 }
 

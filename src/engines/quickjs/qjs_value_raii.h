@@ -40,9 +40,9 @@ public:
 
   bool operator!() const { return JS_IsException(val_) || JS_IsUndefined(val_) || JS_IsNull(val_); }
 
-  JSValue release() {
+  JSValue release() const {
     JSValue val = val_;
-    val_ = JS_UNDEFINED;
+    const_cast<QjsValueRAII*>(this)->val_ = JS_UNDEFINED;
     return val;
   }
 

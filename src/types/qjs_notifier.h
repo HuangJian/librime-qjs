@@ -20,7 +20,6 @@ class JsWrapper<Notifier> {
     if (engine.isException(result)) {
       LOG(ERROR) << "Error in notifying the js connection";
     }
-    engine.freeValue(result, arg);
   }
 
   DEFINE_CFUNCTION_ARGC(connect, 1, {
@@ -32,7 +31,7 @@ class JsWrapper<Notifier> {
 
     // IMPORTANT: jsListenerFunc should be duplicated before passing to JS_Call,
     // otherwise it will be released by the quickjs engine and the function will not be called
-    auto duplicatedFunc = engine.duplicateValue(jsListenerFunc);
+    auto duplicatedFunc = std::make_shared<QjsValueRAII>(engine.duplicateValue(jsListenerFunc));
 
     auto obj = engine.unwrap<Notifier>(thisVal);
     auto connection = std::make_shared<NotifierConnection>(
@@ -40,12 +39,12 @@ class JsWrapper<Notifier> {
         // otherwise it could crash the program when running with the JavaScriptCore engine.
         // I guess it could have been released in jsc's garbage collection.
         obj->connect([&engine, duplicatedFunc](rime::Context* rimeContext) {
-          handleNotification(engine, duplicatedFunc, rimeContext);
+          handleNotification(engine, *duplicatedFunc, rimeContext);
         }));
 
     auto jsConnection = engine.wrap(connection);
     // attach it to the connection to free it by the js engine when disconnecting
-    engine.setObjectProperty(jsConnection, JS_LISTENER_PROPERTY_NAME, duplicatedFunc);
+    engine.setObjectProperty(jsConnection, JS_LISTENER_PROPERTY_NAME, *duplicatedFunc);
     return jsConnection;
   })
 
@@ -54,5 +53,5 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
                                 WITHOUT_GETTERS,
-                                WITH_FUNCTIONS(connect));
+                                WITH_FUNCTIONS(connect, 1));
 };

@@ -3,7 +3,6 @@
 #include <quickjs.h>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 #include "engines/js_exception.h"
 #include "engines/js_traits.h"
@@ -16,7 +15,6 @@ class JsEngine;
 
 template <>
 class JsEngine<QjsValueRAII> {
-public:
   inline static std::mutex instanceMutex;
   inline static bool isInitialized = false;
 
@@ -91,7 +89,7 @@ public:
     return impl_->getArrayLength(array);
   }
 
-  void insertItemToArray(JSValueConst array, size_t index, JSValue value) const {
+  void insertItemToArray(JSValueConst array, size_t index, const QjsValueRAII& value) const {
     impl_->insertItemToArray(array, index, JS_DupValue(impl_->getContext(), value));
   }
 
@@ -107,7 +105,7 @@ public:
     return QjsValueRAII(impl_->getContext(), impl_->getObjectProperty(obj, propertyName));
   }
 
-  int setObjectProperty(JSValueConst obj, const char* propertyName, JSValue value) const {
+  int setObjectProperty(JSValueConst obj, const char* propertyName, const QjsValueRAII& value) const {
     return impl_->setObjectProperty(obj, propertyName, JS_DupValue(impl_->getContext(), value));
   }
 
@@ -134,7 +132,7 @@ public:
   [[nodiscard]] QjsValueRAII callFunction(JSValueConst func,
                                           JSValueConst thisArg,
                                           const int argc,
-                                          QjsValueRAII* argv) const {
+                                          const QjsValueRAII* argv) const {
     std::vector<JSValue> args(argc);
     for (int i = 0; i < argc; ++i) {
       args[i] = argv[i];
@@ -145,7 +143,7 @@ public:
 
   [[nodiscard]] QjsValueRAII newClassInstance(JSValueConst clazz,
                                               const int argc,
-                                              QjsValueRAII* argv) const {
+                                              const QjsValueRAII* argv) const {
     std::vector<JSValue> args(argc);
     for (int i = 0; i < argc; ++i) {
       args[i] = argv[i];
@@ -262,6 +260,9 @@ public:
   [[nodiscard]] QjsValueRAII wrap(const double value) const {
     return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(value));
   }
+  [[nodiscard]] QjsValueRAII wrap(const int64_t value) const {
+    return QjsValueRAII(impl_->getContext(), impl_->toJsNumber(value));
+  }
 
   [[nodiscard]] QjsValueRAII createInstanceOfModule(const char* moduleName,
                                                     std::vector<QjsValueRAII>& args,
@@ -290,4 +291,6 @@ public:
                                         const std::string& message) const {
     return QjsValueRAII(impl_->getContext(), impl_->throwError(errorType, message));
   }
+
+  [[nodiscard]] JSContext* getContext() const { return impl_->getContext(); }
 };

@@ -153,62 +153,13 @@ __attribute__((constructor)) void initBaseFolder() {
 }
 #endif
 
-#include <errno.h>
-#ifdef _WIN32
-    #include <sys/stat.h>
-    typedef struct _stat StatStruct;
-    #define STAT_FUNC _stat
-#else
-    #include <sys/stat.h>
-    #include <unistd.h>
-    typedef struct stat StatStruct;
-    #define STAT_FUNC stat
-#endif
-
-// If the system doesn't provide S_ISDIR / S_ISREG macros, define them manually.
-#ifndef S_ISDIR
-#define S_ISDIR(m)  (((m) & S_IFMT) == S_IFDIR)
-#endif
-#ifndef S_ISREG
-#define S_ISREG(m)  (((m) & S_IFMT) == S_IFREG)
-#endif
-
-typedef enum {
-    FILE_TYPE_ERROR = -1,    // error occurred while checking the file type (e.g., permission denied)
-    FILE_TYPE_NOT_EXIST = 0, // path is not exist
-    FILE_TYPE_REG = 1,       // regular file
-    FILE_TYPE_DIR = 2,       // directory
-    FILE_TYPE_OTHER = 3      // other type (like device, pipe, etc.)
-} FileType;
-
-/**
- * get the type of a given path (following symlinks)
- * @param path the path to check
- * @return FileType enum value
- */
-static FileType getFileType(const char *path) {
-    if (path == NULL) {
-        return FILE_TYPE_ERROR;
-    }
-
-    StatStruct st;
-
-    if (STAT_FUNC(path, &st) != 0) {
-        if (errno == ENOENT) {
-            return FILE_TYPE_NOT_EXIST;
-        } else {
-            return FILE_TYPE_ERROR; // other errors (e.g., permission denied)
-        }
-    }
-
-    // get the file type
-    if (S_ISDIR(st.st_mode)) {
-        return FILE_TYPE_DIR;
-    } else if (S_ISREG(st.st_mode)) {
-        return FILE_TYPE_REG;
-    } else {
-        return FILE_TYPE_OTHER; // other type (like device, pipe, etc.)
-    }
+static bool isFileExists(const char* path) {
+  FILE* file = fopen(path, "r");
+  if (file) {
+    fclose(file);
+    return true;
+  }
+  return false;
 }
 
 static const char* getModuleFullPath(const char* moduleName) {
@@ -223,7 +174,7 @@ static const char* getModuleFullPath(const char* moduleName) {
     if (strlen(moduleName) > extLen && strcmp(moduleName + strlen(moduleName) - extLen, extensions[i]) == 0) {
       for (int j = 0; j < qjsBaseFoldersCount; j++) {
         snprintf(fullPath, sizeof(fullPath), "%s/%s", qjsBaseFolders[j], moduleName);
-        if (getFileType(fullPath) == FILE_TYPE_REG) {
+        if (isFileExists(fullPath)) {
           return fullPath;
         }
       }
@@ -239,7 +190,7 @@ static const char* getModuleFullPath(const char* moduleName) {
     snprintf(fileNameAttempt, sizeof(fileNameAttempt), filePatterns[i], moduleName);
     for (int j = 0; j < qjsBaseFoldersCount; j++) {
       snprintf(fullPath, sizeof(fullPath), "%s/%s", qjsBaseFolders[j], fileNameAttempt);
-      if (getFileType(fullPath) == FILE_TYPE_REG) {
+      if (isFileExists(fullPath)) {
         return fullPath;
       }
     }
@@ -254,7 +205,7 @@ static const char* getActualFilePath(const char* path) {
   static char fullPath[LOADER_PATH_MAX];
   for (int i = 0; i < numExtensions; i++) {
     snprintf(fullPath, sizeof(fullPath), "%s%s", path, possibleExtensions[i]);
-    if (getFileType(fullPath) == FILE_TYPE_REG) {
+    if (isFileExists(fullPath)) {
       return fullPath;
     }
   }
@@ -396,10 +347,7 @@ char* readJsCode(JSContext* ctx, const char* moduleName) {
 }
 
 JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
-  char* code = loadFile(moduleName);  // attempt to load the file directly first
-  if (!code) {
-    code = readJsCode(ctx, moduleName);
-  }
+  char* code = readJsCode(ctx, moduleName);
   if (!code) {
     LOG_AND_RETURN_ERROR(ctx, "Could not open %s", moduleName);
   }
@@ -435,7 +383,7 @@ JSModuleDef* js_module_loader(JSContext* ctx,
 
   // Try to find the file in any of the registered base folders
   for (int i = 0; i < qjsBaseFoldersCount; i++) {
-    if (isAbsolutePath(moduleName) || getActualFilePath(moduleName)) {
+    if (isAbsolutePath(moduleName)) {
       snprintf(fullPath, sizeof(fullPath), "%s", moduleName);
     } else {
       snprintf(fullPath, sizeof(fullPath), "%s/%s", qjsBaseFolders[i], moduleName);
