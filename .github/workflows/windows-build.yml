@@ -71,7 +71,9 @@ jobs:
         run: pip install ninja
 
       - name: Configure clang
-        run: choco upgrade -y llvm
+        run: |
+          choco upgrade -y llvm
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
 
       - name: Configure build environment
         run: |
