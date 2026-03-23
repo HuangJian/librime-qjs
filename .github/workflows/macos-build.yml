@@ -56,6 +56,7 @@ jobs:
         #   export CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
         run: |
           brew install llvm ninja
+          echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
           
@@ -133,6 +134,7 @@ jobs:
       - name: Configure build environment
         run: |
           brew install llvm ninja
+          echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
