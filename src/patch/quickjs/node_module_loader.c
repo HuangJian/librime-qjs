@@ -7,70 +7,72 @@
 #include "node_module_loader.h"
 
 #define LOG_AND_RETURN_ERROR(ctx, format, ...) \
-  logError(format, __VA_ARGS__); \
-  return JS_ThrowReferenceError(ctx, format, __VA_ARGS__);
+  do { \
+    logError(format, __VA_ARGS__); \
+    return JS_ThrowReferenceError(ctx, format, __VA_ARGS__); \
+  } while (0)
 
 #define LOG_AND_THROW_ERROR(ctx, format, ...) \
-  logError(format, __VA_ARGS__); \
-  JS_ThrowReferenceError(ctx, format, __VA_ARGS__);
+  do { \
+    logError(format, __VA_ARGS__); \
+    JS_ThrowReferenceError(ctx, format, __VA_ARGS__); \
+  } while (0)
 
 enum { LOADER_PATH_MAX = 1024, MAX_BASE_FOLDERS = 5 };
 
 #ifdef BUILD_FOR_QJS_EXE
+static void log_v(FILE* stream, const char* format, va_list args) {
+  vfprintf(stream, format, args);
+  fputc('\n', stream);
+}
+
 void logInfo(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  vprintf(format, args);
+  log_v(stdout, format, args);
   va_end(args);
-  printf("\n");
 }
 
 void logError(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  vfprintf(stderr, format, args);
+  log_v(stderr, format, args);
   va_end(args);
-  fwrite("\n", 1, 1, stderr);
 }
 #else
 
-// Use extern "C" to properly interface with C++ glog library
 #ifdef __cplusplus
 #include <glog/logging.h>
 #else
-// For C code, declare external logging functions that will be implemented in C++
 extern void logInfoImpl(const char* message);
 extern void logErrorImpl(const char* message);
 #endif
 
+static void log_to_impl(int is_error, const char* format, va_list args) {
+  char buffer[LOADER_PATH_MAX];
+  vsnprintf(buffer, sizeof(buffer), format, args);
+#ifdef __cplusplus
+  if (is_error) LOG(ERROR) << buffer << "\n";
+  else LOG(INFO) << buffer << "\n";
+#else
+  if (is_error) logErrorImpl(buffer);
+  else logInfoImpl(buffer);
+#endif
+}
+
 void logInfo(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  char buffer[LOADER_PATH_MAX];
-  vsnprintf(buffer, sizeof(buffer), format, args);
+  log_to_impl(0, format, args);
   va_end(args);
-
-#ifdef __cplusplus
-  LOG(INFO) << buffer << "\n";
-#else
-  logInfoImpl(buffer);
-#endif
 }
 
 void logError(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  char buffer[LOADER_PATH_MAX];
-  vsnprintf(buffer, sizeof(buffer), format, args);
+  log_to_impl(1, format, args);
   va_end(args);
-
-#ifdef __cplusplus
-  LOG(ERROR) << buffer << "\n";
-#else
-  logErrorImpl(buffer);
-#endif
 }
-
 #endif
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
@@ -101,57 +103,42 @@ void setQjsBaseFolder(const char* path) {
   qjsBaseFoldersCount++;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <limits.h>
+#include <unistd.h>
+#elif defined(__linux__)
+#include <limits.h>
+#include <unistd.h>
+#endif
+
 __attribute__((constructor)) void initBaseFolder() {
-  char path[LOADER_PATH_MAX];
-  GetModuleFileNameA(NULL, path, LOADER_PATH_MAX);
-  char* last_slash = strrchr(path, '\\');
-  if (last_slash) {
-    *last_slash = '\0';
+  char path[LOADER_PATH_MAX] = {0};
+#if defined(_WIN32)
+  if (GetModuleFileNameA(NULL, path, sizeof(path)) > 0) {
+    char* last_slash = strrchr(path, '\\');
+    if (last_slash) *last_slash = '\0';
+  }
+#elif defined(__APPLE__)
+  uint32_t size = sizeof(path);
+  if (_NSGetExecutablePath(path, &size) == 0) {
+    char* lastSlash = strrchr(path, '/');
+    if (lastSlash) *lastSlash = '\0';
+  }
+#elif defined(__linux__)
+  ssize_t count = readlink("/proc/self/exe", path, sizeof(path) - 1);
+  if (count != -1) {
+    path[count] = '\0';
+    char* lastSlash = strrchr(path, '/');
+    if (lastSlash) *lastSlash = '\0';
+  }
+#endif
+  if (path[0] != '\0') {
     setQjsBaseFolder(path);
   }
 }
-#endif
-
-#ifdef __APPLE__
-#include <unistd.h>
-#include <limits.h>
-#include <mach-o/dyld.h>  // For _NSGetExecutablePath on macOS
-
-__attribute__((constructor)) void initBaseFolder() {
-  char path[PATH_MAX];
-  uint32_t size = PATH_MAX;
-  // macOS specific path retrieval
-  if (_NSGetExecutablePath(path, &size) == 0) {
-    char* lastSlash = strrchr(path, '/');
-    if (lastSlash) {
-      *lastSlash = '\0';
-      setQjsBaseFolder(path);
-    }
-  }
-}
-#endif
-
-#ifdef __linux__
-#include <unistd.h>
-#include <limits.h>
-
-__attribute__((constructor)) void initBaseFolder() {
-  char path[PATH_MAX];
-  uint32_t size = PATH_MAX;
-  // Linux path retrieval
-  ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
-  if (count != -1) {
-    path[count] = '\0';  // Ensure null termination
-    char* lastSlash = strrchr(path, '/');
-    if (lastSlash) {
-      *lastSlash = '\0';
-      setQjsBaseFolder(path);
-    }
-  }
-}
-#endif
 
 #include <errno.h>
 #ifdef _WIN32
@@ -211,38 +198,52 @@ static FileType getFileType(const char *path) {
     }
 }
 
-static const char* getModuleFullPath(const char* moduleName) {
-  static char fullPath[LOADER_PATH_MAX];
-  char fileNameAttempt[LOADER_PATH_MAX];
+static void joinPath(char* dest, size_t size, const char* path1, const char* path2) {
+  if (!path1 || path1[0] == '\0') {
+    strncpy(dest, path2, size - 1);
+    dest[size - 1] = '\0';
+  } else {
+    size_t len1 = strlen(path1);
+    const char* sep = (path1[len1 - 1] == '/' || path1[len1 - 1] == '\\') ? "" : "/";
+    snprintf(dest, size, "%s%s%s", path1, sep, path2);
+  }
+}
 
-  // has extension and file exists, return moduleName without modification
+static int hasJsExtension(const char* filename) {
   const char* extensions[] = {".js", ".mjs", ".cjs"};
   const int numExtensions = sizeof(extensions) / sizeof(extensions[0]);
+  size_t len = strlen(filename);
   for (int i = 0; i < numExtensions; i++) {
-    unsigned long extLen = strlen(extensions[i]);
-    if (strlen(moduleName) > extLen && strcmp(moduleName + strlen(moduleName) - extLen, extensions[i]) == 0) {
-      for (int j = 0; j < qjsBaseFoldersCount; j++) {
-        snprintf(fullPath, sizeof(fullPath), "%s/%s", qjsBaseFolders[j], moduleName);
-        if (getFileType(fullPath) == FILE_TYPE_REG) {
-          return fullPath;
-        }
-      }
-      return NULL;
+    size_t extLen = strlen(extensions[i]);
+    if (len > extLen && strcmp(filename + len - extLen, extensions[i]) == 0) {
+      return 1;
     }
   }
+  return 0;
+}
 
-  // file lookup order: ./dist/module.esm.js > ./dist/module.js > ./module.esm.js > ./module.js
+static const char* findInBaseFolders(const char* subPath) {
+  static char fullPath[LOADER_PATH_MAX];
+  for (int i = 0; i < qjsBaseFoldersCount; i++) {
+    joinPath(fullPath, sizeof(fullPath), qjsBaseFolders[i], subPath);
+    if (getFileType(fullPath) == FILE_TYPE_REG) return fullPath;
+  }
+  return NULL;
+}
+
+static const char* getModuleFullPath(const char* moduleName) {
+  if (hasJsExtension(moduleName)) {
+    return findInBaseFolders(moduleName);
+  }
+
   const char* filePatterns[] = {"dist/%s.esm.js", "dist/%s.js", "%s.esm.js", "%s.js"};
   const int numPatterns = sizeof(filePatterns) / sizeof(filePatterns[0]);
 
   for (int i = 0; i < numPatterns; i++) {
+    char fileNameAttempt[LOADER_PATH_MAX];
     snprintf(fileNameAttempt, sizeof(fileNameAttempt), filePatterns[i], moduleName);
-    for (int j = 0; j < qjsBaseFoldersCount; j++) {
-      snprintf(fullPath, sizeof(fullPath), "%s/%s", qjsBaseFolders[j], fileNameAttempt);
-      if (getFileType(fullPath) == FILE_TYPE_REG) {
-        return fullPath;
-      }
-    }
+    const char* foundPath = findInBaseFolders(fileNameAttempt);
+    if (foundPath) return foundPath;
   }
   return NULL;
 }
@@ -262,71 +263,64 @@ static const char* getActualFilePath(const char* path) {
   return NULL;
 }
 
-char* tryFindNodeModuleEntryFileName(const char* folder, const char* key) {
+static char* parsePackageJsonForKey(const char* folder, const char* key) {
   char packageJsonPath[LOADER_PATH_MAX];
-  snprintf(packageJsonPath, sizeof(packageJsonPath), "%s/package.json", folder);
+  joinPath(packageJsonPath, sizeof(packageJsonPath), folder, "package.json");
 
-  FILE* packageJson = fopen(packageJsonPath, "r");
-  if (!packageJson) {
-    return NULL;
-  }
+  FILE* fp = fopen(packageJsonPath, "r");
+  if (!fp) return NULL;
 
-  char* entryFileName = NULL;
   char line[LOADER_PATH_MAX];
-
-  while (fgets(line, sizeof(line), packageJson)) {
+  char* entryFileName = NULL;
+  while (fgets(line, sizeof(line), fp)) {
     char* pos = strstr(line, key);
-    if (!pos) {
-      continue;
-    }
+    if (!pos) continue;
 
-    char* leftQuote = strchr(pos + strlen(key), '\"');
-    if (!leftQuote) {
-      continue;
-    }
+    char* start = strchr(pos + strlen(key), '\"');
+    if (!start) continue;
+    start++;
+    char* end = strchr(start, '\"');
+    if (!end) continue;
 
-    char* rightQuote = strchr(leftQuote + 1, '\"');
-    if (!rightQuote) {
-      continue;
-    }
-
-    size_t len = rightQuote - (leftQuote + 1);
+    size_t len = end - start;
     entryFileName = (char*)malloc(len + 1);
-    strncpy(entryFileName, leftQuote + 1, len);
-    entryFileName[len] = '\0';
-
-    logInfo("Found entry file: [%s] from package.json line: %s", entryFileName, line);
-    break;
+    if (entryFileName) {
+      memcpy(entryFileName, start, len);
+      entryFileName[len] = '\0';
+      logInfo("Found entry file [%s] from package.json key [%s]", entryFileName, key);
+      break;
+    }
   }
+  fclose(fp);
+  return entryFileName;
+}
 
-  fclose(packageJson);
-
-  char entryFilePath[LOADER_PATH_MAX];
-  snprintf(entryFilePath, sizeof(entryFilePath), "%s/%s", folder, entryFileName);
-  const char* actualPath = getActualFilePath(entryFilePath);
-  if (actualPath) {
-    return entryFileName;
+char* tryFindNodeModuleEntryFileName(const char* folder) {
+  const char* keys[] = {"\"module\":", "\"main\":"};
+  for (int i = 0; i < 2; i++) {
+    char* entry = parsePackageJsonForKey(folder, keys[i]);
+    if (entry) {
+      char entryFilePath[LOADER_PATH_MAX];
+      joinPath(entryFilePath, sizeof(entryFilePath), folder, entry);
+      if (getActualFilePath(entryFilePath)) {
+        return entry;
+      }
+      free(entry);
+    }
   }
-
   return NULL;
 }
 
 char* tryFindNodeModuleEntryPath(const char* moduleName) {
   char folder[LOADER_PATH_MAX];
+  char nodeModulesSubPath[LOADER_PATH_MAX];
+  joinPath(nodeModulesSubPath, sizeof(nodeModulesSubPath), "node_modules", moduleName);
 
   for (int j = 0; j < qjsBaseFoldersCount; j++) {
-    snprintf(folder, sizeof(folder), "%s/node_modules/%s", qjsBaseFolders[j], moduleName);
-
-    char* entryFileName = tryFindNodeModuleEntryFileName(folder, "\"module\":");
-    if (!entryFileName) {
-      entryFileName = tryFindNodeModuleEntryFileName(folder, "\"main\":");
-    }
-
-    if (entryFileName) {
-      return entryFileName;
-    }
+    joinPath(folder, sizeof(folder), qjsBaseFolders[j], nodeModulesSubPath);
+    char* entryFileName = tryFindNodeModuleEntryFileName(folder);
+    if (entryFileName) return entryFileName;
   }
-
   logError("Failed to find the entry file of the node module: %s", moduleName);
   return NULL;
 }
@@ -428,37 +422,34 @@ JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-JSModuleDef* js_module_loader(JSContext* ctx,
-                              const char* moduleName,
-                              void* opaque) {
-  char fullPath[LOADER_PATH_MAX];
-
-  // Try to find the file in any of the registered base folders
+JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaque) {
+  // 1. Try to find the file in any of the registered base folders (non-node_modules)
   for (int i = 0; i < qjsBaseFoldersCount; i++) {
+    char fullPath[LOADER_PATH_MAX];
     if (isAbsolutePath(moduleName) || getActualFilePath(moduleName)) {
-      snprintf(fullPath, sizeof(fullPath), "%s", moduleName);
+      strncpy(fullPath, moduleName, sizeof(fullPath) - 1);
+      fullPath[sizeof(fullPath) - 1] = '\0';
     } else {
-      snprintf(fullPath, sizeof(fullPath), "%s/%s", qjsBaseFolders[i], moduleName);
+      joinPath(fullPath, sizeof(fullPath), qjsBaseFolders[i], moduleName);
     }
 
-    const char* actualPath = getActualFilePath(fullPath);
-    if (actualPath) { // file exists, it's a js file outside node_modules
-      const JSValue funcObj = loadJsModule(ctx, moduleName);
+    if (getActualFilePath(fullPath)) {
+      JSValue funcObj = loadJsModule(ctx, moduleName);
       return JS_VALUE_GET_PTR(funcObj);
     }
   }
 
-  // try to load the file from node_modules in the base folders
-  char* nodeModuleEntryFile = tryFindNodeModuleEntryPath(moduleName);
-  if (!nodeModuleEntryFile) {
-    logError("Failed to load the js module: %s", moduleName);
-    return NULL;
+  // 2. Try to load from node_modules
+  char* entryFile = tryFindNodeModuleEntryPath(moduleName);
+  if (entryFile) {
+    char subPath[LOADER_PATH_MAX];
+    snprintf(subPath, sizeof(subPath), "node_modules/%s/%s", moduleName, entryFile);
+    free(entryFile);
+
+    JSValue funcObj = loadJsModule(ctx, subPath);
+    return JS_VALUE_GET_PTR(funcObj);
   }
 
-  char modulePath[LOADER_PATH_MAX];
-  snprintf(modulePath, sizeof(modulePath), "node_modules/%s/%s", moduleName, nodeModuleEntryFile);
-  free(nodeModuleEntryFile);
-
-  const JSValue funcObj = loadJsModule(ctx, modulePath);
-  return JS_VALUE_GET_PTR(funcObj);
+  logError("Failed to load js module: %s", moduleName);
+  return NULL;
 }
