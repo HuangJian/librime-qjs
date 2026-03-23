@@ -435,7 +435,10 @@ JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaq
 
     if (getActualFilePath(fullPath)) {
       JSValue funcObj = loadJsModule(ctx, moduleName);
-      return JS_VALUE_GET_PTR(funcObj);
+      if (JS_IsException(funcObj)) return NULL;
+      JSModuleDef* m = JS_VALUE_GET_PTR(funcObj);
+      JS_FreeValue(ctx, funcObj);
+      return m;
     }
   }
 
@@ -447,7 +450,10 @@ JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaq
     free(entryFile);
 
     JSValue funcObj = loadJsModule(ctx, subPath);
-    return JS_VALUE_GET_PTR(funcObj);
+    if (JS_IsException(funcObj)) return NULL;
+    JSModuleDef* m = JS_VALUE_GET_PTR(funcObj);
+    JS_FreeValue(ctx, funcObj);
+    return m;
   }
 
   logError("Failed to load js module: %s", moduleName);

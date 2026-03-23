@@ -25,7 +25,7 @@ target_link_libraries(librime-qjs-tests PUBLIC
   qjs
   librime-qjs-objs
   GTest::gtest
-  glog::glog
+  glog
   marisa
   leveldb
 )
