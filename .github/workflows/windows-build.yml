@@ -79,7 +79,15 @@ jobs:
           echo "git_ref_name=$git_ref_name" >> $env:GITHUB_ENV
           git submodule > submodule-status
 
+      - name: Cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BOOST_ROOT }}
+          key: ${{ runner.os }}-boost-${{ env.boost_version }}
+
       - name: Install boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
         run: .\install-boost.bat
 
       - name: Cache dependencies
