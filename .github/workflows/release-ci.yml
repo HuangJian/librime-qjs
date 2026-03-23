@@ -17,7 +17,8 @@ jobs:
     with:
       repository: HuangJian/librime
       rime_plugins: ${{ github.repository }}@${{ github.ref_name }}
-      build_type: "${{ github.ref == 'refs/heads/main' && 'Nightly' || 'Release' }}"
+      build_type: "Release"
+      enable_coverage: true
 
   windows:
     uses: ./.github/workflows/windows-build.yml

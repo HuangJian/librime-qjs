@@ -7,6 +7,7 @@ project(LibrimeQjs VERSION 1.3.0)
 
 option(BUILD_TOOLS "Build tools" ON)
 option(BUILD_BENCHMARKS "Run benchmarks" OFF)
+option(ENABLE_COVERAGE "Enable coverage instrumentation" OFF)
 
 option(ENABLE_JAVASCRIPTCORE "Enable JavaScriptCore" OFF)
 if(APPLE)
@@ -25,6 +26,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Specify C11 standard for QuickJS
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
+
+if(ENABLE_COVERAGE)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  endif()
+endif()
 
 # Add _GNU_SOURCE definition for Boost.Stacktrace
 add_definitions(-D_GNU_SOURCE)

@@ -14,6 +14,10 @@ on:
         default: Nightly
         required: false
         type: string
+      enable_coverage:
+        default: false
+        required: false
+        type: boolean
 jobs:
   build:
     runs-on: macos-15
@@ -61,7 +65,7 @@ jobs:
         run: |
           brew install llvm ninja
           echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
-          echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
           
 
@@ -99,7 +103,21 @@ jobs:
           echo qjs_git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
       - name: Build and test
-        run: make test
+        run: |
+          if [ "${{ inputs.enable_coverage }}" = "true" ]; then
+            cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF
+            cmake --build build
+            (cd build; ctest --output-on-failure)
+          else
+            make test
+          fi
+
+      - name: Generate coverage report
+        if: inputs.enable_coverage
+        run: |
+          llvm-profdata merge -sparse ./build/*.profraw -o ./build/test.profdata
+          llvm-cov show ./plugins/qjs/build/librime-qjs-tests -instr-profile=./build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
+          llvm-cov report ./plugins/qjs/build/librime-qjs-tests -instr-profile=./build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
 
       - name: Create distributable
         run: |
@@ -120,3 +138,10 @@ jobs:
           name: artifact-${{ runner.os }}-${{ runner.arch }}
           path: |
             librime-qjs-${{ env.qjs_git_ref_name }}-${{ runner.os }}-${{ runner.arch }}.tar.bz2
+
+      - name: Upload coverage report
+        if: inputs.enable_coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ runner.os }}-${{ runner.arch }}
+          path: coverage_report
