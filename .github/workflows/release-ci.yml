@@ -39,29 +39,23 @@ jobs:
     needs: [macos]
     if: ${{ github.repository == 'HuangJian/librime-qjs' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Download all coverage reports
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download coverage report
         uses: actions/download-artifact@v4
         with:
-          pattern: coverage-report-macOS-*
-          path: coverage_reports
-
-      - name: Prepare reports for deployment
-        run: |
-          mkdir -p public
-          mv coverage_reports/* public/
-          cd public
-          echo "<html><body><h1>librime-qjs Test Coverage</h1><ul>" > index.html
-          for dir in */; do
-            echo "<li><a href='${dir}index.html'>${dir%/}</a></li>" >> index.html
-          done
-          echo "</ul></body></html>" >> index.html
+          name: coverage-report-macOS
+          path: coverage_report
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./coverage_report
 
   release:
     needs: [macos, windows]

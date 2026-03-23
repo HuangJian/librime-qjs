@@ -20,11 +20,9 @@ on:
         type: boolean
 jobs:
   build:
-    runs-on: ${{ matrix.runs-on }}
+    runs-on: macos-15
     strategy:
       fail-fast: false
-      matrix:
-        runs-on: [macos-15, macos-13]
     env:
       boost_version: 1.89.0
       BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.89.0
@@ -96,37 +94,15 @@ jobs:
           echo qjs_git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
       - name: Build and test
-        run: |
-          if [ "${{ inputs.enable_coverage }}" = "true" ]; then
-            cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}" -DCMAKE_INSTALL_PREFIX="./dist" -GNinja
-            cmake --build build
-            (cd build; ctest --output-on-failure)
-          else
-            make test
-          fi
-
-      - name: Generate coverage report
-        if: inputs.enable_coverage
-        run: |
-          llvm-profdata merge -sparse ./build/*.profraw -o ./build/test.profdata
-          llvm-cov show ./build/plugins/qjs/build/librime-qjs-tests -instr-profile=./build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
-          llvm-cov report ./build/plugins/qjs/build/librime-qjs-tests -instr-profile=./build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
+        run: make test
 
       - name: Create distributable
         run: |
-          if [ "${{ inputs.enable_coverage }}" = "true" ]; then
-            cmake --build build --target install
-            mkdir assets
-            cp -r ./version-info.txt ./assets
-            cp -r ./dist/lib/** ./assets
-            cp -r ./build/plugins/qjs/build/qjs ./assets
-          else
-            make install
-            mkdir assets
-            cp -r ./version-info.txt ./assets
-            cp -r ./dist/lib/** ./assets
-            cp -r ./plugins/qjs/build/qjs ./assets
-          fi
+          make install
+          mkdir assets
+          cp -r ./version-info.txt ./assets
+          cp -r ./dist/lib/** ./assets
+          cp -r ./plugins/qjs/build/qjs ./assets
           cd ./plugins/qjs
           bash ./tools/update-version.sh ${{ inputs.build_type }}
           cd ../..
@@ -140,9 +116,68 @@ jobs:
           path: |
             librime-qjs-${{ env.qjs_git_ref_name }}-${{ runner.os }}-${{ runner.arch }}.tar.bz2
 
+  coverage:
+    runs-on: macos-15
+    if: inputs.enable_coverage
+    env:
+      boost_version: 1.89.0
+      BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.89.0
+      RIME_PLUGINS: ${{ inputs.rime_plugins }}
+    steps:
+      - name: Checkout last commit
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ inputs.repository }}
+          submodules: recursive
+
+      - name: Configure build environment
+        run: |
+          brew install llvm ninja
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
+
+      - name: Configure build variant
+        run: |
+          echo BUILD_UNIVERSAL=1 >> $GITHUB_ENV
+
+      - name: Install Boost
+        run: ./install-boost.sh
+
+      - name: Check submodules
+        run: git submodule > submodule-status
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            bin
+            include
+            lib
+            share
+          key: ${{ runner.os }}-${{ runner.arch }}-deps-${{ hashFiles('submodule-status') }}
+
+      - name: Build dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: make deps
+
+      - name: Install Rime plugins
+        run: ./action-install-plugins-macos.sh
+
+      - name: Build and test with coverage
+        run: |
+          cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}" -DCMAKE_INSTALL_PREFIX="./dist" -GNinja
+          cmake --build build
+          (cd build; export LLVM_PROFILE_FILE="code-%p.profraw"; ctest --output-on-failure)
+
+      - name: Generate coverage report
+        run: |
+          llvm-profdata merge -sparse ./build/*.profraw -o ./build/test.profdata
+          llvm-cov show ./build/plugins/qjs/librime-qjs-tests -instr-profile=./build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
+          llvm-cov report ./build/plugins/qjs/librime-qjs-tests -instr-profile=./build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
+
       - name: Upload coverage report
-        if: inputs.enable_coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report-${{ runner.os }}-${{ runner.arch }}
+          name: coverage-report-macOS
           path: coverage_report
