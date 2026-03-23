@@ -71,8 +71,32 @@ jobs:
         env:
           CMAKE_GENERATOR: Ninja
 
+  asan:
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang-22
+      CXX: clang++-22
+      RIME_PLUGINS: ${{ inputs.rime_plugins }}
+    steps:
+      - name: Checkout last commit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
+
+      - name: Install dependency
+        run: ./action-install-linux.sh
+
+      - name: Install Rime plugins
+        run: ./action-install-plugins-linux.sh
+
+      - name: Install clang-22
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
+
       - name: Detect Memory Leak
-        if: matrix.compiler == 'clang-22'
         run: |
           make clean
           make test-debug CFLAGS="-g -fsanitize=address" LDFLAGS="-fsanitize=address"
