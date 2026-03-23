@@ -20,12 +20,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang-19]
+        compiler: [gcc, clang-22]
         include:
           - compiler: gcc
             cxx_compiler: g++
-          - compiler: clang-19
-            cxx_compiler: clang++-19
+          - compiler: clang-22
+            cxx_compiler: clang++-22
     env:
       CC: ${{ matrix.compiler }}
       CXX: ${{ matrix.cxx_compiler }}
@@ -38,7 +38,7 @@ jobs:
       #     echo "set -g history-limit 50000" > ~/.tmate.conf
       #     echo "set -g terminal-overrides 'xterm*:smcup@:rmcup@'" >> ~/.tmate.conf
       # - name: Setup tmate session
-      #   if: matrix.compiler == 'clang-19'
+      #   if: matrix.compiler == 'clang-22'
       #   uses: mxschmitt/action-tmate@v3
       #   with:
       #     limit-access-to-actor: true
@@ -59,11 +59,12 @@ jobs:
       - name: Install Rime plugins
         run: ./action-install-plugins-linux.sh
 
-      - name: Install clang-19
-        if: matrix.compiler == 'clang-19'
+      - name: Install clang-22
+        if: matrix.compiler == 'clang-22'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-19
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
 
       - name: Build and test
         run: make test
@@ -71,7 +72,7 @@ jobs:
           CMAKE_GENERATOR: Ninja
 
       - name: Detect Memory Leak
-        if: matrix.compiler == 'clang-19'
+        if: matrix.compiler == 'clang-22'
         run: |
           make clean
           make test-debug CFLAGS="-g -fsanitize=address" LDFLAGS="-fsanitize=address"
