@@ -105,7 +105,7 @@ jobs:
       - name: Build and test
         run: |
           if [ "${{ inputs.enable_coverage }}" = "true" ]; then
-            cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF
+            cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}"
             cmake --build build
             (cd build; ctest --output-on-failure)
           else
@@ -116,8 +116,8 @@ jobs:
         if: inputs.enable_coverage
         run: |
           llvm-profdata merge -sparse ./build/*.profraw -o ./build/test.profdata
-          llvm-cov show ./plugins/qjs/build/librime-qjs-tests -instr-profile=./build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
-          llvm-cov report ./plugins/qjs/build/librime-qjs-tests -instr-profile=./build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
+          llvm-cov show ./build/librime-qjs-tests -instr-profile=./build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
+          llvm-cov report ./build/librime-qjs-tests -instr-profile=./build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
 
       - name: Create distributable
         run: |

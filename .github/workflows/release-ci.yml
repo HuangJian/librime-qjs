@@ -17,7 +17,7 @@ jobs:
     with:
       repository: HuangJian/librime
       rime_plugins: ${{ github.repository }}@${{ github.ref_name }}
-      build_type: "Release"
+      build_type: "${{ github.ref == 'refs/heads/main' && 'Nightly' || 'Release' }}"
       enable_coverage: true
 
   windows:
