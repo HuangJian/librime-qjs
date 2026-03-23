@@ -20,17 +20,11 @@ on:
         type: boolean
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
-#      matrix:
-#        runs-on: [macos-15]
-#        include:
-#          - runs-on: macos-15-intel
-#            create-distributable: false
-#          - runs-on: macos-15
-#            create-distributable: true
-#            build_variant: universal
+      matrix:
+        runs-on: [macos-15, macos-13]
     env:
       boost_version: 1.89.0
       BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.89.0
@@ -64,7 +58,6 @@ jobs:
         #   export CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
         run: |
           brew install llvm ninja
-          echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
           
@@ -105,7 +98,7 @@ jobs:
       - name: Build and test
         run: |
           if [ "${{ inputs.enable_coverage }}" = "true" ]; then
-            cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}" -DCMAKE_INSTALL_PREFIX="./dist"
+            cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}" -DCMAKE_INSTALL_PREFIX="./dist" -GNinja
             cmake --build build
             (cd build; ctest --output-on-failure)
           else
