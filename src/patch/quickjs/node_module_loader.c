@@ -1,10 +1,10 @@
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "node_module_loader.h"
+#include "node_module_loader_os.h"
 
 #define LOG_AND_RETURN_ERROR(ctx, format, ...) \
   do { \
@@ -88,7 +88,6 @@ void setQjsBaseFolder(const char* path) {
   // Check for duplicates
   for (int i = 0; i < qjsBaseFoldersCount; i++) {
     if (strcmp(qjsBaseFolders[i], path) == 0) {
-      // logInfo("Base folder already registered: %s", path);
       return;
     }
   }
@@ -103,99 +102,45 @@ void setQjsBaseFolder(const char* path) {
   qjsBaseFoldersCount++;
 }
 
-#if defined(_WIN32)
-#include <windows.h>
-#elif defined(__APPLE__)
-#include <mach-o/dyld.h>
-#include <limits.h>
-#include <unistd.h>
-#elif defined(__linux__)
-#include <limits.h>
-#include <unistd.h>
-#endif
-
 __attribute__((constructor)) void initBaseFolder() {
   char path[LOADER_PATH_MAX] = {0};
+  if (osGetExecutablePath(path, sizeof(path)) == 0) {
 #if defined(_WIN32)
-  if (GetModuleFileNameA(NULL, path, sizeof(path)) > 0) {
-    char* last_slash = strrchr(path, '\\');
-    if (last_slash) *last_slash = '\0';
-  }
-#elif defined(__APPLE__)
-  uint32_t size = sizeof(path);
-  if (_NSGetExecutablePath(path, &size) == 0) {
+    char* lastSlash = strrchr(path, '\\');
+#else
     char* lastSlash = strrchr(path, '/');
-    if (lastSlash) *lastSlash = '\0';
-  }
-#elif defined(__linux__)
-  ssize_t count = readlink("/proc/self/exe", path, sizeof(path) - 1);
-  if (count != -1) {
-    path[count] = '\0';
-    char* lastSlash = strrchr(path, '/');
-    if (lastSlash) *lastSlash = '\0';
-  }
 #endif
-  if (path[0] != '\0') {
+    if (lastSlash) *lastSlash = '\0';
     setQjsBaseFolder(path);
   }
 }
-
-#include <errno.h>
-#ifdef _WIN32
-    #include <sys/stat.h>
-    typedef struct _stat StatStruct;
-    #define STAT_FUNC _stat
-#else
-    #include <sys/stat.h>
-    #include <unistd.h>
-    typedef struct stat StatStruct;
-    #define STAT_FUNC stat
-#endif
-
-// If the system doesn't provide S_ISDIR / S_ISREG macros, define them manually.
-#ifndef S_ISDIR
-#define S_ISDIR(m)  (((m) & S_IFMT) == S_IFDIR)
-#endif
-#ifndef S_ISREG
-#define S_ISREG(m)  (((m) & S_IFMT) == S_IFREG)
-#endif
-
-typedef enum {
-    FILE_TYPE_ERROR = -1,    // error occurred while checking the file type (e.g., permission denied)
-    FILE_TYPE_NOT_EXIST = 0, // path is not exist
-    FILE_TYPE_REG = 1,       // regular file
-    FILE_TYPE_DIR = 2,       // directory
-    FILE_TYPE_OTHER = 3      // other type (like device, pipe, etc.)
-} FileType;
 
 /**
  * get the type of a given path (following symlinks)
  * @param path the path to check
  * @return FileType enum value
  */
-static FileType getFileType(const char *path) {
-    if (path == NULL) {
-        return FILE_TYPE_ERROR;
-    }
+static FileType getFileType(const char* path) {
+  if (path == NULL) {
+    return FILE_TYPE_ERROR;
+  }
 
-    StatStruct st;
-
-    if (STAT_FUNC(path, &st) != 0) {
-        if (errno == ENOENT) {
-            return FILE_TYPE_NOT_EXIST;
-        } else {
-            return FILE_TYPE_ERROR; // other errors (e.g., permission denied)
-        }
-    }
-
-    // get the file type
-    if (S_ISDIR(st.st_mode)) {
-        return FILE_TYPE_DIR;
-    } else if (S_ISREG(st.st_mode)) {
-        return FILE_TYPE_REG;
+  StatStruct st;
+  if (STAT_FUNC(path, &st) != 0) {
+    if (errno == ENOENT) {
+      return FILE_TYPE_NOT_EXIST;
     } else {
-        return FILE_TYPE_OTHER; // other type (like device, pipe, etc.)
+      return FILE_TYPE_ERROR; // other errors (e.g., permission denied)
     }
+  }
+
+  if (S_ISDIR(st.st_mode)) {
+    return FILE_TYPE_DIR;
+  } else if (S_ISREG(st.st_mode)) {
+    return FILE_TYPE_REG;
+  } else {
+    return FILE_TYPE_OTHER; // other type (like device, pipe, etc.)
+  }
 }
 
 static void joinPath(char* dest, size_t size, const char* path1, const char* path2) {
@@ -367,11 +312,9 @@ char* loadFile(const char* absolutePath) {
   content[length] = '\0';
   return content;
 }
+
 bool isAbsolutePath(const char* path) {
-  const size_t len = strlen(path);
-  return (len > 0 && path[0] == '/') ||  // Unix-style absolute path
-         (len > 1 && isalpha(path[0]) && path[1] == ':') || // Windows drive letter (e.g., C:)
-         (len > 1 && path[0] == '\\' && path[1] == '\\');  // Windows UNC path
+  return osIsAbsolutePath(path) != 0;
 }
 
 char* readJsCode(JSContext* ctx, const char* moduleName) {
@@ -436,7 +379,7 @@ JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaq
     if (getActualFilePath(fullPath)) {
       JSValue funcObj = loadJsModule(ctx, moduleName);
       if (JS_IsException(funcObj)) return NULL;
-      JSModuleDef* m = JS_VALUE_GET_PTR(funcObj);
+      JSModuleDef* m = (JSModuleDef*)JS_VALUE_GET_PTR(funcObj);
       JS_FreeValue(ctx, funcObj);
       return m;
     }
@@ -451,7 +394,7 @@ JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaq
 
     JSValue funcObj = loadJsModule(ctx, subPath);
     if (JS_IsException(funcObj)) return NULL;
-    JSModuleDef* m = JS_VALUE_GET_PTR(funcObj);
+    JSModuleDef* m = (JSModuleDef*)JS_VALUE_GET_PTR(funcObj);
     JS_FreeValue(ctx, funcObj);
     return m;
   }
