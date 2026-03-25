@@ -17,7 +17,7 @@ static int isAbsolutePath(const char* path) {
   return path[0] == '/' || path[0] == '\\' || (len > 1 && isalpha(path[0]) != 0 && path[1] == ':');
 }
 
-static int getExecutablePath(const char* path, size_t size) {
+static int getExecutablePath(char* path, size_t size) {  // NOLINT(*-non-const-parameter)
   if (GetModuleFileNameA(NULL, path, (DWORD)size) > 0) {
     return 0;
   }
