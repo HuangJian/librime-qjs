@@ -21,6 +21,12 @@
 enum { LOADER_PATH_MAX = 1024, MAX_BASE_FOLDERS = 5 };
 
 #ifdef BUILD_FOR_QJS_EXE
+/**
+ * @brief Logs an informational message to stdout.
+ *
+ * @param format Printf-style format string.
+ * @param ... Variable arguments for the format string.
+ */
 static void log_v(FILE* stream, const char* format, va_list args) {
   vfprintf(stream, format, args);
   fputc('\n', stream);
@@ -33,6 +39,12 @@ void logInfo(const char* format, ...) {
   va_end(args);
 }
 
+/**
+ * @brief Logs an error message to stderr.
+ *
+ * @param format Printf-style format string.
+ * @param ... Variable arguments for the format string.
+ */
 void logError(const char* format, ...) {
   va_list args;
   va_start(args, format);
@@ -44,6 +56,13 @@ void logError(const char* format, ...) {
 extern void logInfoImpl(const char* message);
 extern void logErrorImpl(const char* message);
 
+/**
+ * @brief Internal helper to log messages using the implementation provided by the host.
+ *
+ * @param is_error Non-zero if this is an error message.
+ * @param format Printf-style format string.
+ * @param args Variable arguments for the format string.
+ */
 static void log_to_impl(int is_error, const char* format, va_list args) {
   char buffer[LOADER_PATH_MAX];
   vsnprintf(buffer, sizeof(buffer), format, args);
@@ -74,6 +93,11 @@ static char qjsBaseFolders[MAX_BASE_FOLDERS][LOADER_PATH_MAX] = {{0}};
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 static int qjsBaseFoldersCount = 0;
 
+/**
+ * @brief Registers a base folder path for the module loader to search in.
+ *
+ * @param path The absolute or relative path to the folder.
+ */
 void setQjsBaseFolder(const char* path) {
   if (!path || strlen(path) == 0) {
     return;
@@ -96,6 +120,10 @@ void setQjsBaseFolder(const char* path) {
   qjsBaseFoldersCount++;
 }
 
+/**
+ * @brief Automatically initializes the base search folder based on the executable's location.
+ * Called as a constructor during program initialization.
+ */
 __attribute__((constructor)) void initBaseFolder() {
   char path[LOADER_PATH_MAX] = {0};
   if (osGetExecutablePath(path, sizeof(path)) == 0) {
@@ -110,9 +138,10 @@ __attribute__((constructor)) void initBaseFolder() {
 }
 
 /**
- * get the type of a given path (following symlinks)
- * @param path the path to check
- * @return FileType enum value
+ * @brief Retrieves the type of a filesystem entry.
+ *
+ * @param path The path to check.
+ * @return FileType enum value (REG, DIR, NOT_EXIST, etc.).
  */
 static FileType getFileType(const char* path) {
   if (path == NULL) {
@@ -137,6 +166,14 @@ static FileType getFileType(const char* path) {
   }
 }
 
+/**
+ * @brief Safely joins two path components into a single path string.
+ *
+ * @param dest Buffer to store the joined path.
+ * @param size Size of the destination buffer.
+ * @param path1 The first part of the path.
+ * @param path2 The second part of the path.
+ */
 static void joinPath(char* dest, size_t size, const char* path1, const char* path2) {
   if (!path1 || path1[0] == '\0') {
     strncpy(dest, path2, size - 1);
@@ -148,6 +185,12 @@ static void joinPath(char* dest, size_t size, const char* path1, const char* pat
   }
 }
 
+/**
+ * @brief Checks if a filename has a recognized JavaScript module extension.
+ *
+ * @param filename The filename to check.
+ * @return 1 if it has a JS extension, 0 otherwise.
+ */
 static int hasJsExtension(const char* filename) {
   const char* extensions[] = {".js", ".mjs", ".cjs"};
   const int numExtensions = sizeof(extensions) / sizeof(extensions[0]);
@@ -161,6 +204,12 @@ static int hasJsExtension(const char* filename) {
   return 0;
 }
 
+/**
+ * @brief Searches for a subpath in all registered base folders.
+ *
+ * @param subPath The relative subpath to search for.
+ * @return Pointer to a static buffer containing the full path if found, or NULL.
+ */
 static const char* findInBaseFolders(const char* subPath) {
   static char fullPath[LOADER_PATH_MAX];
   for (int i = 0; i < qjsBaseFoldersCount; i++) {
@@ -170,6 +219,13 @@ static const char* findInBaseFolders(const char* subPath) {
   return NULL;
 }
 
+/**
+ * @brief Resolves the full path of a module by searching for various patterns.
+ * Patterns include: extension match, dist/ files, and plain module names.
+ *
+ * @param moduleName The name of the module to resolve.
+ * @return Pointer to a static buffer containing the full path if resolved, or NULL.
+ */
 static const char* getModuleFullPath(const char* moduleName) {
   if (hasJsExtension(moduleName)) {
     return findInBaseFolders(moduleName);
@@ -187,6 +243,12 @@ static const char* getModuleFullPath(const char* moduleName) {
   return NULL;
 }
 
+/**
+ * @brief Tries to find the actual file path by appending recognized extensions.
+ *
+ * @param path The base path to check.
+ * @return Pointer to a static buffer containing the actual file path if found, or NULL.
+ */
 static const char* getActualFilePath(const char* path) {
   const char* possibleExtensions[] = {"", ".js", ".mjs", ".cjs"};
   const int numExtensions = sizeof(possibleExtensions) / sizeof(possibleExtensions[0]);
@@ -202,6 +264,13 @@ static const char* getActualFilePath(const char* path) {
   return NULL;
 }
 
+/**
+ * @brief Parses package.json in a folder to find the entry point for a given key.
+ *
+ * @param folder The folder containing package.json.
+ * @param key The key to look for (e.g., "module", "main").
+ * @return Malloc'd string with the entry filename if found, or NULL.
+ */
 static char* parsePackageJsonForKey(const char* folder, const char* key) {
   char packageJsonPath[LOADER_PATH_MAX];
   joinPath(packageJsonPath, sizeof(packageJsonPath), folder, "package.json");
@@ -234,6 +303,13 @@ static char* parsePackageJsonForKey(const char* folder, const char* key) {
   return entryFileName;
 }
 
+/**
+ * @brief Searches for a node module's entry point in a specific folder.
+ * Checks "module" then "main" fields in package.json.
+ *
+ * @param folder The node module folder.
+ * @return Malloc'd string with the entry filename if found, or NULL.
+ */
 char* tryFindNodeModuleEntryFileName(const char* folder) {
   const char* keys[] = {"\"module\":", "\"main\":"};
   for (int i = 0; i < 2; i++) {
@@ -250,6 +326,12 @@ char* tryFindNodeModuleEntryFileName(const char* folder) {
   return NULL;
 }
 
+/**
+ * @brief Resolves a node module's entry file by searching in node_modules folders.
+ *
+ * @param moduleName The name of the node module.
+ * @return Malloc'd string with the entry filename if found, or NULL.
+ */
 char* tryFindNodeModuleEntryPath(const char* moduleName) {
   char folder[LOADER_PATH_MAX];
   char nodeModulesSubPath[LOADER_PATH_MAX];
@@ -264,6 +346,12 @@ char* tryFindNodeModuleEntryPath(const char* moduleName) {
   return NULL;
 }
 
+/**
+ * @brief Reads the entire content of a file into a null-terminated string.
+ *
+ * @param absolutePath The path to the file.
+ * @return Malloc'd string with file content, or NULL on error.
+ */
 char* loadFile(const char* absolutePath) {
   const char* actualPath  = getActualFilePath(absolutePath);
   if (!actualPath) {
@@ -307,10 +395,23 @@ char* loadFile(const char* absolutePath) {
   return content;
 }
 
+/**
+ * @brief Checks if a path is absolute according to platform rules.
+ *
+ * @param path The path to check.
+ * @return true if absolute, false otherwise.
+ */
 bool isAbsolutePath(const char* path) {
   return osIsAbsolutePath(path) != 0;
 }
 
+/**
+ * @brief Locates and reads the source code of a JavaScript module.
+ *
+ * @param ctx QuickJS context.
+ * @param moduleName Name of the module.
+ * @return Malloc'd string with JS source code, or NULL.
+ */
 char* readJsCode(JSContext* ctx, const char* moduleName) {
   if (qjsBaseFoldersCount == 0) {
     LOG_AND_THROW_ERROR(ctx, "basePath is empty in loading js file: %s", moduleName);
@@ -326,6 +427,13 @@ char* readJsCode(JSContext* ctx, const char* moduleName) {
   return loadFile(fullPath);
 }
 
+/**
+ * @brief Compiles a JavaScript module and returns its function object.
+ *
+ * @param ctx QuickJS context.
+ * @param moduleName Name of the module.
+ * @return JSValue representing the compiled module, or JS_EXCEPTION.
+ */
 JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
   char* code = loadFile(moduleName);  // attempt to load the file directly first
   if (!code) {
@@ -358,6 +466,15 @@ JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
   return funcObj;
 }
 
+/**
+ * @brief Standard QuickJS module loader callback implementation.
+ * Resolves module names to files and compiles them into QuickJS modules.
+ *
+ * @param ctx QuickJS context.
+ * @param moduleName Name of the module to load.
+ * @param opaque User-provided opaque data.
+ * @return JSModuleDef pointer on success, NULL on error.
+ */
 // NOLINTNEXTLINE(readability-identifier-naming)
 JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaque) {
   // 1. Try to find the file in any of the registered base folders (non-node_modules)
