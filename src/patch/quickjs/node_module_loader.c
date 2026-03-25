@@ -6,12 +6,16 @@
 #include "node_module_loader.h"
 
 #define LOG_AND_RETURN_ERROR(ctx, format, ...)     \
+  do {                                             \
     logError(format, ##__VA_ARGS__);               \
-    return JS_ThrowReferenceError(ctx, format, ##__VA_ARGS__);
+    return JS_ThrowReferenceError(ctx, format, ##__VA_ARGS__); \
+  } while (0)
 
 #define LOG_AND_THROW_ERROR(ctx, format, ...)      \
+  do {                                             \
     logError(format, ##__VA_ARGS__);               \
-    JS_ThrowReferenceError(ctx, format, ##__VA_ARGS__);
+    JS_ThrowReferenceError(ctx, format, ##__VA_ARGS__);        \
+  } while (0)
 
 enum { LOADER_PATH_MAX = 1024, MAX_BASE_FOLDERS = 5 };
 
@@ -65,7 +69,7 @@ extern void logErrorImpl(const char* message);
  * @param format Printf-style format string.
  * @param args Variable arguments for the format string.
  */
-static void logToImpl(const int isError, const char* format, va_list args) {
+static void logToImpl(int isError, const char* format, va_list args) {
   char buffer[LOADER_PATH_MAX];
   vsnprintf(buffer, sizeof(buffer), format, args);
   if (isError) {
@@ -140,14 +144,15 @@ void setQjsBaseFolder(const char* path) {
  */
 __attribute__((constructor)) void initBaseFolder() {
   char path[LOADER_PATH_MAX] = {0};
-  if (getExecutablePath(path, sizeof(path)) == 0) {
-#ifdef _WIN32
+  if (osGetExecutablePath(path, sizeof(path)) == 0) {
+#if defined(_WIN32)
     char* lastSlash = strrchr(path, '\\');
 #else
     char* lastSlash = strrchr(path, '/');
 #endif
-    if (lastSlash) { *lastSlash = '\0';
-}
+    if (lastSlash) {
+      *lastSlash = '\0';
+    }
     setQjsBaseFolder(path);
   }
 }
@@ -167,17 +172,18 @@ static FileType getFileType(const char* path) {
   if (STAT_FUNC(path, &st) != 0) {
     if (errno == ENOENT) {
       return FileType_NotExist;
+    } else {
+      return FileType_Error; // other errors (e.g., permission denied)
     }
-    return FileType_Error;  // other errors (e.g., permission denied)
   }
 
   if (S_ISDIR(st.st_mode)) {
     return FileType_Dir;
-  }
-  if (S_ISREG(st.st_mode)) {
+  } else if (S_ISREG(st.st_mode)) {
     return FileType_Reg;
+  } else {
+    return FileType_Other; // other type (like device, pipe, etc.)
   }
-  return FileType_Other;  // other type (like device, pipe, etc.)
 }
 
 /**
@@ -188,13 +194,13 @@ static FileType getFileType(const char* path) {
  * @param path1 The first part of the path.
  * @param path2 The second part of the path.
  */
-static void joinPath(char* dest, const size_t size, const char* path1, const char* path2) {
+static void joinPath(char* dest, size_t size, const char* path1, const char* path2) {
   if (!path1 || path1[0] == '\0') {
     strncpy(dest, path2, size - 1);
     dest[size - 1] = '\0';
   } else {
-    const size_t len1 = strlen(path1);
-    const char* sep = path1[len1 - 1] == '/' || path1[len1 - 1] == '\\' ? "" : "/";
+    size_t len1 = strlen(path1);
+    const char* sep = (path1[len1 - 1] == '/' || path1[len1 - 1] == '\\') ? "" : "/";
     snprintf(dest, size, "%s%s%s", path1, sep, path2);
   }
 }
@@ -208,9 +214,9 @@ static void joinPath(char* dest, const size_t size, const char* path1, const cha
 static int hasJsExtension(const char* filename) {
   const char* extensions[] = {".js", ".mjs", ".cjs"};
   const int numExtensions = sizeof(extensions) / sizeof(extensions[0]);
-  const size_t len = strlen(filename);
+  size_t len = strlen(filename);
   for (int i = 0; i < numExtensions; i++) {
-    const size_t extLen = strlen(extensions[i]);
+    size_t extLen = strlen(extensions[i]);
     if (len > extLen && strcmp(filename + len - extLen, extensions[i]) == 0) {
       return 1;
     }
@@ -228,8 +234,9 @@ static const char* findInBaseFolders(const char* subPath) {
   static char fullPath[LOADER_PATH_MAX];
   for (int i = 0; i < qjsBaseFoldersCount; i++) {
     joinPath(fullPath, sizeof(fullPath), qjsBaseFolders[i], subPath);
-    if (getFileType(fullPath) == FileType_Reg) { return fullPath;
-}
+    if (getFileType(fullPath) == FileType_Reg) {
+      return fullPath;
+    }
   }
   return NULL;
 }
@@ -253,8 +260,9 @@ static const char* getModuleFullPath(const char* moduleName) {
     char fileNameAttempt[LOADER_PATH_MAX];
     snprintf(fileNameAttempt, sizeof(fileNameAttempt), filePatterns[i], moduleName);
     const char* foundPath = findInBaseFolders(fileNameAttempt);
-    if (foundPath) { return foundPath;
-}
+    if (foundPath) {
+      return foundPath;
+    }
   }
   return NULL;
 }
@@ -292,25 +300,29 @@ static char* parsePackageJsonForKey(const char* folder, const char* key) {
   joinPath(packageJsonPath, sizeof(packageJsonPath), folder, "package.json");
 
   FILE* fp = fopen(packageJsonPath, "r");
-  if (!fp) { return NULL;
-}
+  if (!fp) {
+    return NULL;
+  }
 
   char line[LOADER_PATH_MAX];
   char* entryFileName = NULL;
   while (fgets(line, sizeof(line), fp)) {
     char* pos = strstr(line, key);
-    if (!pos) { continue;
-}
+    if (!pos) {
+      continue;
+    }
 
     char* start = strchr(pos + strlen(key), '\"');
-    if (!start) { continue;
-}
+    if (!start) {
+      continue;
+    }
     start++;
     char* end = strchr(start, '\"');
-    if (!end) { continue;
-}
+    if (!end) {
+      continue;
+    }
 
-    const size_t len = end - start;
+    size_t len = (size_t)(end - start);
     entryFileName = (char*)malloc(len + 1);
     if (entryFileName) {
       memcpy(entryFileName, start, len);
@@ -332,7 +344,7 @@ static char* parsePackageJsonForKey(const char* folder, const char* key) {
  */
 char* tryFindNodeModuleEntryFileName(const char* folder) {
   const char* keys[] = {"\"module\":", "\"main\":"};
-  for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+  for (int i = 0; i < 2; i++) {
     char* entry = parsePackageJsonForKey(folder, keys[i]);
     if (entry) {
       char entryFilePath[LOADER_PATH_MAX];
@@ -360,8 +372,9 @@ char* tryFindNodeModuleEntryPath(const char* moduleName) {
   for (int j = 0; j < qjsBaseFoldersCount; j++) {
     joinPath(folder, sizeof(folder), qjsBaseFolders[j], nodeModulesSubPath);
     char* entryFileName = tryFindNodeModuleEntryFileName(folder);
-    if (entryFileName) { return entryFileName;
-}
+    if (entryFileName) {
+      return entryFileName;
+    }
   }
   logError("Failed to find the entry file of the node module: %s", moduleName);
   return NULL;
@@ -396,7 +409,7 @@ char* loadFile(const char* absolutePath) {
     return NULL;
   }
 
-  char* content = malloc(length + 1);
+  char* content = (char*)malloc((size_t)length + 1);
   if (!content) {
     logError("Failed to allocate memory for file: %s", absolutePath);
     fclose(file);
@@ -414,6 +427,16 @@ char* loadFile(const char* absolutePath) {
 
   content[length] = '\0';
   return content;
+}
+
+/**
+ * @brief Checks if a path is absolute according to platform rules.
+ *
+ * @param path The path to check.
+ * @return true if absolute, false otherwise.
+ */
+bool isAbsolutePath(const char* path) {
+  return osIsAbsolutePath(path) != 0;
 }
 
 /**
@@ -499,10 +522,11 @@ JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaq
     }
 
     if (getActualFilePath(fullPath)) {
-      const JSValue funcObj = loadJsModule(ctx, moduleName);
-      if (JS_IsException(funcObj)) { return NULL;
-}
-      JSModuleDef* m = JS_VALUE_GET_PTR(funcObj);
+      JSValue funcObj = loadJsModule(ctx, moduleName);
+      if (JS_IsException(funcObj)) {
+        return NULL;
+      }
+      JSModuleDef* m = (JSModuleDef*)JS_VALUE_GET_PTR(funcObj);
       JS_FreeValue(ctx, funcObj);
       return m;
     }
@@ -515,10 +539,11 @@ JSModuleDef* js_module_loader(JSContext* ctx, const char* moduleName, void* opaq
     snprintf(subPath, sizeof(subPath), "node_modules/%s/%s", moduleName, entryFile);
     free(entryFile);
 
-    const JSValue funcObj = loadJsModule(ctx, subPath);
-    if (JS_IsException(funcObj)) { return NULL;
-}
-    JSModuleDef* m = JS_VALUE_GET_PTR(funcObj);
+    JSValue funcObj = loadJsModule(ctx, subPath);
+    if (JS_IsException(funcObj)) {
+      return NULL;
+    }
+    JSModuleDef* m = (JSModuleDef*)JS_VALUE_GET_PTR(funcObj);
     JS_FreeValue(ctx, funcObj);
     return m;
   }

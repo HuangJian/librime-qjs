@@ -1,10 +1,10 @@
 #ifndef NODE_MODULE_LOADER_H
 #define NODE_MODULE_LOADER_H
 
-#include <errno.h>
 #include "quickjs.h"
+#include <errno.h>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include "node_module_loader_win.h"
 #elif defined(__APPLE__)
 #include "node_module_loader_mac.h"
@@ -14,21 +14,21 @@
 
 // If the system doesn't provide S_ISDIR / S_ISREG macros, define them manually.
 #ifndef S_ISDIR
-#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#define S_ISDIR(m) (((m)&S_IFMT) == S_IFDIR)
 #endif
 #ifndef S_ISREG
-#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#define S_ISREG(m) (((m)&S_IFMT) == S_IFREG)
 #endif
 
 /**
  * @brief Represents the type of a filesystem entry.
  */
 typedef enum {
-  FileType_Error = -1,   /**< An error occurred during check. */
-  FileType_NotExist = 0, /**< The path does not exist. */
-  FileType_Reg = 1,      /**< The path is a regular file. */
-  FileType_Dir = 2,      /**< The path is a directory. */
-  FileType_Other = 3     /**< The path is of another type. */
+  FileType_Error = -1,    /**< An error occurred during check. */
+  FileType_NotExist = 0,  /**< The path does not exist. */
+  FileType_Reg = 1,       /**< The path is a regular file. */
+  FileType_Dir = 2,       /**< The path is a directory. */
+  FileType_Other = 3      /**< The path is of another type. */
 } FileType;
 
 #ifdef __cplusplus
