@@ -41,23 +41,17 @@ void logError(const char* format, ...) {
 }
 #else
 
-#ifdef __cplusplus
-#include <glog/logging.h>
-#else
 extern void logInfoImpl(const char* message);
 extern void logErrorImpl(const char* message);
-#endif
 
 static void log_to_impl(int is_error, const char* format, va_list args) {
   char buffer[LOADER_PATH_MAX];
   vsnprintf(buffer, sizeof(buffer), format, args);
-#ifdef __cplusplus
-  if (is_error) LOG(ERROR) << buffer << "\n";
-  else LOG(INFO) << buffer << "\n";
-#else
-  if (is_error) logErrorImpl(buffer);
-  else logInfoImpl(buffer);
-#endif
+  if (is_error) {
+    logErrorImpl(buffer);
+  } else {
+    logInfoImpl(buffer);
+  }
 }
 
 void logInfo(const char* format, ...) {
