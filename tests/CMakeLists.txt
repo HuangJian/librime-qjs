@@ -18,16 +18,13 @@ if(WIN32)
 endif()
 
 find_package(GTest REQUIRED)
-find_package(glog REQUIRED)
 
 target_link_libraries(librime-qjs-tests PUBLIC
-  rime
+  ${rime_library}
   qjs
   librime-qjs-objs
   GTest::gtest
-  glog
-  marisa
-  leveldb
+  ${Marisa_LIBRARY}
 )
 
 if(ENABLE_JAVASCRIPTCORE)

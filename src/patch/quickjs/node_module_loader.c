@@ -4,18 +4,17 @@
 #include <string.h>
 
 #include "node_module_loader.h"
-#include "node_module_loader_os.h"
 
-#define LOG_AND_RETURN_ERROR(ctx, format, ...) \
-  do { \
-    logError(format, __VA_ARGS__); \
-    return JS_ThrowReferenceError(ctx, format, __VA_ARGS__); \
+#define LOG_AND_RETURN_ERROR(ctx, format, ...)     \
+  do {                                             \
+    logError(format, ##__VA_ARGS__);               \
+    return JS_ThrowReferenceError(ctx, format, ##__VA_ARGS__); \
   } while (0)
 
-#define LOG_AND_THROW_ERROR(ctx, format, ...) \
-  do { \
-    logError(format, __VA_ARGS__); \
-    JS_ThrowReferenceError(ctx, format, __VA_ARGS__); \
+#define LOG_AND_THROW_ERROR(ctx, format, ...)      \
+  do {                                             \
+    logError(format, ##__VA_ARGS__);               \
+    JS_ThrowReferenceError(ctx, format, ##__VA_ARGS__); \
   } while (0)
 
 enum { LOADER_PATH_MAX = 1024, MAX_BASE_FOLDERS = 5 };
@@ -24,18 +23,25 @@ enum { LOADER_PATH_MAX = 1024, MAX_BASE_FOLDERS = 5 };
 /**
  * @brief Logs an informational message to stdout.
  *
+ * @param stream Output stream.
  * @param format Printf-style format string.
- * @param ... Variable arguments for the format string.
+ * @param args Variable arguments for the format string.
  */
-static void log_v(FILE* stream, const char* format, va_list args) {
+static void logV(FILE* stream, const char* format, va_list args) {
   vfprintf(stream, format, args);
   fputc('\n', stream);
 }
 
+/**
+ * @brief Logs an informational message to stdout.
+ *
+ * @param format Printf-style format string.
+ * @param ... Variable arguments for the format string.
+ */
 void logInfo(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  log_v(stdout, format, args);
+  logV(stdout, format, args);
   va_end(args);
 }
 
@@ -48,7 +54,7 @@ void logInfo(const char* format, ...) {
 void logError(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  log_v(stderr, format, args);
+  logV(stderr, format, args);
   va_end(args);
 }
 #else
@@ -59,31 +65,43 @@ extern void logErrorImpl(const char* message);
 /**
  * @brief Internal helper to log messages using the implementation provided by the host.
  *
- * @param is_error Non-zero if this is an error message.
+ * @param isError Non-zero if this is an error message.
  * @param format Printf-style format string.
  * @param args Variable arguments for the format string.
  */
-static void log_to_impl(int is_error, const char* format, va_list args) {
+static void logToImpl(int isError, const char* format, va_list args) {
   char buffer[LOADER_PATH_MAX];
   vsnprintf(buffer, sizeof(buffer), format, args);
-  if (is_error) {
+  if (isError) {
     logErrorImpl(buffer);
   } else {
     logInfoImpl(buffer);
   }
 }
 
+/**
+ * @brief Logs an informational message.
+ *
+ * @param format Printf-style format string.
+ * @param ... Variable arguments.
+ */
 void logInfo(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  log_to_impl(0, format, args);
+  logToImpl(0, format, args);
   va_end(args);
 }
 
+/**
+ * @brief Logs an error message.
+ *
+ * @param format Printf-style format string.
+ * @param ... Variable arguments.
+ */
 void logError(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  log_to_impl(1, format, args);
+  logToImpl(1, format, args);
   va_end(args);
 }
 #endif
@@ -141,28 +159,28 @@ __attribute__((constructor)) void initBaseFolder() {
  * @brief Retrieves the type of a filesystem entry.
  *
  * @param path The path to check.
- * @return FileType enum value (REG, DIR, NOT_EXIST, etc.).
+ * @return FileType enum value (Reg, Dir, NotExist, etc.).
  */
 static FileType getFileType(const char* path) {
   if (path == NULL) {
-    return FILE_TYPE_ERROR;
+    return FileType_Error;
   }
 
   StatStruct st;
   if (STAT_FUNC(path, &st) != 0) {
     if (errno == ENOENT) {
-      return FILE_TYPE_NOT_EXIST;
+      return FileType_NotExist;
     } else {
-      return FILE_TYPE_ERROR; // other errors (e.g., permission denied)
+      return FileType_Error; // other errors (e.g., permission denied)
     }
   }
 
   if (S_ISDIR(st.st_mode)) {
-    return FILE_TYPE_DIR;
+    return FileType_Dir;
   } else if (S_ISREG(st.st_mode)) {
-    return FILE_TYPE_REG;
+    return FileType_Reg;
   } else {
-    return FILE_TYPE_OTHER; // other type (like device, pipe, etc.)
+    return FileType_Other; // other type (like device, pipe, etc.)
   }
 }
 
@@ -214,7 +232,7 @@ static const char* findInBaseFolders(const char* subPath) {
   static char fullPath[LOADER_PATH_MAX];
   for (int i = 0; i < qjsBaseFoldersCount; i++) {
     joinPath(fullPath, sizeof(fullPath), qjsBaseFolders[i], subPath);
-    if (getFileType(fullPath) == FILE_TYPE_REG) return fullPath;
+    if (getFileType(fullPath) == FileType_Reg) return fullPath;
   }
   return NULL;
 }
@@ -256,7 +274,7 @@ static const char* getActualFilePath(const char* path) {
   static char fullPath[LOADER_PATH_MAX];
   for (int i = 0; i < numExtensions; i++) {
     snprintf(fullPath, sizeof(fullPath), "%s%s", path, possibleExtensions[i]);
-    if (getFileType(fullPath) == FILE_TYPE_REG) {
+    if (getFileType(fullPath) == FileType_Reg) {
       return fullPath;
     }
   }
@@ -353,7 +371,7 @@ char* tryFindNodeModuleEntryPath(const char* moduleName) {
  * @return Malloc'd string with file content, or NULL on error.
  */
 char* loadFile(const char* absolutePath) {
-  const char* actualPath  = getActualFilePath(absolutePath);
+  const char* actualPath = getActualFilePath(absolutePath);
   if (!actualPath) {
     logError("Failed to open file at: %s", absolutePath);
     return NULL;
@@ -382,11 +400,11 @@ char* loadFile(const char* absolutePath) {
     return NULL;
   }
 
-  const size_t read = fread(content, 1, length, file);
+  const size_t readCount = fread(content, 1, (size_t)length, file);
   fclose(file);
 
-  if (read != (size_t)length) {
-    logError("Failed to read file: %s, expected %ld bytes but got %zu", absolutePath, length, read);
+  if (readCount != (size_t)length) {
+    logError("Failed to read file: %s, expected %ld bytes but got %zu", absolutePath, length, readCount);
     free(content);
     return NULL;
   }
@@ -435,7 +453,7 @@ char* readJsCode(JSContext* ctx, const char* moduleName) {
  * @return JSValue representing the compiled module, or JS_EXCEPTION.
  */
 JSValue loadJsModule(JSContext* ctx, const char* moduleName) {
-  char* code = loadFile(moduleName);  // attempt to load the file directly first
+  char* code = loadFile(moduleName); // attempt to load the file directly first
   if (!code) {
     code = readJsCode(ctx, moduleName);
   }
