@@ -2,21 +2,21 @@
 #define NODE_MODULE_LOADER_MAC_H
 
 #include <mach-o/dyld.h>
-#include <limits.h>
-#include <unistd.h>
 #include <sys/stat.h>
-#include <string.h>
+#include <unistd.h>
 
 typedef struct stat StatStruct;
 #define STAT_FUNC stat
 
-static inline int osIsAbsolutePath(const char* path) {
+static int isAbsolutePath(const char* path) {
   return path && path[0] == '/';
 }
 
-static inline int osGetExecutablePath(char* path, size_t size) {
-  uint32_t mac_size = (uint32_t)size;
-  if (_NSGetExecutablePath(path, &mac_size) == 0) return 0;
+static int getExecutablePath(char* path, const size_t size) {
+  uint32_t macSize = (uint32_t)size;
+  if (_NSGetExecutablePath(path, &macSize) == 0) {
+    return 0;
+  }
   return -1;
 }
 
