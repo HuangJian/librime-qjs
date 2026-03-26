@@ -187,8 +187,8 @@ jobs:
           echo "Plugin library found at: $PLUGIN_LIB"
           if [ -n "$PROFRAW_FILES" ] && [ -n "$TEST_BINARY" ] && [ -n "$PLUGIN_LIB" ]; then
             llvm-profdata merge -sparse $PROFRAW_FILES -o build/test.profdata
-            llvm-cov show "$TEST_BINARY" -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/' -object "$PLUGIN_LIB"
-            llvm-cov report "$TEST_BINARY" -instr-profile=build/test.profdata -ignore-filename-regex='(thirdparty|tests)/' -object "$PLUGIN_LIB"
+            llvm-cov show "$TEST_BINARY" -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -object "$PLUGIN_LIB" ./plugins/qjs/src
+            llvm-cov report "$TEST_BINARY" -instr-profile=build/test.profdata -object "$PLUGIN_LIB" ./plugins/qjs/src
           else
             echo "Missing required files for coverage report."
             exit 1
