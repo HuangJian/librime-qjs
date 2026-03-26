@@ -172,6 +172,9 @@ jobs:
 
       - name: Build and test with coverage
         run: |
+          export CFLAGS="-fprofile-instr-generate -fcoverage-mapping"
+          export CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping"
+          export LDFLAGS="-fprofile-instr-generate -fcoverage-mapping"
           cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}" -DCMAKE_INSTALL_PREFIX="./dist" -GNinja
           cmake --build build
           export LLVM_PROFILE_FILE="code-%p.profraw"
@@ -185,12 +188,16 @@ jobs:
           PROFRAW_FILES=$(find . -name "*.profraw")
           echo "Test binary found at: $TEST_BINARY"
           echo "Plugin library found at: $PLUGIN_LIB"
-          if [ -n "$PROFRAW_FILES" ] && [ -n "$TEST_BINARY" ] && [ -n "$PLUGIN_LIB" ]; then
+          if [ -n "$PROFRAW_FILES" ]; then
             llvm-profdata merge -sparse $PROFRAW_FILES -o build/test.profdata
-            llvm-cov show "$TEST_BINARY" -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -object "$PLUGIN_LIB" ./plugins/qjs/src
-            llvm-cov report "$TEST_BINARY" -instr-profile=build/test.profdata -object "$PLUGIN_LIB" ./plugins/qjs/src
+            COV_OBJECTS="-object $TEST_BINARY"
+            if [ -n "$PLUGIN_LIB" ]; then
+              COV_OBJECTS="$COV_OBJECTS -object $PLUGIN_LIB"
+            fi
+            llvm-cov show $COV_OBJECTS -instr-profile=build/test.profdata -format=html -output-dir=coverage_report ./plugins/qjs/src
+            llvm-cov report $COV_OBJECTS -instr-profile=build/test.profdata ./plugins/qjs/src
           else
-            echo "Missing required files for coverage report."
+            echo "No .profraw files found."
             exit 1
           fi
 

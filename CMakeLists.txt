@@ -29,17 +29,11 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 
 if(ENABLE_COVERAGE)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(COVERAGE_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
-    add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
-
-    # Use CACHE FORCE to propagate flags to the entire project (including parent librime targets)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COVERAGE_FLAGS}" CACHE STRING "" FORCE)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${COVERAGE_FLAGS}" CACHE STRING "" FORCE)
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${COVERAGE_FLAGS}" CACHE STRING "" FORCE)
-
-    # Also set CMAKE_CXX_FLAGS/CMAKE_C_FLAGS in CACHE to ensure all targets are instrumented
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_FLAGS}" CACHE STRING "" FORCE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_FLAGS}" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
   endif()
 endif()
 
