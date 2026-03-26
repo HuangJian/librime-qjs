@@ -19,12 +19,10 @@ class JsWrapper<NotifierConnection> {
     return engine.undefined();
   })
 
-  DEFINE_GETTER(NotifierConnection, isConnected, obj->connected())
-
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(NotifierConnection,
                                    WITHOUT_CONSTRUCTOR,
                                    WITHOUT_PROPERTIES,
-                                   WITH_GETTERS(isConnected),
+                                   WITH_GETTERS((isConnected, obj->connected())),
                                    WITH_FUNCTIONS(disconnect));
 };

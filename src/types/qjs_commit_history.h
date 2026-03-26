@@ -17,14 +17,10 @@ class JsWrapper<CommitHistory> {
     return engine.undefined();
   })
 
-  DEFINE_GETTER(CommitHistory, last, obj->empty() ? nullptr : &obj->back());
-
-  DEFINE_GETTER(CommitHistory, repr, obj->repr());
-
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(CommitHistory,
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
-                                WITH_GETTERS(last, repr),
+                                WITH_GETTERS((last, obj->empty() ? nullptr : &obj->back()), repr),
                                 WITH_FUNCTIONS(push));
 };

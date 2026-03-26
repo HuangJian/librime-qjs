@@ -10,11 +10,6 @@ using namespace rime;
 
 template <>
 class JsWrapper<Segment> {
-  DEFINE_GETTER(Segment, start, obj->start)
-  DEFINE_GETTER(Segment, end, obj->end)
-  DEFINE_GETTER(Segment, selectedCandidate, obj->GetSelectedCandidate())
-  DEFINE_GETTER(Segment, candidateSize, obj->menu->candidate_count())
-
   DEFINE_CFUNCTION_ARGC(getCandidateAt, 1, {
     auto obj = engine.unwrap<Segment>(thisVal);
     int32_t index = engine.toInt(argv[0]);
@@ -35,6 +30,9 @@ public:
                                 WITHOUT_CONSTRUCTOR,
                                 WITH_PROPERTIES(AUTO_PROPERTIES(prompt,
                                                                 (selectedIndex, selected_index))),
-                                WITH_GETTERS(start, end, selectedCandidate, candidateSize),
+                                WITH_GETTERS(start,
+                                             end,
+                                             (selectedCandidate, obj->GetSelectedCandidate()),
+                                             (candidateSize, obj->menu->candidate_count())),
                                 WITH_FUNCTIONS(getCandidateAt, hasTag));
 };

@@ -9,19 +9,6 @@ using namespace rime;
 
 template <>
 class JsWrapper<Context> {
-  DEFINE_GETTER(Context, preedit, std::make_shared<Preedit>(obj->GetPreedit()))
-
-  DEFINE_GETTER(Context,
-                lastSegment,
-                obj->composition().empty() ? nullptr : &obj->composition().back());
-
-  DEFINE_GETTER(Context, commitNotifier, &obj->commit_notifier())
-  DEFINE_GETTER(Context, selectNotifier, &obj->select_notifier())
-  DEFINE_GETTER(Context, updateNotifier, &obj->update_notifier())
-  DEFINE_GETTER(Context, deleteNotifier, &obj->delete_notifier())
-
-  DEFINE_GETTER(Context, commitHistory, &obj->commit_history())
-
   DEFINE_CFUNCTION(commit, {
     auto obj = engine.unwrap<Context>(thisVal);
     obj->Commit();
@@ -63,12 +50,12 @@ public:
       Context,
       WITHOUT_CONSTRUCTOR,
       WITH_PROPERTIES(AUTO_PROPERTIES(input, (caretPos, caret_pos))),
-      WITH_GETTERS(preedit,
-                   lastSegment,
-                   commitNotifier,
-                   selectNotifier,
-                   updateNotifier,
-                   deleteNotifier,
-                   commitHistory),
+      WITH_GETTERS((preedit, std::make_shared<Preedit>(obj->GetPreedit())),
+                   (lastSegment, obj->composition().empty() ? nullptr : &obj->composition().back()),
+                   (commitNotifier, &obj->commit_notifier()),
+                   (selectNotifier, &obj->select_notifier()),
+                   (updateNotifier, &obj->update_notifier()),
+                   (deleteNotifier, &obj->delete_notifier()),
+                   (commitHistory, &obj->commit_history())),
       WITH_FUNCTIONS(commit, getCommitText, clear, hasMenu, getOption, setOption));
 };

@@ -118,7 +118,10 @@
   WITHOUT_PROPERTIES_QJS;  \
   inline static JSStaticValue propertiesJsc[] = {};
 
-#define DEFINE_GETTER_JSC(name) {#name, get_##name##Jsc, nullptr, kJSPropertyAttributeNone},
+#define DEFINE_GETTER_JSC_IMPL(name, payload, mode) \
+  {#name, get_##name##Jsc, nullptr, kJSPropertyAttributeNone},
+#define DEFINE_GETTER_JSC_EXPAND(spec) DEFINE_GETTER_JSC_IMPL spec
+#define DEFINE_GETTER_JSC(spec) DEFINE_GETTER_JSC_EXPAND(NORMALIZE_GETTER_SPEC(spec))
 
 #define WITH_GETTERS(...)       \
   WITH_GETTER_QJS(__VA_ARGS__); \

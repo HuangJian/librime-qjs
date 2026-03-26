@@ -265,9 +265,43 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   inline static const JSCFunctionListEntry PROPERTIES_QJS[] = {}; \
   inline static const size_t PROPERTIES_SIZE = 0;
 
-#define DEFINE_GETTER_QJS(name) JS_CGETSET_DEF(#name, get_##name, nullptr),
+#define DEFINE_GETTER_ACCESSOR_manual(name, payload)
+#define DEFINE_GETTER_ACCESSOR_custom(name, statement) DEFINE_GETTER(T_RIME_TYPE, name, statement)
+#define DEFINE_GETTER_ACCESSOR_auto(name, cpp_name)                                  \
+  template <typename T_OBJ>                                                          \
+  static auto get_auto_getter_##name(T_OBJ&& obj, int)->decltype(obj->cpp_name()) {  \
+    return obj->cpp_name();                                                          \
+  }                                                                                  \
+  template <typename T_OBJ>                                                          \
+  static auto get_auto_getter_##name(T_OBJ&& obj, long)->decltype((obj->cpp_name)) { \
+    return obj->cpp_name;                                                            \
+  }                                                                                  \
+  DEFINE_GETTER(T_RIME_TYPE, name, get_auto_getter_##name(obj, 0))
+
+#define NORMALIZE_GETTER_SPEC_PLAIN(x) (x, x, auto)
+#define NORMALIZE_GETTER_SPEC_2(name, statement) (name, statement, custom)
+#define NORMALIZE_GETTER_SPEC_3(name, payload, mode) (name, payload, mode)
+#define NORMALIZE_GETTER_SPEC_TUPLE_CHOOSER(_1, _2, _3, NAME, ...) NAME
+#define NORMALIZE_GETTER_SPEC_TUPLE_IMPL(...)                                      \
+  EXPAND(NORMALIZE_GETTER_SPEC_TUPLE_CHOOSER(__VA_ARGS__, NORMALIZE_GETTER_SPEC_3, \
+                                             NORMALIZE_GETTER_SPEC_2)(__VA_ARGS__))
+#define NORMALIZE_GETTER_SPEC_TUPLE(x) NORMALIZE_GETTER_SPEC_TUPLE_IMPL x
+#define NORMALIZE_GETTER_SPEC_IMPL_0(x) NORMALIZE_GETTER_SPEC_PLAIN(x)
+#define NORMALIZE_GETTER_SPEC_IMPL_1(x) NORMALIZE_GETTER_SPEC_TUPLE(x)
+#define NORMALIZE_GETTER_SPEC(x) PP_CAT(NORMALIZE_GETTER_SPEC_IMPL_, PP_IS_PAREN(x))(x)
+
+#define DEFINE_GETTER_ACCESSOR_IMPL(name, payload, mode) \
+  DEFINE_GETTER_ACCESSOR_##mode(name, payload)
+#define DEFINE_GETTER_ACCESSOR_EXPAND(spec) DEFINE_GETTER_ACCESSOR_IMPL spec
+#define DEFINE_GETTER_ACCESSOR_FROM_SPEC(spec) \
+  DEFINE_GETTER_ACCESSOR_EXPAND(NORMALIZE_GETTER_SPEC(spec))
+
+#define DEFINE_GETTER_ENTRY_IMPL(name, payload, mode) JS_CGETSET_DEF(#name, get_##name, nullptr),
+#define DEFINE_GETTER_ENTRY_EXPAND(spec) DEFINE_GETTER_ENTRY_IMPL spec
+#define DEFINE_GETTER_QJS(spec) DEFINE_GETTER_ENTRY_EXPAND(NORMALIZE_GETTER_SPEC(spec))
 
 #define WITH_GETTER_QJS(...)                                 \
+  FOR_EACH(DEFINE_GETTER_ACCESSOR_FROM_SPEC, __VA_ARGS__)    \
   inline static const JSCFunctionListEntry GETTERS_QJS[] = { \
       FOR_EACH(DEFINE_GETTER_QJS, __VA_ARGS__)};             \
   inline static const size_t GETTERS_SIZE = sizeof(GETTERS_QJS) / sizeof(GETTERS_QJS[0]);

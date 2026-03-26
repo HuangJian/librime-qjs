@@ -11,10 +11,6 @@ using namespace rime;
 
 template <>
 class JsWrapper<Engine> {
-  DEFINE_GETTER(Engine, schema, obj->schema())
-  DEFINE_GETTER(Engine, context, obj->context())
-  DEFINE_GETTER(Engine, activeEngine, obj->active_engine())
-
   DEFINE_CFUNCTION_ARGC(commitText, 1, {
     std::string text = engine.toStdString(argv[0]);
     auto* obj = engine.unwrap<Engine>(thisVal);
@@ -42,6 +38,6 @@ public:
   EXPORT_CLASS_WITH_RAW_POINTER(Engine,
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
-                                WITH_GETTERS(schema, context, activeEngine),
+                                WITH_GETTERS(schema, context, (activeEngine, obj->active_engine())),
                                 WITH_FUNCTIONS(processKey, commitText, applySchema));
 };

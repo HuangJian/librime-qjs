@@ -8,16 +8,14 @@ using namespace rime;
 
 template <>
 class JsWrapper<Schema> {
-  DEFINE_GETTER(Schema, id, obj->schema_id())
-  DEFINE_GETTER(Schema, name, obj->schema_name())
-  DEFINE_GETTER(Schema, config, obj->config())
-  DEFINE_GETTER(Schema, pageSize, obj->page_size())
-  DEFINE_GETTER(Schema, selectKeys, obj->select_keys())
-
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Schema,
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
-                                WITH_GETTERS(id, name, config, pageSize, selectKeys),
+                                WITH_GETTERS((id, obj->schema_id()),
+                                             (name, obj->schema_name()),
+                                             config,
+                                             (pageSize, obj->page_size()),
+                                             (selectKeys, obj->select_keys())),
                                 WITHOUT_FUNCTIONS);
 };

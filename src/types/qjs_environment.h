@@ -11,13 +11,6 @@ using namespace rime;
 
 template <>
 class JsWrapper<Environment> {
-  DEFINE_GETTER(Environment, id, obj->getId())
-  DEFINE_GETTER(Environment, engine, &obj->getEngine())
-  DEFINE_GETTER(Environment, namespace, obj->getNameSpace())
-  DEFINE_GETTER(Environment, os, obj->getSystemInfo())
-  DEFINE_GETTER(Environment, userDataDir, obj->getUserDataDir())
-  DEFINE_GETTER(Environment, sharedDataDir, obj->getSharedDataDir())
-
   DEFINE_CFUNCTION_ARGC(loadFile, 1, {
     std::string path = engine.toStdString(argv[0]);
     if (path.empty()) {
@@ -101,6 +94,18 @@ public:
   EXPORT_CLASS_WITH_RAW_POINTER(Environment,
                                 WITHOUT_CONSTRUCTOR,
                                 WITHOUT_PROPERTIES,
-                                WITH_GETTERS(id, engine, namespace, userDataDir, sharedDataDir, os),
-                                WITH_FUNCTIONS(loadFile, fileExists, saveFile, removeFile, createDir, removeDir, getRimeInfo, popen));
+                                WITH_GETTERS((id, obj->getId()),
+                                             (engine, &obj->getEngine()),
+                                             (namespace, obj->getNameSpace()),
+                                             (userDataDir, obj->getUserDataDir()),
+                                             (sharedDataDir, obj->getSharedDataDir()),
+                                             (os, obj->getSystemInfo())),
+                                WITH_FUNCTIONS(loadFile,
+                                               fileExists,
+                                               saveFile,
+                                               removeFile,
+                                               createDir,
+                                               removeDir,
+                                               getRimeInfo,
+                                               popen));
 };
