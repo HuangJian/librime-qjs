@@ -179,7 +179,7 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          llvm-profdata merge -sparse ./*.profraw build/*.profraw build/plugins/qjs/*.profraw -o build/test.profdata || true
+          llvm-profdata merge -sparse ./*.profraw build/*.profraw build/plugins/qjs/*.profraw build/plugins/qjs/build/*.profraw -o build/test.profdata || true
           llvm-cov show ./build/plugins/qjs/tests/librime-qjs-tests -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
           llvm-cov report ./build/plugins/qjs/tests/librime-qjs-tests -instr-profile=build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
 
