@@ -172,10 +172,49 @@ public:
   template <typename T_RIME_TYPE>
   void registerType() {
     using WRAPPER = JsWrapper<T_RIME_TYPE>;
+    const auto* properties = []() -> const JSCFunctionListEntry* {
+      if constexpr (has_properties_qjs_accessor<WRAPPER>::value) {
+        return WRAPPER::propertiesQjs();
+      }
+      return WRAPPER::PROPERTIES_QJS;
+    }();
+    const auto propertiesSize = []() -> size_t {
+      if constexpr (has_properties_qjs_accessor<WRAPPER>::value) {
+        return WRAPPER::propertiesSize();
+      }
+      return WRAPPER::PROPERTIES_SIZE;
+    }();
+
+    const auto* getters = []() -> const JSCFunctionListEntry* {
+      if constexpr (has_getters_qjs_accessor<WRAPPER>::value) {
+        return WRAPPER::gettersQjs();
+      }
+      return WRAPPER::GETTERS_QJS;
+    }();
+    const auto gettersSize = []() -> size_t {
+      if constexpr (has_getters_qjs_accessor<WRAPPER>::value) {
+        return WRAPPER::gettersSize();
+      }
+      return WRAPPER::GETTERS_SIZE;
+    }();
+
+    const auto* functions = []() -> const JSCFunctionListEntry* {
+      if constexpr (has_functions_qjs_accessor<WRAPPER>::value) {
+        return WRAPPER::functionsQjs();
+      }
+      return WRAPPER::FUNCTIONS_QJS;
+    }();
+    const auto functionsSize = []() -> size_t {
+      if constexpr (has_functions_qjs_accessor<WRAPPER>::value) {
+        return WRAPPER::functionsSize();
+      }
+      return WRAPPER::FUNCTIONS_SIZE;
+    }();
+
     impl_->registerType(WRAPPER::typeName, WRAPPER::jsClassId, WRAPPER::JS_CLASS_DEF,
                         WRAPPER::constructorQjs, WRAPPER::CONSTRUCTOR_ARGC, WRAPPER::finalizerQjs,
-                        WRAPPER::PROPERTIES_QJS, WRAPPER::PROPERTIES_SIZE, WRAPPER::GETTERS_QJS,
-                        WRAPPER::GETTERS_SIZE, WRAPPER::FUNCTIONS_QJS, WRAPPER::FUNCTIONS_SIZE);
+                        properties, static_cast<int>(propertiesSize), getters,
+                        static_cast<int>(gettersSize), functions, static_cast<int>(functionsSize));
   }
 
   template <typename T>

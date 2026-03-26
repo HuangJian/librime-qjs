@@ -5,6 +5,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "engines/for_each_macros.h"
 #include "engines/quickjs/quickjs_engine.h"  // IWYU pragma: export
@@ -272,6 +273,8 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   DEFINE_AUTO_PROPERTY_ACCESSOR_##enabled(name, cpp_name)
 #define DEFINE_AUTO_PROPERTY_ACCESSOR(spec) DEFINE_AUTO_PROPERTY_ACCESSOR_IMPL spec
 
+#define DEFINE_PROPERTIES(...) FOR_EACH(DEFINE_AUTO_PROPERTY_ACCESSOR, __VA_ARGS__)
+
 #define DEFINE_PROPERTY_ENTRY_IMPL(name, cpp_name, enabled) \
   JS_CGETSET_DEF(#name, get_##name, set_##name),
 #define DEFINE_PROPERTY_ENTRY(spec) DEFINE_PROPERTY_ENTRY_IMPL spec
@@ -316,6 +319,8 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 #define DEFINE_GETTER_ACCESSOR_FROM_SPEC(spec) \
   DEFINE_GETTER_ACCESSOR_EXPAND(NORMALIZE_GETTER_SPEC(spec))
 
+#define DEFINE_GETTERS(...) FOR_EACH(DEFINE_GETTER_ACCESSOR_FROM_SPEC, __VA_ARGS__)
+
 #define DEFINE_GETTER_ENTRY_IMPL(name, payload, mode) JS_CGETSET_DEF(#name, get_##name, nullptr),
 #define DEFINE_GETTER_ENTRY_EXPAND(spec) DEFINE_GETTER_ENTRY_IMPL spec
 #define DEFINE_GETTER_QJS(spec) DEFINE_GETTER_ENTRY_EXPAND(NORMALIZE_GETTER_SPEC(spec))
@@ -338,4 +343,118 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 #define WITHOUT_FUNCTIONS_QJS                                    \
   inline static const JSCFunctionListEntry FUNCTIONS_QJS[] = {}; \
   inline static const size_t FUNCTIONS_SIZE = 0;
+
+inline JSCFunctionListEntry makeQjsPropertyEntry(const char* name,
+                                                 JSValue (*getter)(JSContext*, JSValueConst),
+                                                 JSValue (*setter)(JSContext*,
+                                                                   JSValueConst,
+                                                                   JSValue)) {
+  return JS_CGETSET_DEF(name, getter, setter);
+}
+
+inline JSCFunctionListEntry makeQjsGetterEntry(const char* name,
+                                               JSValue (*getter)(JSContext*, JSValueConst)) {
+  return JS_CGETSET_DEF(name, getter, nullptr);
+}
+
+inline JSCFunctionListEntry makeQjsFunctionEntry(const char* name,
+                                                 int argc,
+                                                 JSCFunction* function) {
+  return JS_CFUNC_DEF(name, static_cast<uint8_t>(argc), function);
+}
+
+template <typename T_UNWRAP_TYPE>
+class JsTypeBinder {
+public:
+  JsTypeBinder() = default;
+
+#ifdef _ENABLE_JAVASCRIPTCORE
+  JsTypeBinder& property(const char* name,
+                         JSValue (*getterQjs)(JSContext*, JSValueConst),
+                         JSValue (*setterQjs)(JSContext*, JSValueConst, JSValue),
+                         JSObjectGetPropertyCallback getterJsc,
+                         JSObjectSetPropertyCallback setterJsc) {
+#else
+  JsTypeBinder& property(const char* name,
+                         JSValue (*getterQjs)(JSContext*, JSValueConst),
+                         JSValue (*setterQjs)(JSContext*, JSValueConst, JSValue)) {
+#endif
+    propertiesQjs_.push_back(makeQjsPropertyEntry(name, getterQjs, setterQjs));
+#ifdef _ENABLE_JAVASCRIPTCORE
+    propertiesJsc_.push_back({name, getterJsc, setterJsc, kJSPropertyAttributeNone});
+#endif
+    return *this;
+  }
+
+#ifdef _ENABLE_JAVASCRIPTCORE
+  JsTypeBinder& getter(const char* name,
+                       JSValue (*getterQjs)(JSContext*, JSValueConst),
+                       JSObjectGetPropertyCallback getterJsc) {
+#else
+  JsTypeBinder& getter(const char* name, JSValue (*getterQjs)(JSContext*, JSValueConst)) {
+#endif
+    gettersQjs_.push_back(makeQjsGetterEntry(name, getterQjs));
+#ifdef _ENABLE_JAVASCRIPTCORE
+    gettersJsc_.push_back({name, getterJsc, nullptr, kJSPropertyAttributeNone});
+#endif
+    return *this;
+  }
+
+#ifdef _ENABLE_JAVASCRIPTCORE
+  JsTypeBinder& function(const char* name,
+                         int argc,
+                         JSCFunction* functionQjs,
+                         JSObjectCallAsFunctionCallback functionJsc) {
+#else
+  JsTypeBinder& function(const char* name, int argc, JSCFunction* functionQjs) {
+#endif
+    functionsQjs_.push_back(makeQjsFunctionEntry(name, argc, functionQjs));
+#ifdef _ENABLE_JAVASCRIPTCORE
+    functionsJsc_.push_back({name, functionJsc, static_cast<JSPropertyAttributes>(argc)});
+#endif
+    return *this;
+  }
+
+  [[nodiscard]] const JSCFunctionListEntry* propertiesQjs() const {
+    return propertiesQjs_.empty() ? nullptr : propertiesQjs_.data();
+  }
+  [[nodiscard]] size_t propertiesSize() const { return propertiesQjs_.size(); }
+
+  [[nodiscard]] const JSCFunctionListEntry* gettersQjs() const {
+    return gettersQjs_.empty() ? nullptr : gettersQjs_.data();
+  }
+  [[nodiscard]] size_t gettersSize() const { return gettersQjs_.size(); }
+
+  [[nodiscard]] const JSCFunctionListEntry* functionsQjs() const {
+    return functionsQjs_.empty() ? nullptr : functionsQjs_.data();
+  }
+  [[nodiscard]] size_t functionsSize() const { return functionsQjs_.size(); }
+
+#ifdef _ENABLE_JAVASCRIPTCORE
+  [[nodiscard]] const JSStaticValue* propertiesJsc() const {
+    return propertiesJsc_.empty() ? nullptr : propertiesJsc_.data();
+  }
+  [[nodiscard]] const JSStaticValue* gettersJsc() const {
+    return gettersJsc_.empty() ? nullptr : gettersJsc_.data();
+  }
+  [[nodiscard]] const JSStaticFunction* functionsJsc() const {
+    if (functionsJscWithSentinel_.size() != functionsJsc_.size() + 1) {
+      functionsJscWithSentinel_ = functionsJsc_;
+      functionsJscWithSentinel_.push_back({nullptr, nullptr, 0});
+    }
+    return functionsJscWithSentinel_.data();
+  }
+#endif
+
+private:
+  std::vector<JSCFunctionListEntry> propertiesQjs_;
+  std::vector<JSCFunctionListEntry> gettersQjs_;
+  std::vector<JSCFunctionListEntry> functionsQjs_;
+#ifdef _ENABLE_JAVASCRIPTCORE
+  std::vector<JSStaticValue> propertiesJsc_;
+  std::vector<JSStaticValue> gettersJsc_;
+  std::vector<JSStaticFunction> functionsJsc_;
+  mutable std::vector<JSStaticFunction> functionsJscWithSentinel_;
+#endif
+};
 // NOLINTEND(cppcoreguidelines-macro-usage)

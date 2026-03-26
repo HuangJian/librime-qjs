@@ -225,10 +225,48 @@ public:
   template <typename T_RIME_TYPE>
   void registerType() {
     using WRAPPER = JsWrapper<T_RIME_TYPE>;
+    const auto* properties = []() -> const JSStaticValue* {
+      if constexpr (has_properties_jsc_accessor<WRAPPER>::value) {
+        return WRAPPER::binderPropertiesJsc();
+      }
+      return WRAPPER::propertiesJsc;
+    }();
+    const auto propertiesSize = []() -> int {
+      if constexpr (has_properties_jsc_accessor<WRAPPER>::value) {
+        return static_cast<int>(WRAPPER::propertiesSize());
+      }
+      return static_cast<int>(WRAPPER::PROPERTIES_SIZE);
+    }();
+
+    const auto* getters = []() -> const JSStaticValue* {
+      if constexpr (has_getters_jsc_accessor<WRAPPER>::value) {
+        return WRAPPER::binderGettersJsc();
+      }
+      return WRAPPER::gettersJsc;
+    }();
+    const auto gettersSize = []() -> int {
+      if constexpr (has_getters_jsc_accessor<WRAPPER>::value) {
+        return static_cast<int>(WRAPPER::gettersSize());
+      }
+      return static_cast<int>(WRAPPER::GETTERS_SIZE);
+    }();
+
+    auto* functions = []() -> JSStaticFunction* {
+      if constexpr (has_functions_jsc_accessor<WRAPPER>::value) {
+        return const_cast<JSStaticFunction*>(WRAPPER::binderFunctionsJsc());
+      }
+      return WRAPPER::functionsJsc;
+    }();
+    const auto functionsSize = []() -> int {
+      if constexpr (has_functions_jsc_accessor<WRAPPER>::value) {
+        return static_cast<int>(WRAPPER::functionsSize());
+      }
+      return static_cast<int>(WRAPPER::FUNCTIONS_SIZE);
+    }();
+
     impl_->registerType(WRAPPER::typeName, WRAPPER::classDefJsc, WRAPPER::constructorJsc,
-                        WRAPPER::finalizerJsc, WRAPPER::functionsJsc, WRAPPER::FUNCTIONS_SIZE,
-                        WRAPPER::propertiesJsc, WRAPPER::PROPERTIES_SIZE, WRAPPER::gettersJsc,
-                        WRAPPER::GETTERS_SIZE);
+                        WRAPPER::finalizerJsc, functions, functionsSize, properties, propertiesSize,
+                        getters, gettersSize);
   }
 
   template <typename T>
