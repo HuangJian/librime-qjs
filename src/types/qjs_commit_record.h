@@ -12,8 +12,8 @@ class JsWrapper<CommitRecord> {
   DEFINE_GETTER(CommitRecord, type, obj->type)
   DEFINE_GETTER(CommitRecord, text, obj->text)
 
-  DEFINE_STRING_SETTER(CommitRecord, text, obj->text = str)
-  DEFINE_STRING_SETTER(CommitRecord, type, obj->type = str)
+  DEFINE_SETTER(CommitRecord, text, obj->text = value)
+  DEFINE_SETTER(CommitRecord, type, obj->type = value)
 
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(CommitRecord,

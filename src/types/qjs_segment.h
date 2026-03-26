@@ -14,7 +14,7 @@ class JsWrapper<Segment> {
   DEFINE_SETTER(Segment, selectedIndex, obj->selected_index = value)
 
   DEFINE_GETTER(Segment, prompt, obj->prompt)
-  DEFINE_STRING_SETTER(Segment, prompt, obj->prompt = str)
+  DEFINE_SETTER(Segment, prompt, obj->prompt = value)
 
   DEFINE_GETTER(Segment, start, obj->start)
   DEFINE_GETTER(Segment, end, obj->end)

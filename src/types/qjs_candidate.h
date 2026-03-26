@@ -20,31 +20,31 @@ class JsWrapper<Candidate> {
   DEFINE_GETTER(Candidate, quality, obj->quality())
   DEFINE_GETTER(Candidate, preedit, obj->preedit())
 
-  DEFINE_STRING_SETTER(Candidate, text, {
+  DEFINE_SETTER(Candidate, text, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
-      simpleCandidate->set_text(str);
+      simpleCandidate->set_text(value);
     }
   })
 
-  DEFINE_STRING_SETTER(Candidate, comment, {
+  DEFINE_SETTER(Candidate, comment, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
-      simpleCandidate->set_comment(str);
+      simpleCandidate->set_comment(value);
     } else if (auto phrase = dynamic_cast<rime::Phrase*>(obj.get())) {
-      phrase->set_comment(str);
+      phrase->set_comment(value);
     }
   })
 
-  DEFINE_STRING_SETTER(Candidate, type, obj->set_type(str);)
+  DEFINE_SETTER(Candidate, type, obj->set_type(value))
 
   DEFINE_SETTER(Candidate, start, obj->set_start(value))
   DEFINE_SETTER(Candidate, quality, obj->set_quality(value))
   DEFINE_SETTER(Candidate, end, obj->set_end(value))
 
-  DEFINE_STRING_SETTER(Candidate, preedit, {
+  DEFINE_SETTER(Candidate, preedit, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
-      simpleCandidate->set_preedit(str);
+      simpleCandidate->set_preedit(value);
     } else if (auto phrase = dynamic_cast<rime::Phrase*>(obj.get())) {
-      phrase->set_preedit(str);
+      phrase->set_preedit(value);
     }
   })
 

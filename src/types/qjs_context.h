@@ -12,7 +12,7 @@ class JsWrapper<Context> {
   DEFINE_GETTER(Context, input, obj->input())
   DEFINE_GETTER(Context, caretPos, obj->caret_pos())
 
-  DEFINE_STRING_SETTER(Context, input, obj->set_input(str);)
+  DEFINE_SETTER(Context, input, obj->set_input(value);)
   DEFINE_SETTER(Context, caretPos, obj->set_caret_pos(value))
 
   DEFINE_GETTER(Context, preedit, std::make_shared<Preedit>(obj->GetPreedit()))

@@ -20,30 +20,6 @@
     return engine.undefined();                                                                 \
   }
 
-#define DEFINE_STRING_SETTER(T_RIME_TYPE, name, assignment)                                    \
-                                                                                               \
-  DEFINE_STRING_SETTER_IMPL_QJS(T_RIME_TYPE, name, assignment);                                \
-                                                                                               \
-  static bool set_##name##Jsc(JSContextRef ctx, JSObjectRef thisVal, JSStringRef propertyName, \
-                              JSValueRef val, JSValueRef* exception) {                         \
-    auto& engine = JsEngine<JSValueRef>::instance();                                           \
-    if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                                      \
-      auto str = engine.toStdString(val);                                                      \
-      if (!str.empty()) {                                                                      \
-        assignment;                                                                            \
-        return true;                                                                           \
-      }                                                                                        \
-      std::stringstream msg;                                                                   \
-      msg << #T_RIME_TYPE << '.' << #name << "rvalue: rvalue is not a string";                 \
-      *exception = JSValueMakeString(ctx, JscStringRAII(msg.str().c_str()));                   \
-      return false;                                                                            \
-    }                                                                                          \
-    std::stringstream msg;                                                                     \
-    msg << "Failed to unwrap the js object to a cpp " << #T_RIME_TYPE << " object";            \
-    *exception = JSValueMakeString(ctx, JscStringRAII(msg.str().c_str()));                     \
-    return false;                                                                              \
-  }
-
 #define DEFINE_SETTER(T_RIME_TYPE, jsName, assignment)                                           \
                                                                                                  \
   DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment);                                       \

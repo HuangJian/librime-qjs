@@ -34,7 +34,10 @@ public:
 
   template <typename T,
             std::enable_if_t<std::is_integral_v<std::decay_t<T>> &&
-                                 !std::is_same_v<std::decay_t<T>, bool>,
+                                 !std::is_same_v<std::decay_t<T>, bool> &&
+                                 !std::is_same_v<std::decay_t<T>, char> &&
+                                 !std::is_same_v<std::decay_t<T>, signed char> &&
+                                 !std::is_same_v<std::decay_t<T>, unsigned char>,
                              int> = 0>
   operator T() const {
     return static_cast<T>(engine_.toInt(jsValue_));
@@ -58,9 +61,6 @@ JsSetterValueProxy<T_JS_VALUE> makeSetterValueProxy(const JsEngine<T_JS_VALUE>& 
 #else
 #define DEFINE_GETTER(T_RIME_TYPE, propertyName, statement) \
   DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertyName, statement)
-
-#define DEFINE_STRING_SETTER(T_RIME_TYPE, name, assignment) \
-  DEFINE_STRING_SETTER_IMPL_QJS(T_RIME_TYPE, name, assignment)
 
 #define DEFINE_SETTER(T_RIME_TYPE, jsName, assignment) \
   DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment)
@@ -106,22 +106,6 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   }
 
 // =============== SETTER ===============
-#define DEFINE_STRING_SETTER_IMPL_QJS(T_RIME_TYPE, name, assignment)             \
-  static JSValue set_##name(JSContext* ctx, JSValueConst thisVal, JSValue val) { \
-    auto& engine = JsEngine<JSValue>::instance();                                \
-    if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                        \
-      auto str = engine.toStdString(val);                                        \
-      if (!str.empty()) {                                                        \
-        assignment;                                                              \
-        return JS_UNDEFINED;                                                     \
-      }                                                                          \
-      auto* format = "%s.%s = rvalue: rvalue is not a string";                   \
-      return JS_ThrowTypeError(ctx, format, #T_RIME_TYPE, #name);                \
-    }                                                                            \
-    auto* format = "Failed to unwrap the js object to a cpp %s object";          \
-    return JS_ThrowTypeError(ctx, format, #T_RIME_TYPE);                         \
-  }
-
 #define DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment)                    \
   static JSValue set_##jsName(JSContext* ctx, JSValueConst thisVal, JSValue val) { \
     auto& engine = JsEngine<JSValue>::instance();                                  \
