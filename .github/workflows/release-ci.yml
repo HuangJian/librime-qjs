@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/macos-ci-coverage-final
     tags:
       - '[0-9]+.*'
   workflow_dispatch:
@@ -37,7 +38,7 @@ jobs:
 
   pages:
     needs: [macos]
-    if: ${{ github.repository == 'HuangJian/librime-qjs' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.repository == 'HuangJian/librime-qjs' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/macos-ci-coverage-final') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
