@@ -11,7 +11,6 @@ using namespace rime;
 template <>
 class JsWrapper<Segment> {
   DEFINE_CFUNCTION_ARGC(getCandidateAt, 1, {
-    auto obj = engine.unwrap<Segment>(thisVal);
     int32_t index = engine.toInt(argv[0]);
     if (index < 0 || size_t(index) >= obj->menu->candidate_count()) {
       return engine.null();
@@ -20,7 +19,6 @@ class JsWrapper<Segment> {
   })
 
   DEFINE_CFUNCTION_ARGC(hasTag, 1, {
-    auto obj = engine.unwrap<Segment>(thisVal);
     std::string tag = engine.toStdString(argv[0]);
     return engine.wrap(obj->HasTag(tag));
   })

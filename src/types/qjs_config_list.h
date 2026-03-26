@@ -10,14 +10,10 @@ template <>
 class JsWrapper<ConfigList> {
   DEFINE_CFUNCTION(getType, { return engine.wrap("list"); })
 
-  DEFINE_CFUNCTION(getSize, {
-    auto obj = engine.unwrap<rime::ConfigList>(thisVal);
-    return engine.wrap(obj->size());
-  })
+  DEFINE_CFUNCTION(getSize, { return engine.wrap(obj->size()); })
 
   DEFINE_CFUNCTION_ARGC(getItemAt, 1, {
     int index = engine.toInt(argv[0]);
-    auto obj = engine.unwrap<rime::ConfigList>(thisVal);
 
     if (index < 0 || size_t(index) >= obj->size()) {
       return engine.null();
@@ -32,7 +28,6 @@ class JsWrapper<ConfigList> {
 
   DEFINE_CFUNCTION_ARGC(getValueAt, 1, {
     int index = engine.toInt(argv[0]);
-    auto obj = engine.unwrap<rime::ConfigList>(thisVal);
 
     if (index < 0 || size_t(index) >= obj->size()) {
       return engine.null();
@@ -47,14 +42,12 @@ class JsWrapper<ConfigList> {
 
   DEFINE_CFUNCTION_ARGC(pushBack, 1, {
     if (auto item = engine.unwrap<ConfigItem>(argv[0])) {
-      auto obj = engine.unwrap<rime::ConfigList>(thisVal);
       obj->Append(item);
     }
     return engine.undefined();
   })
 
   DEFINE_CFUNCTION(clear, {
-    auto obj = engine.unwrap<rime::ConfigList>(thisVal);
     obj->Clear();
     return engine.undefined();
   })

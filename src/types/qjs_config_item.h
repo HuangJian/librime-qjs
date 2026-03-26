@@ -9,7 +9,6 @@ using namespace rime;
 template <>
 class JsWrapper<ConfigItem> {
   DEFINE_CFUNCTION(getType, {
-    auto obj = engine.unwrap<rime::ConfigItem>(thisVal);
     const char* strType;
     switch (obj->type()) {
       case rime::ConfigItem::kNull:

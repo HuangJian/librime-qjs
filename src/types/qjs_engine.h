@@ -13,7 +13,6 @@ template <>
 class JsWrapper<Engine> {
   DEFINE_CFUNCTION_ARGC(commitText, 1, {
     std::string text = engine.toStdString(argv[0]);
-    auto* obj = engine.unwrap<Engine>(thisVal);
     obj->CommitText(text);
     return engine.undefined();
   })
@@ -23,14 +22,12 @@ class JsWrapper<Engine> {
     if (!schema) {
       return engine.jsFalse();
     }
-    auto* obj = engine.unwrap<Engine>(thisVal);
     obj->ApplySchema(schema);
     return engine.jsTrue();
   })
 
   DEFINE_CFUNCTION_ARGC(processKey, 1, {
     std::string keyRepr = engine.toStdString(argv[0]);
-    auto* obj = engine.unwrap<Engine>(thisVal);
     return engine.wrap(obj->ProcessKey(KeyEvent(keyRepr)));
   })
 

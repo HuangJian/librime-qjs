@@ -12,7 +12,6 @@ constexpr const char* JS_LISTENER_PROPERTY_NAME = "jsListenerFunc";
 template <>
 class JsWrapper<NotifierConnection> {
   DEFINE_CFUNCTION(disconnect, {
-    auto obj = engine.unwrap<NotifierConnection>(thisVal);
     obj->disconnect();
     auto jsListenerFunc = engine.getObjectProperty(thisVal, JS_LISTENER_PROPERTY_NAME);
     engine.freeValue(jsListenerFunc);

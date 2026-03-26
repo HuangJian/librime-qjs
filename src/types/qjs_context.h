@@ -10,37 +10,27 @@ using namespace rime;
 template <>
 class JsWrapper<Context> {
   DEFINE_CFUNCTION(commit, {
-    auto obj = engine.unwrap<Context>(thisVal);
     obj->Commit();
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION(getCommitText, {
-    auto obj = engine.unwrap<Context>(thisVal);
-    return engine.wrap(obj->GetCommitText());
-  })
+  DEFINE_CFUNCTION(getCommitText, { return engine.wrap(obj->GetCommitText()); })
 
   DEFINE_CFUNCTION(clear, {
-    auto obj = engine.unwrap<Context>(thisVal);
     obj->Clear();
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION(hasMenu, {
-    auto obj = engine.unwrap<Context>(thisVal);
-    return engine.wrap(obj->HasMenu());
-  })
+  DEFINE_CFUNCTION(hasMenu, { return engine.wrap(obj->HasMenu()); })
 
   DEFINE_CFUNCTION_ARGC(getOption, 1, {
     std::string optionName = engine.toStdString(argv[0]);
-    auto* obj = engine.unwrap<Context>(thisVal);
     return engine.wrap(obj->get_option(optionName));
   })
 
   DEFINE_CFUNCTION_ARGC(setOption, 2, {
     std::string optionName = engine.toStdString(argv[0]);
     bool value = engine.toBool(argv[1]);
-    auto* obj = engine.unwrap<Context>(thisVal);
     obj->set_option(optionName, value);
     return engine.undefined();
   })

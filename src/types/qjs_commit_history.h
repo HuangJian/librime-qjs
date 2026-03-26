@@ -12,7 +12,6 @@ class JsWrapper<CommitHistory> {
   DEFINE_CFUNCTION_ARGC(push, 2, {
     auto type = engine.toStdString(argv[0]);
     auto text = engine.toStdString(argv[1]);
-    auto* obj = engine.unwrap<rime::CommitHistory>(thisVal);
     obj->Push(CommitRecord(type, text));
     return engine.undefined();
   })

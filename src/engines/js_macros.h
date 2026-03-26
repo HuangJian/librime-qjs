@@ -9,6 +9,20 @@
 #include "engines/for_each_macros.h"
 #include "engines/quickjs/quickjs_engine.h"  // IWYU pragma: export
 
+template <typename T_RIME_TYPE>
+class JsWrapper;
+
+template <typename T_WRAPPER>
+struct JsWrapperType;
+
+template <typename T_RIME_TYPE>
+struct JsWrapperType<JsWrapper<T_RIME_TYPE>> {
+  using type = T_RIME_TYPE;
+};
+
+template <typename T_WRAPPER>
+using JsWrapperTypeT = typename JsWrapperType<T_WRAPPER>::type;
+
 template <typename T_JS_VALUE>
 class JsSetterValueProxy {
   const JsEngine<T_JS_VALUE>& engine_;
@@ -154,6 +168,7 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   static constexpr int funcName##_argc = 0;                                           \
   static JSValue funcName(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv) { \
     auto& engine = JsEngine<JSValue>::instance();                                     \
+    auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);                     \
     try {                                                                             \
       funcBody;                                                                       \
     } catch (const JsException& e) {                                                  \
@@ -168,6 +183,7 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
       return JS_ThrowSyntaxError(ctx, "%s(...) expects %d arguments", #funcName, expectingArgc); \
     }                                                                                            \
     auto& engine = JsEngine<JSValue>::instance();                                                \
+    auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);                                \
     try {                                                                                        \
       statements;                                                                                \
     } catch (const JsException& e) {                                                             \

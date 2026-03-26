@@ -12,7 +12,6 @@ using CandidateIterator = Translation;
 template <>
 class JsWrapper<Translation> {
   DEFINE_CFUNCTION(next, {
-    auto obj = engine.unwrap<CandidateIterator>(thisVal);
     if (obj->exhausted()) {
       return engine.null();
     }

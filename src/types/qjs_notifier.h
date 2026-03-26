@@ -34,7 +34,6 @@ class JsWrapper<Notifier> {
     // otherwise it will be released by the quickjs engine and the function will not be called
     auto duplicatedFunc = engine.duplicateValue(jsListenerFunc);
 
-    auto obj = engine.unwrap<Notifier>(thisVal);
     auto connection = std::make_shared<NotifierConnection>(
         // NOTE: duplicatedFunc should be passed by value but not by reference "&duplicatedFunc",
         // otherwise it could crash the program when running with the JavaScriptCore engine.

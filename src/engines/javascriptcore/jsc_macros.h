@@ -45,6 +45,7 @@
   static JSValueRef funcName##Jsc(JSContextRef ctx, JSObjectRef function, JSObjectRef thisVal,   \
                                   size_t argc, const JSValueRef argv[], JSValueRef* exception) { \
     auto& engine = JsEngine<JSValueRef>::instance();                                             \
+    auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);                                \
     try {                                                                                        \
       funcBody;                                                                                  \
     } catch (const JsException& e) {                                                             \
@@ -66,6 +67,7 @@
       *exception = JSValueMakeString(ctx, JscStringRAII(msg.str().c_str()));                     \
       return nullptr;                                                                            \
     }                                                                                            \
+    auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);                                \
     try {                                                                                        \
       statements;                                                                                \
     } catch (const JsException& e) {                                                             \
