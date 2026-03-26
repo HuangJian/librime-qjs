@@ -10,12 +10,6 @@ using namespace rime;
 
 template <>
 class JsWrapper<Segment> {
-  DEFINE_GETTER(Segment, selectedIndex, obj->selected_index)
-  DEFINE_SETTER(Segment, selectedIndex, obj->selected_index = value)
-
-  DEFINE_GETTER(Segment, prompt, obj->prompt)
-  DEFINE_SETTER(Segment, prompt, obj->prompt = value)
-
   DEFINE_GETTER(Segment, start, obj->start)
   DEFINE_GETTER(Segment, end, obj->end)
   DEFINE_GETTER(Segment, selectedCandidate, obj->GetSelectedCandidate())
@@ -39,7 +33,9 @@ class JsWrapper<Segment> {
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Segment,
                                 WITHOUT_CONSTRUCTOR,
-                                WITH_PROPERTIES(selectedIndex, prompt),
+                                WITH_PROPERTIES(AUTO_PROPERTIES(prompt),
+                                                AUTO_PROPERTIES_RENAMED(selectedIndex,
+                                                                        selected_index)),
                                 WITH_GETTERS(start, end, selectedCandidate, candidateSize),
                                 WITH_FUNCTIONS(getCandidateAt, hasTag));
 };

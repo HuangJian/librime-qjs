@@ -4,6 +4,7 @@
 
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "engines/for_each_macros.h"
 #include "engines/quickjs/quickjs_engine.h"  // IWYU pragma: export
@@ -93,6 +94,21 @@ template <typename T, std::size_t N>
 constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   return N;
 }
+
+// Property specs used by WITH_PROPERTIES(...).
+// CUSTOM_PROPERTY(name): use pre-defined get_/set_ accessors.
+// AUTO_PROPERTY(name): auto-generate get_/set_ accessors using obj->name() and obj->set_name(value).
+#define CUSTOM_PROPERTY(name) (name, name, 0)
+
+#define AUTO_PROPERTY_1(name) (name, name, 1)
+#define AUTO_PROPERTY_2(name, cpp_name) (name, cpp_name, 1)
+#define AUTO_PROPERTY_CHOOSER(_1, _2, NAME, ...) NAME
+#define AUTO_PROPERTY(...) \
+  EXPAND(AUTO_PROPERTY_CHOOSER(__VA_ARGS__, AUTO_PROPERTY_2, AUTO_PROPERTY_1)(__VA_ARGS__))
+
+#define CUSTOM_PROPERTIES(...) FOR_EACH_COMMA(CUSTOM_PROPERTY, __VA_ARGS__)
+#define AUTO_PROPERTIES(...) FOR_EACH_COMMA(AUTO_PROPERTY, __VA_ARGS__)
+#define AUTO_PROPERTIES_RENAMED(...) FOR_EACH_PAIR_COMMA(AUTO_PROPERTY, __VA_ARGS__)
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage) function-like macro 'DEFINE_GETTER' used; consider a 'constexpr' template function
 // =============== GETTER ===============
@@ -195,11 +211,41 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   };
 #define WITHOUT_FINALIZER_QJS inline static JSClassFinalizer* finalizerQjs = nullptr;
 
-#define DEFINE_PROPERTY(name) JS_CGETSET_DEF(#name, get_##name, set_##name),
+#define DEFINE_AUTO_PROPERTY_ACCESSOR_0(name, cpp_name)
+#define DEFINE_AUTO_PROPERTY_ACCESSOR_1(name, cpp_name)                                \
+  template <typename T_OBJ>                                                            \
+  static auto get_auto_property_##name(T_OBJ&& obj, int)->decltype(obj->cpp_name()) {  \
+    return obj->cpp_name();                                                            \
+  }                                                                                    \
+  template <typename T_OBJ>                                                            \
+  static auto get_auto_property_##name(T_OBJ&& obj, long)->decltype((obj->cpp_name)) { \
+    return obj->cpp_name;                                                              \
+  }                                                                                    \
+  template <typename T_OBJ, typename T_VALUE>                                          \
+  static auto set_auto_property_##name(T_OBJ&& obj, T_VALUE&& value, int)              \
+      ->decltype(obj->set_##cpp_name(std::forward<T_VALUE>(value)), void()) {          \
+    obj->set_##cpp_name(std::forward<T_VALUE>(value));                                 \
+  }                                                                                    \
+  template <typename T_OBJ, typename T_VALUE>                                          \
+  static auto set_auto_property_##name(T_OBJ&& obj, T_VALUE&& value, long)             \
+      ->decltype((obj->cpp_name = std::forward<T_VALUE>(value)), void()) {             \
+    obj->cpp_name = std::forward<T_VALUE>(value);                                      \
+  }                                                                                    \
+  DEFINE_GETTER(T_RIME_TYPE, name, get_auto_property_##name(obj, 0))                   \
+  DEFINE_SETTER(T_RIME_TYPE, name, set_auto_property_##name(obj, value, 0))
+
+#define DEFINE_AUTO_PROPERTY_ACCESSOR_IMPL(name, cpp_name, enabled) \
+  DEFINE_AUTO_PROPERTY_ACCESSOR_##enabled(name, cpp_name)
+#define DEFINE_AUTO_PROPERTY_ACCESSOR(spec) DEFINE_AUTO_PROPERTY_ACCESSOR_IMPL spec
+
+#define DEFINE_PROPERTY_ENTRY_IMPL(name, cpp_name, enabled) \
+  JS_CGETSET_DEF(#name, get_##name, set_##name),
+#define DEFINE_PROPERTY_ENTRY(spec) DEFINE_PROPERTY_ENTRY_IMPL spec
 
 #define WITH_PROPERTIES_QJS(...)                                \
+  FOR_EACH(DEFINE_AUTO_PROPERTY_ACCESSOR, __VA_ARGS__)          \
   inline static const JSCFunctionListEntry PROPERTIES_QJS[] = { \
-      FOR_EACH(DEFINE_PROPERTY, __VA_ARGS__)};                  \
+      FOR_EACH(DEFINE_PROPERTY_ENTRY, __VA_ARGS__)};            \
   inline static const size_t PROPERTIES_SIZE = sizeof(PROPERTIES_QJS) / sizeof(PROPERTIES_QJS[0]);
 #define WITHOUT_PROPERTIES_QJS                                    \
   inline static const JSCFunctionListEntry PROPERTIES_QJS[] = {}; \

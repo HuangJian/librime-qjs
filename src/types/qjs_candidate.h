@@ -14,10 +14,6 @@ template <>
 class JsWrapper<Candidate> {
   DEFINE_GETTER(Candidate, text, obj->text())
   DEFINE_GETTER(Candidate, comment, obj->comment())
-  DEFINE_GETTER(Candidate, type, obj->type())
-  DEFINE_GETTER(Candidate, start, obj->start())
-  DEFINE_GETTER(Candidate, end, obj->end())
-  DEFINE_GETTER(Candidate, quality, obj->quality())
   DEFINE_GETTER(Candidate, preedit, obj->preedit())
 
   DEFINE_SETTER(Candidate, text, {
@@ -33,12 +29,6 @@ class JsWrapper<Candidate> {
       phrase->set_comment(value);
     }
   })
-
-  DEFINE_SETTER(Candidate, type, obj->set_type(value))
-
-  DEFINE_SETTER(Candidate, start, obj->set_start(value))
-  DEFINE_SETTER(Candidate, quality, obj->set_quality(value))
-  DEFINE_SETTER(Candidate, end, obj->set_end(value))
 
   DEFINE_SETTER(Candidate, preedit, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
@@ -62,10 +52,10 @@ class JsWrapper<Candidate> {
   });
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(
-      Candidate,
-      WITH_CONSTRUCTOR(makeCandidate),
-      WITH_PROPERTIES(text, comment, type, start, end, quality, preedit),
-      WITHOUT_GETTERS,
-      WITHOUT_FUNCTIONS);
+  EXPORT_CLASS_WITH_SHARED_POINTER(Candidate,
+                                   WITH_CONSTRUCTOR(makeCandidate),
+                                   WITH_PROPERTIES(CUSTOM_PROPERTIES(text, comment, preedit),
+                                                   AUTO_PROPERTIES(type, start, end, quality)),
+                                   WITHOUT_GETTERS,
+                                   WITHOUT_FUNCTIONS);
 };

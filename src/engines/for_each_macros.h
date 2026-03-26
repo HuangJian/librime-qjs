@@ -40,6 +40,32 @@
 #define FOR_EACH_N(N, macro, ...) INTERNAL_FOR_EACH_N(N, macro, __VA_ARGS__)
 #define FOR_EACH(macro, ...) FOR_EACH_N(COUNT_ARGS(__VA_ARGS__), macro, __VA_ARGS__)
 
+// =============== FOR_EACH_COMMA ===============
+#define FOR_EACH_COMMA_1(macro, x) macro(x)
+#define FOR_EACH_COMMA_2(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_1(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_3(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_2(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_4(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_3(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_5(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_4(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_6(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_5(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_7(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_6(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_8(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_7(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_9(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_8(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_10(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_9(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_11(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_10(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_12(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_11(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_13(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_12(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_14(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_13(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_15(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_14(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_16(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_15(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_17(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_16(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_18(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_17(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_19(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_18(macro, __VA_ARGS__))
+#define FOR_EACH_COMMA_20(macro, x, ...) macro(x), EXPAND(FOR_EACH_COMMA_19(macro, __VA_ARGS__))
+
+#define INTERNAL_FOR_EACH_COMMA_N(N, macro, ...) FOR_EACH_COMMA_##N(macro, __VA_ARGS__)
+#define FOR_EACH_COMMA_N(N, macro, ...) INTERNAL_FOR_EACH_COMMA_N(N, macro, __VA_ARGS__)
+#define FOR_EACH_COMMA(macro, ...) FOR_EACH_COMMA_N(COUNT_ARGS(__VA_ARGS__), macro, __VA_ARGS__)
+
 // =============== FOR_EACH_PAIR ===============
 #define FOR_EACH_PAIR_0(...)
 #define FOR_EACH_PAIR_1(macro, x, y) macro(x, y)
@@ -73,5 +99,43 @@
 #define INTERNAL_FOR_EACH_PAIR_N(N, macro, ...) FOR_EACH_PAIR_##N(macro, __VA_ARGS__)
 #define FOR_EACH_PAIR_N(N, macro, ...) INTERNAL_FOR_EACH_PAIR_N(N, macro, __VA_ARGS__)
 #define FOR_EACH_PAIR(macro, ...) FOR_EACH_PAIR_N(COUNT_PAIRS(__VA_ARGS__), macro, __VA_ARGS__)
+
+// =============== FOR_EACH_PAIR_COMMA ===============
+#define FOR_EACH_PAIR_COMMA_1(macro, x, y) macro(x, y)
+#define FOR_EACH_PAIR_COMMA_2(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_1(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_3(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_2(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_4(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_3(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_5(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_4(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_6(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_5(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_7(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_6(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_8(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_7(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_9(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_8(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_10(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_9(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_11(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_10(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_12(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_11(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_13(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_12(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_14(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_13(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_15(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_14(macro, __VA_ARGS__))
+#define FOR_EACH_PAIR_COMMA_16(macro, x, y, ...) \
+  macro(x, y), EXPAND(FOR_EACH_PAIR_COMMA_15(macro, __VA_ARGS__))
+
+#define INTERNAL_FOR_EACH_PAIR_COMMA_N(N, macro, ...) FOR_EACH_PAIR_COMMA_##N(macro, __VA_ARGS__)
+#define FOR_EACH_PAIR_COMMA_N(N, macro, ...) INTERNAL_FOR_EACH_PAIR_COMMA_N(N, macro, __VA_ARGS__)
+#define FOR_EACH_PAIR_COMMA(macro, ...) \
+  FOR_EACH_PAIR_COMMA_N(COUNT_PAIRS(__VA_ARGS__), macro, __VA_ARGS__)
 
 // NOLINTEND(cppcoreguidelines-macro-usage)

@@ -106,8 +106,9 @@
   WITHOUT_FINALIZER_QJS;  \
   inline static void (*finalizerJsc)(JSObjectRef) = nullptr;
 
-#define DEFINE_PROPERTY_JSC(name) \
+#define DEFINE_PROPERTY_JSC_IMPL(name, cpp_name, enabled) \
   {#name, get_##name##Jsc, set_##name##Jsc, kJSPropertyAttributeNone},
+#define DEFINE_PROPERTY_JSC(spec) DEFINE_PROPERTY_JSC_IMPL spec
 
 #define WITH_PROPERTIES(...)        \
   WITH_PROPERTIES_QJS(__VA_ARGS__); \

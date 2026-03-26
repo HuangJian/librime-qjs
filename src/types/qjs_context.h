@@ -9,12 +9,6 @@ using namespace rime;
 
 template <>
 class JsWrapper<Context> {
-  DEFINE_GETTER(Context, input, obj->input())
-  DEFINE_GETTER(Context, caretPos, obj->caret_pos())
-
-  DEFINE_SETTER(Context, input, obj->set_input(value);)
-  DEFINE_SETTER(Context, caretPos, obj->set_caret_pos(value))
-
   DEFINE_GETTER(Context, preedit, std::make_shared<Preedit>(obj->GetPreedit()))
 
   DEFINE_GETTER(Context,
@@ -68,7 +62,7 @@ public:
   EXPORT_CLASS_WITH_RAW_POINTER(
       Context,
       WITHOUT_CONSTRUCTOR,
-      WITH_PROPERTIES(input, caretPos),
+      WITH_PROPERTIES(AUTO_PROPERTIES(input), AUTO_PROPERTIES_RENAMED(caretPos, caret_pos)),
       WITH_GETTERS(preedit,
                    lastSegment,
                    commitNotifier,
