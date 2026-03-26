@@ -39,16 +39,16 @@ class JsWrapper<Candidate> {
   })
 
   DEFINE_CFUNCTION_ARGC(makeCandidate, MIN_ARGC_NEW_CANDIDATE, {
-    auto obj = std::make_shared<rime::SimpleCandidate>();
-    obj->set_type(engine.toStdString(argv[0]));
-    obj->set_start(engine.toInt(argv[1]));
-    obj->set_end(engine.toInt(argv[2]));
-    obj->set_text(engine.toStdString(argv[3]));
-    obj->set_comment(engine.toStdString(argv[4]));
+    auto candidate = std::make_shared<rime::SimpleCandidate>();
+    candidate->set_type(engine.toStdString(argv[0]));
+    candidate->set_start(engine.toInt(argv[1]));
+    candidate->set_end(engine.toInt(argv[2]));
+    candidate->set_text(engine.toStdString(argv[3]));
+    candidate->set_comment(engine.toStdString(argv[4]));
     if (argc > MIN_ARGC_NEW_CANDIDATE) {
-      obj->set_quality(engine.toDouble(argv[5]));
+      candidate->set_quality(engine.toDouble(argv[5]));
     }
-    return engine.wrap<an<Candidate>>(obj);
+    return engine.wrap<an<Candidate>>(candidate);
   });
 
 public:
