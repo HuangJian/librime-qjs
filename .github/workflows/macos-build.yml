@@ -179,9 +179,20 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          llvm-profdata merge -sparse ./*.profraw build/*.profraw build/plugins/qjs/*.profraw build/plugins/qjs/build/*.profraw -o build/test.profdata || true
-          llvm-cov show ./build/plugins/qjs/tests/librime-qjs-tests -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
-          llvm-cov report ./build/plugins/qjs/tests/librime-qjs-tests -instr-profile=build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
+          find . -name "*.profraw"
+          TEST_BINARY=$(find . -name "librime-qjs-tests" -type f | head -n 1)
+          PLUGIN_LIB=$(find . -name "librime-qjs.dylib" -type f | head -n 1)
+          PROFRAW_FILES=$(find . -name "*.profraw")
+          echo "Test binary found at: $TEST_BINARY"
+          echo "Plugin library found at: $PLUGIN_LIB"
+          if [ -n "$PROFRAW_FILES" ] && [ -n "$TEST_BINARY" ] && [ -n "$PLUGIN_LIB" ]; then
+            llvm-profdata merge -sparse $PROFRAW_FILES -o build/test.profdata
+            llvm-cov show "$TEST_BINARY" -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/' -object "$PLUGIN_LIB"
+            llvm-cov report "$TEST_BINARY" -instr-profile=build/test.profdata -ignore-filename-regex='(thirdparty|tests)/' -object "$PLUGIN_LIB"
+          else
+            echo "Missing required files for coverage report."
+            exit 1
+          fi
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
