@@ -174,13 +174,14 @@ jobs:
         run: |
           cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=ON -DENABLE_EXTERNAL_PLUGINS=ON -DBUILD_MERGED_PLUGINS=OFF -DBoost_NO_BOOST_CMAKE=TRUE -DBOOST_ROOT="${{ env.BOOST_ROOT }}" -DCMAKE_INSTALL_PREFIX="./dist" -GNinja
           cmake --build build
-          (cd build; export LLVM_PROFILE_FILE="code-%p.profraw"; ctest --output-on-failure)
+          export LLVM_PROFILE_FILE="code-%p.profraw"
+          (cd build; ctest --output-on-failure)
 
       - name: Generate coverage report
         run: |
-          llvm-profdata merge -sparse ./build/*.profraw -o ./build/test.profdata
-          llvm-cov show ./build/plugins/qjs/librime-qjs-tests -instr-profile=./build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
-          llvm-cov report ./build/plugins/qjs/librime-qjs-tests -instr-profile=./build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
+          llvm-profdata merge -sparse ./*.profraw build/*.profraw build/plugins/qjs/*.profraw -o build/test.profdata || true
+          llvm-cov show ./build/plugins/qjs/tests/librime-qjs-tests -instr-profile=build/test.profdata -format=html -output-dir=coverage_report -ignore-filename-regex='(thirdparty|tests)/'
+          llvm-cov report ./build/plugins/qjs/tests/librime-qjs-tests -instr-profile=build/test.profdata -ignore-filename-regex='(thirdparty|tests)/'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
