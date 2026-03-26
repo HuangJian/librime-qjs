@@ -106,8 +106,22 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 #define AUTO_PROPERTY(...) \
   EXPAND(AUTO_PROPERTY_CHOOSER(__VA_ARGS__, AUTO_PROPERTY_2, AUTO_PROPERTY_1)(__VA_ARGS__))
 
+#define PP_CAT_IMPL(a, b) a##b
+#define PP_CAT(a, b) PP_CAT_IMPL(a, b)
+#define PP_CHECK_N(x, n, ...) n
+#define PP_CHECK(...) PP_CHECK_N(__VA_ARGS__, 0, )
+#define PP_PROBE(x) x, 1,
+#define PP_IS_PAREN_PROBE(...) PP_PROBE(~)
+#define PP_IS_PAREN(x) PP_CHECK(PP_IS_PAREN_PROBE x)
+
+#define AUTO_PROPERTY_ITEM_PLAIN(x) AUTO_PROPERTY(x)
+#define AUTO_PROPERTY_ITEM_RENAMED(js_name, cpp_name) AUTO_PROPERTY(js_name, cpp_name)
+#define AUTO_PROPERTY_ITEM_IMPL_0(x) AUTO_PROPERTY_ITEM_PLAIN(x)
+#define AUTO_PROPERTY_ITEM_IMPL_1(x) AUTO_PROPERTY_ITEM_RENAMED x
+#define AUTO_PROPERTY_ITEM(x) PP_CAT(AUTO_PROPERTY_ITEM_IMPL_, PP_IS_PAREN(x))(x)
+
 #define CUSTOM_PROPERTIES(...) FOR_EACH_COMMA(CUSTOM_PROPERTY, __VA_ARGS__)
-#define AUTO_PROPERTIES(...) FOR_EACH_COMMA(AUTO_PROPERTY, __VA_ARGS__)
+#define AUTO_PROPERTIES(...) FOR_EACH_COMMA(AUTO_PROPERTY_ITEM, __VA_ARGS__)
 #define AUTO_PROPERTIES_RENAMED(...) FOR_EACH_PAIR_COMMA(AUTO_PROPERTY, __VA_ARGS__)
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage) function-like macro 'DEFINE_GETTER' used; consider a 'constexpr' template function

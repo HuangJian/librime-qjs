@@ -62,7 +62,7 @@ public:
   EXPORT_CLASS_WITH_RAW_POINTER(
       Context,
       WITHOUT_CONSTRUCTOR,
-      WITH_PROPERTIES(AUTO_PROPERTIES(input), AUTO_PROPERTIES_RENAMED(caretPos, caret_pos)),
+      WITH_PROPERTIES(AUTO_PROPERTIES(input, (caretPos, caret_pos))),
       WITH_GETTERS(preedit,
                    lastSegment,
                    commitNotifier,

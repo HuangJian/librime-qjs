@@ -9,12 +9,12 @@ using namespace rime;
 template <>
 class JsWrapper<Preedit> {
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(
-      Preedit,
-      WITHOUT_CONSTRUCTOR,
-      WITH_PROPERTIES(
-          AUTO_PROPERTIES(text),
-          AUTO_PROPERTIES_RENAMED(caretPos, caret_pos, selectStart, sel_start, selectEnd, sel_end)),
-      WITHOUT_GETTERS,
-      WITHOUT_FUNCTIONS);
+  EXPORT_CLASS_WITH_SHARED_POINTER(Preedit,
+                                   WITHOUT_CONSTRUCTOR,
+                                   WITH_PROPERTIES(AUTO_PROPERTIES(text,
+                                                                   (caretPos, caret_pos),
+                                                                   (selectStart, sel_start),
+                                                                   (selectEnd, sel_end))),
+                                   WITHOUT_GETTERS,
+                                   WITHOUT_FUNCTIONS);
 };
