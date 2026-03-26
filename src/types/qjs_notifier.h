@@ -50,8 +50,8 @@ class JsWrapper<Notifier> {
 
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Notifier,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
-                                WITHOUT_GETTERS,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
+                                WITH_GETTERS(),
                                 WITH_FUNCTIONS(connect));
 };

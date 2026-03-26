@@ -114,7 +114,7 @@ public:
   EXPORT_CLASS_WITH_SHARED_POINTER(
       LevelDb,
       WITH_CONSTRUCTOR(makeLevelDb),
-      WITHOUT_PROPERTIES,
-      WITHOUT_GETTERS,
+      WITH_PROPERTIES(),
+      WITH_GETTERS(),
       WITH_FUNCTIONS(loadTextFile, loadBinaryFile, saveToBinaryFile, find, prefixSearch, close));
 };

@@ -18,8 +18,8 @@ class JsWrapper<CommitHistory> {
 
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(CommitHistory,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
                                 WITH_GETTERS((last, obj->empty() ? nullptr : &obj->back()), repr),
                                 WITH_FUNCTIONS(push));
 };

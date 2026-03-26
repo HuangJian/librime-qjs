@@ -55,8 +55,8 @@ class JsWrapper<ConfigList> {
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(
       ConfigList,
-      WITHOUT_CONSTRUCTOR,
-      WITHOUT_PROPERTIES,
-      WITHOUT_GETTERS,
+      WITH_CONSTRUCTOR(),
+      WITH_PROPERTIES(),
+      WITH_GETTERS(),
       WITH_FUNCTIONS(getType, getSize, getItemAt, getValueAt, pushBack, clear));
 };

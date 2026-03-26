@@ -10,8 +10,8 @@ template <>
 class JsWrapper<KeyEvent> {
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(KeyEvent,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
                                 WITH_GETTERS(shift, ctrl, alt, release, repr),
-                                WITHOUT_FUNCTIONS);
+                                WITH_FUNCTIONS());
 };

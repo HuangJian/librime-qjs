@@ -22,8 +22,8 @@ class JsWrapper<Translation> {
 
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(CandidateIterator,
-                                   WITHOUT_CONSTRUCTOR,
-                                   WITHOUT_PROPERTIES,
-                                   WITHOUT_GETTERS,
+                                   WITH_CONSTRUCTOR(),
+                                   WITH_PROPERTIES(),
+                                   WITH_GETTERS(),
                                    WITH_FUNCTIONS(next));
 };

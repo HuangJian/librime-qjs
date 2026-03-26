@@ -10,12 +10,12 @@ template <>
 class JsWrapper<Schema> {
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Schema,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
                                 WITH_GETTERS((id, obj->schema_id()),
                                              (name, obj->schema_name()),
                                              config,
                                              (pageSize, obj->page_size()),
                                              (selectKeys, obj->select_keys())),
-                                WITHOUT_FUNCTIONS);
+                                WITH_FUNCTIONS());
 };

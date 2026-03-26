@@ -43,8 +43,8 @@ class JsWrapper<ConfigMap> {
 
 public:
   EXPORT_CLASS_WITH_SHARED_POINTER(ConfigMap,
-                                   WITHOUT_CONSTRUCTOR,
-                                   WITHOUT_PROPERTIES,
-                                   WITHOUT_GETTERS,
+                                   WITH_CONSTRUCTOR(),
+                                   WITH_PROPERTIES(),
+                                   WITH_GETTERS(),
                                    WITH_FUNCTIONS(getType, hasKey, getItem, getValue, setItem));
 };

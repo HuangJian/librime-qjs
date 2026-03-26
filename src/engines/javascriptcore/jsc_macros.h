@@ -81,13 +81,17 @@
                         EXPAND(block4));                                           \
   inline static JSClassRef classDefJsc = nullptr;
 
-#define WITH_CONSTRUCTOR(funcName)                                                       \
+#define WITH_CONSTRUCTOR_1(funcName)                                                     \
   WITH_CONSTRUCTOR_QJS(funcName);                                                        \
   static JSObjectRef constructorJsc(JSContextRef ctx, JSObjectRef function, size_t argc, \
                                     const JSValueRef argv[], JSValueRef* exception) {    \
     auto val = funcName##Jsc(ctx, function, nullptr, argc, argv, exception);             \
     return JSValueToObject(ctx, val, nullptr);                                           \
   }
+#define WITH_CONSTRUCTOR_0() WITHOUT_CONSTRUCTOR
+#define WITH_CONSTRUCTOR_N_IMPL(N, ...) WITH_CONSTRUCTOR_##N(__VA_ARGS__)
+#define WITH_CONSTRUCTOR_N(N, ...) WITH_CONSTRUCTOR_N_IMPL(N, __VA_ARGS__)
+#define WITH_CONSTRUCTOR(...) WITH_CONSTRUCTOR_N(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
 
 #define WITHOUT_CONSTRUCTOR \
   WITHOUT_CONSTRUCTOR_QJS;  \

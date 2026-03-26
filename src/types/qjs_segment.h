@@ -25,7 +25,7 @@ class JsWrapper<Segment> {
 
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Segment,
-                                WITHOUT_CONSTRUCTOR,
+                                WITH_CONSTRUCTOR(),
                                 WITH_PROPERTIES(AUTO_PROPERTIES(prompt,
                                                                 (selectedIndex, selected_index))),
                                 WITH_GETTERS(start,

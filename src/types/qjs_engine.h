@@ -33,8 +33,8 @@ class JsWrapper<Engine> {
 
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Engine,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
                                 WITH_GETTERS(schema, context, (activeEngine, obj->active_engine())),
                                 WITH_FUNCTIONS(processKey, commitText, applySchema));
 };

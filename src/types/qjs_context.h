@@ -38,7 +38,7 @@ class JsWrapper<Context> {
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(
       Context,
-      WITHOUT_CONSTRUCTOR,
+      WITH_CONSTRUCTOR(),
       WITH_PROPERTIES(AUTO_PROPERTIES(input, (caretPos, caret_pos))),
       WITH_GETTERS((preedit, std::make_shared<Preedit>(obj->GetPreedit())),
                    (lastSegment, obj->composition().empty() ? nullptr : &obj->composition().back()),

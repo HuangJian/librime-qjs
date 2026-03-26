@@ -56,6 +56,6 @@ public:
                                    WITH_CONSTRUCTOR(makeCandidate),
                                    WITH_PROPERTIES(CUSTOM_PROPERTIES(text, comment, preedit),
                                                    AUTO_PROPERTIES(type, start, end, quality)),
-                                   WITHOUT_GETTERS,
-                                   WITHOUT_FUNCTIONS);
+                                   WITH_GETTERS(),
+                                   WITH_FUNCTIONS());
 };

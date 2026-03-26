@@ -11,8 +11,8 @@ template <>
 class JsWrapper<CommitRecord> {
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(CommitRecord,
-                                WITHOUT_CONSTRUCTOR,
+                                WITH_CONSTRUCTOR(),
                                 WITH_PROPERTIES(AUTO_PROPERTIES(text, type)),
-                                WITHOUT_GETTERS,
-                                WITHOUT_FUNCTIONS);
+                                WITH_GETTERS(),
+                                WITH_FUNCTIONS());
 };

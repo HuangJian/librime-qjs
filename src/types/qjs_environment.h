@@ -92,8 +92,8 @@ class JsWrapper<Environment> {
 
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(Environment,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
                                 WITH_GETTERS((id, obj->getId()),
                                              (engine, &obj->getEngine()),
                                              (namespace, obj->getNameSpace()),

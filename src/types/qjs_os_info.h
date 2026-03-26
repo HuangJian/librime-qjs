@@ -8,10 +8,10 @@ template <>
 class JsWrapper<SystemInfo> {
 public:
   EXPORT_CLASS_WITH_RAW_POINTER(SystemInfo,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
+                                WITH_CONSTRUCTOR(),
+                                WITH_PROPERTIES(),
                                 WITH_GETTERS((name, obj->getOSName()),
                                              (version, obj->getOSVersion()),
                                              (architecture, obj->getArchitecture())),
-                                WITHOUT_FUNCTIONS);
+                                WITH_FUNCTIONS());
 };
