@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - feature/macos-ci-coverage-final
+      - feature/macos-ci-coverage-10055102022330038739
     tags:
       - '[0-9]+.*'
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
 
   pages:
     needs: [macos]
-    if: ${{ github.repository == 'HuangJian/librime-qjs' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/macos-ci-coverage-final') }}
+    if: ${{ github.repository == 'HuangJian/librime-qjs' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/macos-ci-coverage-10055102022330038739') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
