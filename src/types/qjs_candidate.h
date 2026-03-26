@@ -36,9 +36,9 @@ class JsWrapper<Candidate> {
 
   DEFINE_STRING_SETTER(Candidate, type, obj->set_type(str);)
 
-  DEFINE_SETTER(Candidate, start, engine.toInt, obj->set_start(value))
-  DEFINE_SETTER(Candidate, quality, engine.toDouble, obj->set_quality(value))
-  DEFINE_SETTER(Candidate, end, engine.toInt, obj->set_end(value))
+  DEFINE_SETTER(Candidate, start, obj->set_start(value))
+  DEFINE_SETTER(Candidate, quality, obj->set_quality(value))
+  DEFINE_SETTER(Candidate, end, obj->set_end(value))
 
   DEFINE_STRING_SETTER(Candidate, preedit, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {

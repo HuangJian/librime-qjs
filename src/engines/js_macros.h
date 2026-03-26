@@ -2,20 +2,68 @@
 
 #include <quickjs.h>
 
+#include <string>
+#include <type_traits>
+
 #include "engines/for_each_macros.h"
 #include "engines/quickjs/quickjs_engine.h"  // IWYU pragma: export
+
+template <typename T_JS_VALUE>
+class JsSetterValueProxy {
+  const JsEngine<T_JS_VALUE>& engine_;
+  const T_JS_VALUE& jsValue_;
+
+public:
+  JsSetterValueProxy(const JsEngine<T_JS_VALUE>& engine, const T_JS_VALUE& jsValue)
+      : engine_(engine), jsValue_(jsValue) {}
+
+  template <typename T, std::enable_if_t<std::is_same_v<std::decay_t<T>, bool>, int> = 0>
+  operator T() const {
+    return static_cast<T>(engine_.toBool(jsValue_));
+  }
+
+  template <typename T, std::enable_if_t<std::is_same_v<std::decay_t<T>, std::string>, int> = 0>
+  operator T() const {
+    return engine_.toStdString(jsValue_);
+  }
+
+  template <typename T, std::enable_if_t<std::is_floating_point_v<std::decay_t<T>>, int> = 0>
+  operator T() const {
+    return static_cast<T>(engine_.toDouble(jsValue_));
+  }
+
+  template <typename T,
+            std::enable_if_t<std::is_integral_v<std::decay_t<T>> &&
+                                 !std::is_same_v<std::decay_t<T>, bool>,
+                             int> = 0>
+  operator T() const {
+    return static_cast<T>(engine_.toInt(jsValue_));
+  }
+
+  template <typename T, std::enable_if_t<std::is_enum_v<std::decay_t<T>>, int> = 0>
+  operator T() const {
+    using Underlying = std::underlying_type_t<std::decay_t<T>>;
+    return static_cast<T>(static_cast<Underlying>(engine_.toInt(jsValue_)));
+  }
+};
+
+template <typename T_JS_VALUE>
+JsSetterValueProxy<T_JS_VALUE> makeSetterValueProxy(const JsEngine<T_JS_VALUE>& engine,
+                                                    const T_JS_VALUE& jsValue) {
+  return JsSetterValueProxy<T_JS_VALUE>(engine, jsValue);
+}
 
 #ifdef _ENABLE_JAVASCRIPTCORE
 #include "engines/javascriptcore/jsc_macros.h"
 #else
-#define DEFINE_GETTER(T_RIME_TYPE, propertieyName, statement) \
-  DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertieyName, statement)
+#define DEFINE_GETTER(T_RIME_TYPE, propertyName, statement) \
+  DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertyName, statement)
 
 #define DEFINE_STRING_SETTER(T_RIME_TYPE, name, assignment) \
   DEFINE_STRING_SETTER_IMPL_QJS(T_RIME_TYPE, name, assignment)
 
-#define DEFINE_SETTER(T_RIME_TYPE, jsName, converter, assignment) \
-  DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, converter, assignment)
+#define DEFINE_SETTER(T_RIME_TYPE, jsName, assignment) \
+  DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment)
 
 #define DEFINE_CFUNCTION(funcName, funcBody) DEFINE_CFUNCTION_QJS(funcName, funcBody)
 
@@ -48,13 +96,13 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage) function-like macro 'DEFINE_GETTER' used; consider a 'constexpr' template function
 // =============== GETTER ===============
-#define DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertieyName, statement)        \
-  static JSValue get_##propertieyName(JSContext* ctx, JSValueConst thisVal) { \
-    auto& engine = JsEngine<JSValue>::instance();                             \
-    if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                     \
-      return engine.wrap(statement);                                          \
-    }                                                                         \
-    return JS_UNDEFINED;                                                      \
+#define DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertyName, statement)        \
+  static JSValue get_##propertyName(JSContext* ctx, JSValueConst thisVal) { \
+    auto& engine = JsEngine<JSValue>::instance();                           \
+    if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                   \
+      return engine.wrap(statement);                                        \
+    }                                                                       \
+    return JS_UNDEFINED;                                                    \
   }
 
 // =============== SETTER ===============
@@ -74,11 +122,11 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
     return JS_ThrowTypeError(ctx, format, #T_RIME_TYPE);                         \
   }
 
-#define DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, converter, assignment)         \
+#define DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment)                    \
   static JSValue set_##jsName(JSContext* ctx, JSValueConst thisVal, JSValue val) { \
     auto& engine = JsEngine<JSValue>::instance();                                  \
     if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                          \
-      auto value = converter(val);                                                 \
+      auto value = makeSetterValueProxy(engine, val);                              \
       assignment;                                                                  \
       return JS_UNDEFINED;                                                         \
     }                                                                              \
@@ -183,8 +231,7 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   inline static const JSCFunctionListEntry GETTERS_QJS[] = {}; \
   inline static const size_t GETTERS_SIZE = 0;
 
-#define DEFINE_FUNCTION_QJS(name) \
-  JS_CFUNC_DEF(#name, static_cast<uint8_t>(name##_argc), name),
+#define DEFINE_FUNCTION_QJS(name) JS_CFUNC_DEF(#name, static_cast<uint8_t>(name##_argc), name),
 
 #define WITH_FUNCTIONS_QJS(...)                                \
   inline static const JSCFunctionListEntry FUNCTIONS_QJS[] = { \

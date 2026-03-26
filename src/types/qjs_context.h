@@ -13,7 +13,7 @@ class JsWrapper<Context> {
   DEFINE_GETTER(Context, caretPos, obj->caret_pos())
 
   DEFINE_STRING_SETTER(Context, input, obj->set_input(str);)
-  DEFINE_SETTER(Context, caretPos, engine.toInt, obj->set_caret_pos(value))
+  DEFINE_SETTER(Context, caretPos, obj->set_caret_pos(value))
 
   DEFINE_GETTER(Context, preedit, std::make_shared<Preedit>(obj->GetPreedit()))
 
@@ -65,15 +65,16 @@ class JsWrapper<Context> {
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Context,
-                                WITHOUT_CONSTRUCTOR,
-                                WITH_PROPERTIES(input, caretPos),
-                                WITH_GETTERS(preedit,
-                                             lastSegment,
-                                             commitNotifier,
-                                             selectNotifier,
-                                             updateNotifier,
-                                             deleteNotifier,
-                                             commitHistory),
-                                WITH_FUNCTIONS(commit, getCommitText, clear, hasMenu, getOption, setOption));
+  EXPORT_CLASS_WITH_RAW_POINTER(
+      Context,
+      WITHOUT_CONSTRUCTOR,
+      WITH_PROPERTIES(input, caretPos),
+      WITH_GETTERS(preedit,
+                   lastSegment,
+                   commitNotifier,
+                   selectNotifier,
+                   updateNotifier,
+                   deleteNotifier,
+                   commitHistory),
+      WITH_FUNCTIONS(commit, getCommitText, clear, hasMenu, getOption, setOption));
 };

@@ -11,7 +11,7 @@ using namespace rime;
 template <>
 class JsWrapper<Segment> {
   DEFINE_GETTER(Segment, selectedIndex, obj->selected_index)
-  DEFINE_SETTER(Segment, selectedIndex, engine.toInt, obj->selected_index = value)
+  DEFINE_SETTER(Segment, selectedIndex, obj->selected_index = value)
 
   DEFINE_GETTER(Segment, prompt, obj->prompt)
   DEFINE_STRING_SETTER(Segment, prompt, obj->prompt = str)

@@ -44,15 +44,15 @@
     return false;                                                                              \
   }
 
-#define DEFINE_SETTER(T_RIME_TYPE, jsName, converter, assignment)                                \
+#define DEFINE_SETTER(T_RIME_TYPE, jsName, assignment)                                           \
                                                                                                  \
-  DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, converter, assignment);                            \
+  DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment);                                       \
                                                                                                  \
   static bool set_##jsName##Jsc(JSContextRef ctx, JSObjectRef thisVal, JSStringRef propertyName, \
                                 JSValueRef val, JSValueRef* exception) {                         \
     auto& engine = JsEngine<JSValueRef>::instance();                                             \
     if (auto obj = engine.unwrap<T_RIME_TYPE>(thisVal)) {                                        \
-      auto value = converter(val);                                                               \
+      auto value = makeSetterValueProxy(engine, val);                                            \
       assignment;                                                                                \
       return true;                                                                               \
     }                                                                                            \
