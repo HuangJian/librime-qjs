@@ -18,6 +18,10 @@ on:
         default: false
         required: false
         type: boolean
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: macos-15
