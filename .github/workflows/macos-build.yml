@@ -190,12 +190,12 @@ jobs:
           echo "Plugin library found at: $PLUGIN_LIB"
           if [ -n "$PROFRAW_FILES" ]; then
             llvm-profdata merge -sparse $PROFRAW_FILES -o build/test.profdata
-            COV_OBJECTS="-object $TEST_BINARY"
+            COV_OBJECTS=""
             if [ -n "$PLUGIN_LIB" ]; then
-              COV_OBJECTS="$COV_OBJECTS -object $PLUGIN_LIB"
+              COV_OBJECTS="-object $PLUGIN_LIB"
             fi
-            llvm-cov show $COV_OBJECTS -instr-profile=build/test.profdata -format=html -output-dir=coverage_report ./plugins/qjs/src
-            llvm-cov report $COV_OBJECTS -instr-profile=build/test.profdata ./plugins/qjs/src
+            llvm-cov show "$TEST_BINARY" $COV_OBJECTS -instr-profile=build/test.profdata -format=html -output-dir=coverage_report ./plugins/qjs/src
+            llvm-cov report "$TEST_BINARY" $COV_OBJECTS -instr-profile=build/test.profdata ./plugins/qjs/src
           else
             echo "No .profraw files found."
             exit 1

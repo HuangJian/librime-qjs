@@ -81,7 +81,7 @@ jobs:
             artifact/*
 
       - name: Create Stable release
-        if: ${{ github.ref != 'refs/heads/main' }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: 'marvinpinto/action-automatic-releases@latest'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
