@@ -6,6 +6,10 @@ on:
         default: HuangJian/librime
         required: false
         type: string
+      ref:
+        default: ${{ github.ref_name }}
+        required: false
+        type: string
       rime_plugins:
         default: ${{ github.repository }}@${{ github.ref_name }}
         required: false
@@ -48,13 +52,17 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
           submodules: recursive
 
       - name: Configure build environment
         run: |
           brew install llvm ninja
           echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          LLVM_PATH=$(brew --prefix llvm)/bin
+          echo "$LLVM_PATH" >> $GITHUB_PATH
+          echo "CC=$LLVM_PATH/clang" >> $GITHUB_ENV
+          echo "CXX=$LLVM_PATH/clang++" >> $GITHUB_ENV
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
           
 
@@ -126,13 +134,17 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
           submodules: recursive
 
       - name: Configure build environment
         run: |
           brew install llvm ninja
           echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          LLVM_PATH=$(brew --prefix llvm)/bin
+          echo "$LLVM_PATH" >> $GITHUB_PATH
+          echo "CC=$LLVM_PATH/clang" >> $GITHUB_ENV
+          echo "CXX=$LLVM_PATH/clang++" >> $GITHUB_ENV
           echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
 
       - name: Configure build variant
@@ -199,3 +211,63 @@ jobs:
         with:
           name: coverage-report-macOS
           path: coverage_report
+
+  asan:
+    runs-on: macos-13
+    env:
+      boost_version: 1.89.0
+      BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.89.0
+      RIME_PLUGINS: ${{ inputs.rime_plugins }}
+    steps:
+      - name: Checkout last commit
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
+          submodules: recursive
+
+      - name: Configure build environment
+        run: |
+          brew install llvm ninja
+          echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV
+          LLVM_PATH=$(brew --prefix llvm)/bin
+          echo "$LLVM_PATH" >> $GITHUB_PATH
+          echo "CC=$LLVM_PATH/clang" >> $GITHUB_ENV
+          echo "CXX=$LLVM_PATH/clang++" >> $GITHUB_ENV
+          echo git_ref_name="$(git describe --always)" >> $GITHUB_ENV
+
+      - name: Configure build variant
+        run: |
+          echo BUILD_UNIVERSAL=1 >> $GITHUB_ENV
+
+      - name: Install Boost
+        run: ./install-boost.sh
+
+      - name: Check submodules
+        run: git submodule > submodule-status
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            bin
+            include
+            lib
+            share
+          key: ${{ runner.os }}-${{ runner.arch }}-deps-${{ hashFiles('submodule-status') }}
+
+      - name: Build dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: make deps
+
+      - name: Install Rime plugins
+        run: ./action-install-plugins-macos.sh
+
+      - name: Detect Memory Leak
+        run: |
+          make clean
+          make test-debug CFLAGS="-g -fsanitize=address" LDFLAGS="-fsanitize=address"
+          ASAN_OPTIONS=detect_leaks=1 ./plugins/qjs/build/librime-qjs-tests
+        env:
+          CMAKE_GENERATOR: Ninja

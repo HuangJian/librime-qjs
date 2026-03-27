@@ -7,6 +7,7 @@ jobs:
     uses: ./.github/workflows/macos-build.yml
     with:
       repository: HuangJian/librime
+      ref: ci-build-librime-qjs # The branch, tag or SHA to checkout
       rime_plugins: ${{ github.repository }}@${{ github.ref_name }}
       enable_coverage: false
 
