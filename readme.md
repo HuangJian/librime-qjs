@@ -1,9 +1,8 @@
+[![Release CI](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml/badge.svg)](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml)
+[![Coverage Status](https://img.shields.io/endpoint?url=https://huangjian.github.io/librime-qjs/coverage.json)](https://huangjian.github.io/librime-qjs/)
 [English](./doc/readme.en.md) | 中文 | [Plugin Development Guide](./doc/plugin-dev.en.md) | [插件开发指南](./doc/plugin-dev.cn.md)
 
 # librime-qjs
-
-[![Release CI](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml/badge.svg)](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml)
-[![Coverage Status](https://img.shields.io/endpoint?url=https://huangjian.github.io/librime-qjs/coverage.json)](https://huangjian.github.io/librime-qjs/)
 
 为 Rime 输入法引擎带来浩瀚的 JavaScript 插件生态，以闪电般的速度和羽毛般的轻盈，让输入体验焕然一新！
 
