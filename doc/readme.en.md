@@ -2,6 +2,9 @@ English | [中文](../readme.md) | [Plugin Development Guide](./plugin-dev.en.md
 
 # librime-qjs
 
+[![Release CI](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml/badge.svg)](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml)
+[![Coverage Status](https://img.shields.io/endpoint?url=https://huangjian.github.io/librime-qjs/coverage.json)](https://huangjian.github.io/librime-qjs/)
+
 Experience a vast JavaScript plugin ecosystem for the Rime Input Method Engine, delivering lightning-fast speed and feather-light performance for a revolutionary input experience!
 
 ## Features

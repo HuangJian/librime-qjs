@@ -20,11 +20,15 @@ endif()
 find_package(GTest REQUIRED)
 
 target_link_libraries(librime-qjs-tests PUBLIC
-  ${rime_library}
+  rime
   qjs
   librime-qjs-objs
   GTest::gtest
   ${Marisa_LIBRARY}
+  glog
+  leveldb
+  marisa
+  yaml-cpp
 )
 
 if(ENABLE_JAVASCRIPTCORE)
