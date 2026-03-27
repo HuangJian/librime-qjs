@@ -188,7 +188,25 @@ jobs:
               COV_OBJECTS="-object $PLUGIN_LIB"
             fi
             llvm-cov show "$TEST_BINARY" $COV_OBJECTS -instr-profile=build/test.profdata -format=html -output-dir=coverage_report ./plugins/qjs/src
-            llvm-cov report "$TEST_BINARY" $COV_OBJECTS -instr-profile=build/test.profdata ./plugins/qjs/src
+            llvm-cov report "$TEST_BINARY" $COV_OBJECTS -instr-profile=build/test.profdata ./plugins/qjs/src | tee coverage_report/summary.txt
+
+            # Parse coverage percentage and generate coverage.json for Shields.io
+            # Line coverage is usually in the 10th column (TOTAL ... Lines Missed Cover)
+            COVERAGE=$(awk '/^TOTAL/ {print $10}' coverage_report/summary.txt | tr -d '%')
+            if [ -z "$COVERAGE" ]; then
+              # Fallback to last column if 10th is empty
+              COVERAGE=$(grep "TOTAL" coverage_report/summary.txt | awk '{print $NF}' | tr -d '%')
+            fi
+            COLOR=$(awk -v cov="$COVERAGE" 'BEGIN {
+              if (cov >= 90) print "brightgreen";
+              else if (cov >= 80) print "green";
+              else if (cov >= 70) print "yellowgreen";
+              else if (cov >= 60) print "yellow";
+              else if (cov >= 40) print "orange";
+              else print "red";
+            }')
+
+            echo "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"$COVERAGE%\", \"color\": \"$COLOR\"}" > coverage_report/coverage.json
           else
             echo "No .profraw files found."
             exit 1

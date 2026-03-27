@@ -1,3 +1,5 @@
+[![Release CI](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml/badge.svg)](https://github.com/HuangJian/librime-qjs/actions/workflows/release-ci.yml)
+[![Coverage Status](https://img.shields.io/endpoint?url=https://huangjian.github.io/librime-qjs/coverage.json)](https://huangjian.github.io/librime-qjs/)
 English | [中文](../readme.md) | [Plugin Development Guide](./plugin-dev.en.md) | [插件开发指南](./plugin-dev.cn.md)
 
 # librime-qjs
