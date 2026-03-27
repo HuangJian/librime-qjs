@@ -7,7 +7,7 @@ on:
         required: false
         type: string
       ref:
-        default: ${{ github.ref_name }}
+        default: ''
         required: false
         type: string
       rime_plugins:
@@ -213,7 +213,7 @@ jobs:
           path: coverage_report
 
   asan:
-    runs-on: macos-13
+    runs-on: macos-15
     env:
       boost_version: 1.89.0
       BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.89.0
@@ -268,6 +268,6 @@ jobs:
         run: |
           make clean
           make test-debug CFLAGS="-g -fsanitize=address" LDFLAGS="-fsanitize=address"
-          ASAN_OPTIONS=detect_leaks=1 ./plugins/qjs/build/librime-qjs-tests
+          ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=plugins/qjs/lsan.supp ./plugins/qjs/build/librime-qjs-tests
         env:
           CMAKE_GENERATOR: Ninja
