@@ -9,71 +9,44 @@ using namespace rime;
 
 template <>
 class JsWrapper<Context> {
-  DEFINE_GETTER(Context, input, obj->input())
-  DEFINE_GETTER(Context, caretPos, obj->caret_pos())
-
-  DEFINE_STRING_SETTER(Context, input, obj->set_input(str);)
-  DEFINE_SETTER(Context, caretPos, engine.toInt, obj->set_caret_pos(value))
-
-  DEFINE_GETTER(Context, preedit, std::make_shared<Preedit>(obj->GetPreedit()))
-
-  DEFINE_GETTER(Context,
-                lastSegment,
-                obj->composition().empty() ? nullptr : &obj->composition().back());
-
-  DEFINE_GETTER(Context, commitNotifier, &obj->commit_notifier())
-  DEFINE_GETTER(Context, selectNotifier, &obj->select_notifier())
-  DEFINE_GETTER(Context, updateNotifier, &obj->update_notifier())
-  DEFINE_GETTER(Context, deleteNotifier, &obj->delete_notifier())
-
-  DEFINE_GETTER(Context, commitHistory, &obj->commit_history())
-
-  DEFINE_CFUNCTION(commit, {
-    auto obj = engine.unwrap<Context>(thisVal);
+  JS_API_DEFINE_CFUNCTION(commit, {
     obj->Commit();
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION(getCommitText, {
-    auto obj = engine.unwrap<Context>(thisVal);
-    return engine.wrap(obj->GetCommitText());
-  })
+  JS_API_DEFINE_CFUNCTION(getCommitText, { return engine.wrap(obj->GetCommitText()); })
 
-  DEFINE_CFUNCTION(clear, {
-    auto obj = engine.unwrap<Context>(thisVal);
+  JS_API_DEFINE_CFUNCTION(clear, {
     obj->Clear();
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION(hasMenu, {
-    auto obj = engine.unwrap<Context>(thisVal);
-    return engine.wrap(obj->HasMenu());
-  })
+  JS_API_DEFINE_CFUNCTION(hasMenu, { return engine.wrap(obj->HasMenu()); })
 
-  DEFINE_CFUNCTION_ARGC(getOption, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(getOption, 1, {
     std::string optionName = engine.toStdString(argv[0]);
-    auto* obj = engine.unwrap<Context>(thisVal);
     return engine.wrap(obj->get_option(optionName));
   })
 
-  DEFINE_CFUNCTION_ARGC(setOption, 2, {
+  JS_API_DEFINE_CFUNCTION_ARGC(setOption, 2, {
     std::string optionName = engine.toStdString(argv[0]);
     bool value = engine.toBool(argv[1]);
-    auto* obj = engine.unwrap<Context>(thisVal);
     obj->set_option(optionName, value);
     return engine.undefined();
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Context,
-                                WITHOUT_CONSTRUCTOR,
-                                WITH_PROPERTIES(input, caretPos),
-                                WITH_GETTERS(preedit,
-                                             lastSegment,
-                                             commitNotifier,
-                                             selectNotifier,
-                                             updateNotifier,
-                                             deleteNotifier,
-                                             commitHistory),
-                                WITH_FUNCTIONS(commit, getCommitText, clear, hasMenu, getOption, setOption));
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(
+      Context,
+      JS_API_WITH_CONSTRUCTOR(),
+      JS_API_WITH_PROPERTIES(JS_API_AUTO_PROPERTIES(input, (caretPos, caret_pos))),
+      JS_API_WITH_GETTERS((preedit, std::make_shared<Preedit>(obj->GetPreedit())),
+                          (lastSegment,
+                           obj->composition().empty() ? nullptr : &obj->composition().back()),
+                          (commitNotifier, &obj->commit_notifier()),
+                          (selectNotifier, &obj->select_notifier()),
+                          (updateNotifier, &obj->update_notifier()),
+                          (deleteNotifier, &obj->delete_notifier()),
+                          (commitHistory, &obj->commit_history())),
+      JS_API_WITH_FUNCTIONS(commit, getCommitText, clear, hasMenu, getOption, setOption));
 };

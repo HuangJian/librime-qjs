@@ -7,24 +7,21 @@
 
 using NotifierConnection = connection;
 
-constexpr const char* JS_LISTENER_PROPERTY_NAME = "jsListenerFunc";
+constexpr auto JS_LISTENER_PROPERTY_NAME = "jsListenerFunc";
 
 template <>
 class JsWrapper<NotifierConnection> {
-  DEFINE_CFUNCTION(disconnect, {
-    auto obj = engine.unwrap<NotifierConnection>(thisVal);
+  JS_API_DEFINE_CFUNCTION(disconnect, {
     obj->disconnect();
     auto jsListenerFunc = engine.getObjectProperty(thisVal, JS_LISTENER_PROPERTY_NAME);
     engine.freeValue(jsListenerFunc);
     return engine.undefined();
   })
 
-  DEFINE_GETTER(NotifierConnection, isConnected, obj->connected())
-
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(NotifierConnection,
-                                   WITHOUT_CONSTRUCTOR,
-                                   WITHOUT_PROPERTIES,
-                                   WITH_GETTERS(isConnected),
-                                   WITH_FUNCTIONS(disconnect));
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(NotifierConnection,
+                                          JS_API_WITH_CONSTRUCTOR(),
+                                          JS_API_WITH_PROPERTIES(),
+                                          JS_API_WITH_GETTERS((isConnected, obj->connected())),
+                                          JS_API_WITH_FUNCTIONS(disconnect));
 };

@@ -6,14 +6,12 @@
 
 template <>
 class JsWrapper<SystemInfo> {
-  DEFINE_GETTER(SystemInfo, name, obj->getOSName());
-  DEFINE_GETTER(SystemInfo, version, obj->getOSVersion());
-  DEFINE_GETTER(SystemInfo, architecture, obj->getArchitecture());
-
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(SystemInfo,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
-                                WITH_GETTERS(name, version, architecture),
-                                WITHOUT_FUNCTIONS);
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(SystemInfo,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS((name, obj->getOSName()),
+                                                           (version, obj->getOSVersion()),
+                                                           (architecture, obj->getArchitecture())),
+                                       JS_API_WITH_FUNCTIONS());
 };

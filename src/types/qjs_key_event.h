@@ -8,16 +8,10 @@ using namespace rime;
 
 template <>
 class JsWrapper<KeyEvent> {
-  DEFINE_GETTER(KeyEvent, shift, obj->shift())
-  DEFINE_GETTER(KeyEvent, ctrl, obj->ctrl())
-  DEFINE_GETTER(KeyEvent, alt, obj->alt())
-  DEFINE_GETTER(KeyEvent, release, obj->release())
-  DEFINE_GETTER(KeyEvent, repr, obj->repr())
-
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(KeyEvent,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
-                                WITH_GETTERS(shift, ctrl, alt, release, repr),
-                                WITHOUT_FUNCTIONS);
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(KeyEvent,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS(shift, ctrl, alt, release, repr),
+                                       JS_API_WITH_FUNCTIONS());
 };

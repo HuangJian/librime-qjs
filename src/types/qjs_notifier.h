@@ -23,7 +23,7 @@ class JsWrapper<Notifier> {
     engine.freeValue(result, arg);
   }
 
-  DEFINE_CFUNCTION_ARGC(connect, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(connect, 1, {
     auto jsListenerFunc = argv[0];
     if (!engine.isFunction(jsListenerFunc)) {
       const char* msg = "The argument of notifier.connect(arg) should be a function";
@@ -34,7 +34,6 @@ class JsWrapper<Notifier> {
     // otherwise it will be released by the quickjs engine and the function will not be called
     auto duplicatedFunc = engine.duplicateValue(jsListenerFunc);
 
-    auto obj = engine.unwrap<Notifier>(thisVal);
     auto connection = std::make_shared<NotifierConnection>(
         // NOTE: duplicatedFunc should be passed by value but not by reference "&duplicatedFunc",
         // otherwise it could crash the program when running with the JavaScriptCore engine.
@@ -50,9 +49,9 @@ class JsWrapper<Notifier> {
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Notifier,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
-                                WITHOUT_GETTERS,
-                                WITH_FUNCTIONS(connect));
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(Notifier,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS(),
+                                       JS_API_WITH_FUNCTIONS(connect));
 };

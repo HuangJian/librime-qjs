@@ -11,37 +11,32 @@ using namespace rime;
 
 template <>
 class JsWrapper<Engine> {
-  DEFINE_GETTER(Engine, schema, obj->schema())
-  DEFINE_GETTER(Engine, context, obj->context())
-  DEFINE_GETTER(Engine, activeEngine, obj->active_engine())
-
-  DEFINE_CFUNCTION_ARGC(commitText, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(commitText, 1, {
     std::string text = engine.toStdString(argv[0]);
-    auto* obj = engine.unwrap<Engine>(thisVal);
     obj->CommitText(text);
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION_ARGC(applySchema, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(applySchema, 1, {
     auto schema = engine.unwrap<Schema>(argv[0]);
     if (!schema) {
       return engine.jsFalse();
     }
-    auto* obj = engine.unwrap<Engine>(thisVal);
     obj->ApplySchema(schema);
     return engine.jsTrue();
   })
 
-  DEFINE_CFUNCTION_ARGC(processKey, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(processKey, 1, {
     std::string keyRepr = engine.toStdString(argv[0]);
-    auto* obj = engine.unwrap<Engine>(thisVal);
     return engine.wrap(obj->ProcessKey(KeyEvent(keyRepr)));
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Engine,
-                                WITHOUT_CONSTRUCTOR,
-                                WITHOUT_PROPERTIES,
-                                WITH_GETTERS(schema, context, activeEngine),
-                                WITH_FUNCTIONS(processKey, commitText, applySchema));
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(Engine,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS(schema,
+                                                           context,
+                                                           (activeEngine, obj->active_engine())),
+                                       JS_API_WITH_FUNCTIONS(processKey, commitText, applySchema));
 };

@@ -9,16 +9,10 @@ using namespace rime;
 
 template <>
 class JsWrapper<CommitRecord> {
-  DEFINE_GETTER(CommitRecord, type, obj->type)
-  DEFINE_GETTER(CommitRecord, text, obj->text)
-
-  DEFINE_STRING_SETTER(CommitRecord, text, obj->text = str)
-  DEFINE_STRING_SETTER(CommitRecord, type, obj->type = str)
-
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(CommitRecord,
-                                WITHOUT_CONSTRUCTOR,
-                                WITH_PROPERTIES(text, type),
-                                WITHOUT_GETTERS,
-                                WITHOUT_FUNCTIONS);
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(CommitRecord,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(JS_API_AUTO_PROPERTIES(text, type)),
+                                       JS_API_WITH_GETTERS(),
+                                       JS_API_WITH_FUNCTIONS());
 };
