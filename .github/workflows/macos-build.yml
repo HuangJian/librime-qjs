@@ -51,13 +51,6 @@ jobs:
           submodules: recursive
 
       - name: Configure build environment
-        #  If you need to have llvm first in your PATH, run:
-        #   echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> /Users/runner/.bash_profile
-        # For compilers to find llvm you may need to set:
-        #   export LDFLAGS="-L/opt/homebrew/opt/llvm/lib"
-        #   export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
-        # For cmake to find llvm you may need to set:
-        #   export CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
         run: |
           brew install llvm ninja
           echo "CMAKE_GENERATOR=Ninja"  >> $GITHUB_ENV

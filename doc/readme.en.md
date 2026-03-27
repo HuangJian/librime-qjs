@@ -25,7 +25,7 @@ Experience a vast JavaScript plugin ecosystem for the Rime Input Method Engine, 
   - 🎉 No more lag when switching input methods with large plugins - solved once and for all!
   - 🚀 Ready for immersive writing across different applications!
 - 🛡️ Comprehensive testing with both C++ and JavaScript.
-  - ✅ Every Rime API thoroughly tested with [C++ tests](./tests/).
+  - ✅ Every Rime API thoroughly tested with C++ tests ([coverage report](https://huangjian.github.io/librime-qjs/)).
   - 🧪 JavaScript plugins? Test freely with qjs/nodejs/bun/deno using our [test suite](https://github.com/HuangJian/rime-frost/tree/hj/js/tests).
 
 ## Documentation

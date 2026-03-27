@@ -8,7 +8,7 @@ jobs:
     with:
       repository: HuangJian/librime
       rime_plugins: ${{ github.repository }}@${{ github.ref_name }}
-      enable_coverage: true
+      enable_coverage: false
 
   windows:
     uses: ./.github/workflows/windows-build.yml
