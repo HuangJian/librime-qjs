@@ -55,7 +55,7 @@ static ParseTextFileOptions parseTextFileOptions(const JsEngine<T>& engine, T js
 
 template <>
 class JsWrapper<LevelDb> {
-  DEFINE_CFUNCTION_ARGC(loadTextFile, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(loadTextFile, 1, {
     std::string absolutePath = engine.toStdString(argv[0]);
     ParseTextFileOptions options;
     if (argc > 1) {
@@ -66,13 +66,13 @@ class JsWrapper<LevelDb> {
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION_ARGC(loadBinaryFile, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(loadBinaryFile, 1, {
     std::string absolutePath = engine.toStdString(argv[0]);
     obj->loadBinaryFile(absolutePath);
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION_ARGC(saveToBinaryFile, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(saveToBinaryFile, 1, {
     std::string absolutePath = engine.toStdString(argv[0]);
     try {
       obj->saveToBinaryFile(absolutePath);
@@ -83,13 +83,13 @@ class JsWrapper<LevelDb> {
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION_ARGC(find, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(find, 1, {
     std::string key = engine.toStdString(argv[0]);
     auto result = obj->find(key);
     return result ? engine.wrap(*result) : engine.null();
   })
 
-  DEFINE_CFUNCTION_ARGC(prefixSearch, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(prefixSearch, 1, {
     std::string prefix = engine.toStdString(argv[0]);
     auto results = obj->prefixSearch(prefix);
 
@@ -103,18 +103,22 @@ class JsWrapper<LevelDb> {
     return jsArray;
   })
 
-  DEFINE_CFUNCTION(close, {
+  JS_API_DEFINE_CFUNCTION(close, {
     obj->close();
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION(makeLevelDb, { return engine.wrap(std::make_shared<LevelDb>()); })
+  JS_API_DEFINE_CFUNCTION(makeLevelDb, { return engine.wrap(std::make_shared<LevelDb>()); })
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(
-      LevelDb,
-      WITH_CONSTRUCTOR(makeLevelDb),
-      WITH_PROPERTIES(),
-      WITH_GETTERS(),
-      WITH_FUNCTIONS(loadTextFile, loadBinaryFile, saveToBinaryFile, find, prefixSearch, close));
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(LevelDb,
+                                          JS_API_WITH_CONSTRUCTOR(makeLevelDb),
+                                          JS_API_WITH_PROPERTIES(),
+                                          JS_API_WITH_GETTERS(),
+                                          JS_API_WITH_FUNCTIONS(loadTextFile,
+                                                                loadBinaryFile,
+                                                                saveToBinaryFile,
+                                                                find,
+                                                                prefixSearch,
+                                                                close));
 };

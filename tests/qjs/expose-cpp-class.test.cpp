@@ -191,30 +191,30 @@ TEST_F(QuickJSExposeClassTest, TestExposeClassToQuickJS) {
 
 template <>
 class JsWrapper<MyClass> {
-  DEFINE_CFUNCTION_ARGC(sayHello, 0, {
+  JS_API_DEFINE_CFUNCTION_ARGC(sayHello, 0, {
     auto obj = engine.unwrap<MyClass>(thisVal);
     return engine.wrap(obj->sayHello());
   });
-  DEFINE_CFUNCTION_ARGC(getName, 0, {
+  JS_API_DEFINE_CFUNCTION_ARGC(getName, 0, {
     auto obj = engine.unwrap<MyClass>(thisVal);
     return engine.wrap(obj->getName());
   });
-  DEFINE_CFUNCTION_ARGC(setName, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(setName, 1, {
     auto obj = engine.unwrap<MyClass>(thisVal);
     obj->setName(engine.toStdString(argv[0]));
     return engine.undefined();
   });
-  DEFINE_CFUNCTION_ARGC(makeMyClass, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(makeMyClass, 1, {
     auto name = engine.toStdString(argv[0]);
     return engine.wrap(std::make_shared<MyClass>(name));
   });
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(MyClass,
-                                   WITH_CONSTRUCTOR(makeMyClass),
-                                   WITHOUT_PROPERTIES,
-                                   WITHOUT_GETTERS,
-                                   WITH_FUNCTIONS(sayHello, getName, setName));
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(MyClass,
+                                          JS_API_WITH_CONSTRUCTOR(makeMyClass),
+                                          JS_API_WITH_PROPERTIES(),
+                                          JS_API_WITH_GETTERS(),
+                                          JS_API_WITH_FUNCTIONS(sayHello, getName, setName));
 };
 
 TEST_F(QuickJSExposeClassTest, TestExposeClassToQuickJSWithEngine) {

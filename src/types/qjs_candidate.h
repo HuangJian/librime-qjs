@@ -12,17 +12,17 @@ constexpr int MIN_ARGC_NEW_CANDIDATE = 5;
 
 template <>
 class JsWrapper<Candidate> {
-  DEFINE_GETTER(Candidate, text, obj->text())
-  DEFINE_GETTER(Candidate, comment, obj->comment())
-  DEFINE_GETTER(Candidate, preedit, obj->preedit())
+  JS_API_DEFINE_GETTER(Candidate, text, obj->text())
+  JS_API_DEFINE_GETTER(Candidate, comment, obj->comment())
+  JS_API_DEFINE_GETTER(Candidate, preedit, obj->preedit())
 
-  DEFINE_SETTER(Candidate, text, {
+  JS_API_DEFINE_SETTER(Candidate, text, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
       simpleCandidate->set_text(value);
     }
   })
 
-  DEFINE_SETTER(Candidate, comment, {
+  JS_API_DEFINE_SETTER(Candidate, comment, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
       simpleCandidate->set_comment(value);
     } else if (auto phrase = dynamic_cast<rime::Phrase*>(obj.get())) {
@@ -30,7 +30,7 @@ class JsWrapper<Candidate> {
     }
   })
 
-  DEFINE_SETTER(Candidate, preedit, {
+  JS_API_DEFINE_SETTER(Candidate, preedit, {
     if (auto simpleCandidate = dynamic_cast<rime::SimpleCandidate*>(obj.get())) {
       simpleCandidate->set_preedit(value);
     } else if (auto phrase = dynamic_cast<rime::Phrase*>(obj.get())) {
@@ -38,7 +38,7 @@ class JsWrapper<Candidate> {
     }
   })
 
-  DEFINE_CFUNCTION_ARGC(makeCandidate, MIN_ARGC_NEW_CANDIDATE, {
+  JS_API_DEFINE_CFUNCTION_ARGC(makeCandidate, MIN_ARGC_NEW_CANDIDATE, {
     auto candidate = std::make_shared<rime::SimpleCandidate>();
     candidate->set_type(engine.toStdString(argv[0]));
     candidate->set_start(engine.toInt(argv[1]));
@@ -52,10 +52,11 @@ class JsWrapper<Candidate> {
   });
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(Candidate,
-                                   WITH_CONSTRUCTOR(makeCandidate),
-                                   WITH_PROPERTIES(CUSTOM_PROPERTIES(text, comment, preedit),
-                                                   AUTO_PROPERTIES(type, start, end, quality)),
-                                   WITH_GETTERS(),
-                                   WITH_FUNCTIONS());
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(
+      Candidate,
+      JS_API_WITH_CONSTRUCTOR(makeCandidate),
+      JS_API_WITH_PROPERTIES(JS_API_AUTO_PROPERTIES(type, start, end, quality),
+                             JS_API_CUSTOM_PROPERTIES(text, comment, preedit)),
+      JS_API_WITH_GETTERS(),
+      JS_API_WITH_FUNCTIONS());
 };

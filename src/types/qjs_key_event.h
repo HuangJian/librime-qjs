@@ -9,9 +9,9 @@ using namespace rime;
 template <>
 class JsWrapper<KeyEvent> {
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(KeyEvent,
-                                WITH_CONSTRUCTOR(),
-                                WITH_PROPERTIES(),
-                                WITH_GETTERS(shift, ctrl, alt, release, repr),
-                                WITH_FUNCTIONS());
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(KeyEvent,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS(shift, ctrl, alt, release, repr),
+                                       JS_API_WITH_FUNCTIONS());
 };

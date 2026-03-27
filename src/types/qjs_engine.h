@@ -11,13 +11,13 @@ using namespace rime;
 
 template <>
 class JsWrapper<Engine> {
-  DEFINE_CFUNCTION_ARGC(commitText, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(commitText, 1, {
     std::string text = engine.toStdString(argv[0]);
     obj->CommitText(text);
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION_ARGC(applySchema, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(applySchema, 1, {
     auto schema = engine.unwrap<Schema>(argv[0]);
     if (!schema) {
       return engine.jsFalse();
@@ -26,15 +26,17 @@ class JsWrapper<Engine> {
     return engine.jsTrue();
   })
 
-  DEFINE_CFUNCTION_ARGC(processKey, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(processKey, 1, {
     std::string keyRepr = engine.toStdString(argv[0]);
     return engine.wrap(obj->ProcessKey(KeyEvent(keyRepr)));
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Engine,
-                                WITH_CONSTRUCTOR(),
-                                WITH_PROPERTIES(),
-                                WITH_GETTERS(schema, context, (activeEngine, obj->active_engine())),
-                                WITH_FUNCTIONS(processKey, commitText, applySchema));
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(Engine,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS(schema,
+                                                           context,
+                                                           (activeEngine, obj->active_engine())),
+                                       JS_API_WITH_FUNCTIONS(processKey, commitText, applySchema));
 };

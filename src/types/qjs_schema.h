@@ -9,13 +9,14 @@ using namespace rime;
 template <>
 class JsWrapper<Schema> {
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Schema,
-                                WITH_CONSTRUCTOR(),
-                                WITH_PROPERTIES(),
-                                WITH_GETTERS((id, obj->schema_id()),
-                                             (name, obj->schema_name()),
-                                             config,
-                                             (pageSize, obj->page_size()),
-                                             (selectKeys, obj->select_keys())),
-                                WITH_FUNCTIONS());
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(
+      Schema,
+      JS_API_WITH_CONSTRUCTOR(),
+      JS_API_WITH_PROPERTIES(),
+      JS_API_WITH_GETTERS((id, obj->schema_id()),
+                          (name, obj->schema_name()),
+                          config,  // equal to `(config, obj->config())`
+                          (pageSize, obj->page_size()),
+                          (selectKeys, obj->select_keys())),
+      JS_API_WITH_FUNCTIONS());
 };

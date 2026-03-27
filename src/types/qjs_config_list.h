@@ -8,11 +8,11 @@ using namespace rime;
 
 template <>
 class JsWrapper<ConfigList> {
-  DEFINE_CFUNCTION(getType, { return engine.wrap("list"); })
+  JS_API_DEFINE_CFUNCTION(getType, { return engine.wrap("list"); })
 
-  DEFINE_CFUNCTION(getSize, { return engine.wrap(obj->size()); })
+  JS_API_DEFINE_CFUNCTION(getSize, { return engine.wrap(obj->size()); })
 
-  DEFINE_CFUNCTION_ARGC(getItemAt, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(getItemAt, 1, {
     int index = engine.toInt(argv[0]);
 
     if (index < 0 || size_t(index) >= obj->size()) {
@@ -26,7 +26,7 @@ class JsWrapper<ConfigList> {
     return engine.wrap(item);
   })
 
-  DEFINE_CFUNCTION_ARGC(getValueAt, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(getValueAt, 1, {
     int index = engine.toInt(argv[0]);
 
     if (index < 0 || size_t(index) >= obj->size()) {
@@ -40,23 +40,23 @@ class JsWrapper<ConfigList> {
     return engine.wrap(value);
   })
 
-  DEFINE_CFUNCTION_ARGC(pushBack, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(pushBack, 1, {
     if (auto item = engine.unwrap<ConfigItem>(argv[0])) {
       obj->Append(item);
     }
     return engine.undefined();
   })
 
-  DEFINE_CFUNCTION(clear, {
+  JS_API_DEFINE_CFUNCTION(clear, {
     obj->Clear();
     return engine.undefined();
   })
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(
       ConfigList,
-      WITH_CONSTRUCTOR(),
-      WITH_PROPERTIES(),
-      WITH_GETTERS(),
-      WITH_FUNCTIONS(getType, getSize, getItemAt, getValueAt, pushBack, clear));
+      JS_API_WITH_CONSTRUCTOR(),
+      JS_API_WITH_PROPERTIES(),
+      JS_API_WITH_GETTERS(),
+      JS_API_WITH_FUNCTIONS(getType, getSize, getItemAt, getValueAt, pushBack, clear));
 };

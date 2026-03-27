@@ -11,7 +11,7 @@ using namespace rime;
 
 template <>
 class JsWrapper<Environment> {
-  DEFINE_CFUNCTION_ARGC(loadFile, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(loadFile, 1, {
     std::string path = engine.toStdString(argv[0]);
     if (path.empty()) {
       throw JsException(JsErrorType::SYNTAX, "The absolutePath argument should be a string");
@@ -19,7 +19,7 @@ class JsWrapper<Environment> {
     return engine.wrap(Environment::loadFile(path));
   })
 
-  DEFINE_CFUNCTION_ARGC(fileExists, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(fileExists, 1, {
     std::string path = engine.toStdString(argv[0]);
     if (path.empty()) {
       throw JsException(JsErrorType::SYNTAX, "The absolutePath argument should be a string");
@@ -27,7 +27,7 @@ class JsWrapper<Environment> {
     return engine.wrap(Environment::fileExists(path));
   })
 
-  DEFINE_CFUNCTION_ARGC(saveFile, 2, {
+  JS_API_DEFINE_CFUNCTION_ARGC(saveFile, 2, {
     std::string path = engine.toStdString(argv[0]);
     std::string content = engine.toStdString(argv[1]);
     if (path.empty()) {
@@ -36,7 +36,7 @@ class JsWrapper<Environment> {
     return engine.wrap(Environment::saveFile(path, content));
   })
 
-  DEFINE_CFUNCTION_ARGC(removeFile, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(removeFile, 1, {
     std::string path = engine.toStdString(argv[0]);
     if (path.empty()) {
       throw JsException(JsErrorType::SYNTAX, "The absolutePath argument should be a string");
@@ -44,7 +44,7 @@ class JsWrapper<Environment> {
     return engine.wrap(Environment::removeFile(path));
   })
 
-  DEFINE_CFUNCTION_ARGC(createDir, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(createDir, 1, {
     std::string path = engine.toStdString(argv[0]);
     if (path.empty()) {
       throw JsException(JsErrorType::SYNTAX, "The path argument should be a string");
@@ -60,7 +60,7 @@ class JsWrapper<Environment> {
     return engine.wrap(Environment::createDir(path, exist_ok));
   })
 
-  DEFINE_CFUNCTION_ARGC(removeDir, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(removeDir, 1, {
     std::string path = engine.toStdString(argv[0]);
     if (path.empty()) {
       throw JsException(JsErrorType::SYNTAX, "The path argument should be a string");
@@ -68,7 +68,7 @@ class JsWrapper<Environment> {
     return engine.wrap(Environment::removeDir(path));
   })
 
-  DEFINE_CFUNCTION(getRimeInfo, {
+  JS_API_DEFINE_CFUNCTION(getRimeInfo, {
     auto info = Environment::getRimeInfo();
     int64_t bytes = engine.getMemoryUsage();
     if (bytes >= 0) {
@@ -77,7 +77,7 @@ class JsWrapper<Environment> {
     return engine.wrap(info);
   })
 
-  DEFINE_CFUNCTION_ARGC(popen, 1, {
+  JS_API_DEFINE_CFUNCTION_ARGC(popen, 1, {
     std::string command = engine.toStdString(argv[0]);
     if (command.empty()) {
       return engine.throwError(JsErrorType::SYNTAX, "The command argument should be a string");
@@ -91,21 +91,21 @@ class JsWrapper<Environment> {
   })
 
 public:
-  EXPORT_CLASS_WITH_RAW_POINTER(Environment,
-                                WITH_CONSTRUCTOR(),
-                                WITH_PROPERTIES(),
-                                WITH_GETTERS((id, obj->getId()),
-                                             (engine, &obj->getEngine()),
-                                             (namespace, obj->getNameSpace()),
-                                             (userDataDir, obj->getUserDataDir()),
-                                             (sharedDataDir, obj->getSharedDataDir()),
-                                             (os, obj->getSystemInfo())),
-                                WITH_FUNCTIONS(loadFile,
-                                               fileExists,
-                                               saveFile,
-                                               removeFile,
-                                               createDir,
-                                               removeDir,
-                                               getRimeInfo,
-                                               popen));
+  JS_API_EXPORT_CLASS_WITH_RAW_POINTER(Environment,
+                                       JS_API_WITH_CONSTRUCTOR(),
+                                       JS_API_WITH_PROPERTIES(),
+                                       JS_API_WITH_GETTERS((id, obj->getId()),
+                                                           (engine, &obj->getEngine()),
+                                                           (namespace, obj->getNameSpace()),
+                                                           (userDataDir, obj->getUserDataDir()),
+                                                           (sharedDataDir, obj->getSharedDataDir()),
+                                                           (os, obj->getSystemInfo())),
+                                       JS_API_WITH_FUNCTIONS(loadFile,
+                                                             fileExists,
+                                                             saveFile,
+                                                             removeFile,
+                                                             createDir,
+                                                             removeDir,
+                                                             getRimeInfo,
+                                                             popen));
 };

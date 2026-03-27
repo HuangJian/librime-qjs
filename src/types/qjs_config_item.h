@@ -8,7 +8,7 @@ using namespace rime;
 
 template <>
 class JsWrapper<ConfigItem> {
-  DEFINE_CFUNCTION(getType, {
+  JS_API_DEFINE_CFUNCTION(getType, {
     const char* strType;
     switch (obj->type()) {
       case rime::ConfigItem::kNull:
@@ -30,9 +30,9 @@ class JsWrapper<ConfigItem> {
   })
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(ConfigItem,
-                                   WITH_CONSTRUCTOR(),
-                                   WITH_PROPERTIES(),
-                                   WITH_GETTERS(),
-                                   WITH_FUNCTIONS(getType));
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(ConfigItem,
+                                          JS_API_WITH_CONSTRUCTOR(),
+                                          JS_API_WITH_PROPERTIES(),
+                                          JS_API_WITH_GETTERS(),
+                                          JS_API_WITH_FUNCTIONS(getType));
 };

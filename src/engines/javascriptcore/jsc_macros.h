@@ -6,10 +6,10 @@
 
 #include <sstream>
 
-// NOLINTBEGIN(cppcoreguidelines-macro-usage) function-like macro 'EXPORT_CLASS_IMPL' used; consider a 'constexpr' template function
-#define DEFINE_GETTER(T_RIME_TYPE, propertyName, statement)                                    \
+// NOLINTBEGIN(cppcoreguidelines-macro-usage) function-like macro 'JS_PRIV_EXPORT_CLASS_IMPL' used; consider a 'constexpr' template function
+#define JS_API_DEFINE_GETTER(T_RIME_TYPE, propertyName, statement)                             \
                                                                                                \
-  DEFINE_GETTER_IMPL_QJS(T_RIME_TYPE, propertyName, statement);                                \
+  JS_PRIV_QJS_DEFINE_GETTER_IMPL(T_RIME_TYPE, propertyName, statement);                        \
                                                                                                \
   static JSValueRef get_##propertyName##Jsc(JSContextRef ctx, JSObjectRef thisVal,             \
                                             JSStringRef functionName, JSValueRef* exception) { \
@@ -20,9 +20,9 @@
     return engine.undefined();                                                                 \
   }
 
-#define DEFINE_SETTER(T_RIME_TYPE, jsName, assignment)                                           \
+#define JS_API_DEFINE_SETTER(T_RIME_TYPE, jsName, assignment)                                    \
                                                                                                  \
-  DEFINE_SETTER_IMPL_QJS(T_RIME_TYPE, jsName, assignment);                                       \
+  JS_PRIV_QJS_DEFINE_SETTER_IMPL(T_RIME_TYPE, jsName, assignment);                               \
                                                                                                  \
   static bool set_##jsName##Jsc(JSContextRef ctx, JSObjectRef thisVal, JSStringRef propertyName, \
                                 JSValueRef val, JSValueRef* exception) {                         \
@@ -38,14 +38,14 @@
     return false;                                                                                \
   }
 
-#define DEFINE_CFUNCTION(funcName, funcBody)                                                     \
+#define JS_API_DEFINE_CFUNCTION(funcName, funcBody)                                              \
                                                                                                  \
-  DEFINE_CFUNCTION_QJS(funcName, funcBody);                                                      \
+  JS_PRIV_QJS_DEFINE_CFUNCTION(funcName, funcBody);                                              \
                                                                                                  \
   static JSValueRef funcName##Jsc(JSContextRef ctx, JSObjectRef function, JSObjectRef thisVal,   \
                                   size_t argc, const JSValueRef argv[], JSValueRef* exception) { \
     auto& engine = JsEngine<JSValueRef>::instance();                                             \
-    auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);                                \
+    [[maybe_unused]] auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);               \
     try {                                                                                        \
       funcBody;                                                                                  \
     } catch (const JsException& e) {                                                             \
@@ -54,20 +54,20 @@
     }                                                                                            \
   }
 
-#define DEFINE_CFUNCTION_ARGC(funcName, expectingArgc, statements)                               \
+#define JS_API_DEFINE_CFUNCTION_ARGC(funcName, expectingArgc, statements)                        \
                                                                                                  \
-  DEFINE_CFUNCTION_ARGC_QJS(funcName, expectingArgc, statements);                                \
+  JS_PRIV_QJS_DEFINE_CFUNCTION_ARGC(funcName, expectingArgc, statements);                        \
                                                                                                  \
   static JSValueRef funcName##Jsc(JSContextRef ctx, JSObjectRef function, JSObjectRef thisVal,   \
                                   size_t argc, const JSValueRef argv[], JSValueRef* exception) { \
-    auto& engine = JsEngine<JSValueRef>::instance();                                             \
     if (argc < (expectingArgc)) {                                                                \
       std::stringstream msg;                                                                     \
       msg << #funcName << "(...) expects " << (expectingArgc) << " arguments";                   \
       *exception = JSValueMakeString(ctx, JscStringRAII(msg.str().c_str()));                     \
       return nullptr;                                                                            \
     }                                                                                            \
-    auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);                                \
+    auto& engine = JsEngine<JSValueRef>::instance();                                             \
+    [[maybe_unused]] auto obj = engine.unwrap<JsWrapperTypeT<JsWrapper>>(thisVal);               \
     try {                                                                                        \
       statements;                                                                                \
     } catch (const JsException& e) {                                                             \
@@ -76,29 +76,30 @@
     }                                                                                            \
   }
 
-#define EXPORT_CLASS_IMPL(className, block1, block2, block3, block4)               \
-  EXPORT_CLASS_IMPL_QJS(className, EXPAND(block1), EXPAND(block2), EXPAND(block3), \
-                        EXPAND(block4));                                           \
+#define JS_PRIV_EXPORT_CLASS_IMPL(className, block1, block2, block3, block4)               \
+  JS_PRIV_QJS_EXPORT_CLASS_IMPL(className, EXPAND(block1), EXPAND(block2), EXPAND(block3), \
+                                EXPAND(block4));                                           \
   inline static JSClassRef classDefJsc = nullptr;
 
-#define WITH_CONSTRUCTOR_1(funcName)                                                     \
-  WITH_CONSTRUCTOR_QJS(funcName);                                                        \
+#define JS_PRIV_WITH_CONSTRUCTOR_1(funcName)                                             \
+  JS_PRIV_QJS_WITH_CONSTRUCTOR(funcName);                                                \
   static JSObjectRef constructorJsc(JSContextRef ctx, JSObjectRef function, size_t argc, \
                                     const JSValueRef argv[], JSValueRef* exception) {    \
     auto val = funcName##Jsc(ctx, function, nullptr, argc, argv, exception);             \
     return JSValueToObject(ctx, val, nullptr);                                           \
   }
-#define WITH_CONSTRUCTOR_0() WITHOUT_CONSTRUCTOR
-#define WITH_CONSTRUCTOR_N_IMPL(N, ...) WITH_CONSTRUCTOR_##N(__VA_ARGS__)
-#define WITH_CONSTRUCTOR_N(N, ...) WITH_CONSTRUCTOR_N_IMPL(N, __VA_ARGS__)
-#define WITH_CONSTRUCTOR(...) WITH_CONSTRUCTOR_N(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+#define JS_PRIV_WITH_CONSTRUCTOR_0() JS_PRIV_NO_CONSTRUCTOR
+#define JS_PRIV_WITH_CONSTRUCTOR_N_IMPL(N, ...) JS_PRIV_WITH_CONSTRUCTOR_##N(__VA_ARGS__)
+#define JS_PRIV_WITH_CONSTRUCTOR_N(N, ...) JS_PRIV_WITH_CONSTRUCTOR_N_IMPL(N, __VA_ARGS__)
+#define JS_API_WITH_CONSTRUCTOR(...) \
+  JS_PRIV_WITH_CONSTRUCTOR_N(COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
 
-#define WITHOUT_CONSTRUCTOR \
-  WITHOUT_CONSTRUCTOR_QJS;  \
+#define JS_PRIV_NO_CONSTRUCTOR \
+  JS_PRIV_QJS_NO_CONSTRUCTOR;  \
   inline static JSObjectCallAsConstructorCallback constructorJsc = nullptr;
 
-#define WITH_FINALIZER                                                     \
-  WITH_FINALIZER_QJS;                                                      \
+#define JS_PRIV_WITH_FINALIZER                                             \
+  JS_PRIV_QJS_WITH_FINALIZER;                                              \
   static void finalizerJsc(JSObjectRef val) {                              \
     if (void* ptr = JSObjectGetPrivate(val)) {                             \
       if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) { \
@@ -108,45 +109,35 @@
     }                                                                      \
   };
 
-#define WITHOUT_FINALIZER \
-  WITHOUT_FINALIZER_QJS;  \
+#define JS_PRIV_NO_FINALIZER \
+  JS_PRIV_QJS_NO_FINALIZER;  \
   inline static void (*finalizerJsc)(JSObjectRef) = nullptr;
 
-#define DEFINE_PROPERTY_JSC_IMPL(name, cpp_name, enabled) \
+#define JS_PRIV_JSC_DEFINE_PROPERTY_IMPL(name, cpp_name, enabled) \
   {#name, get_##name##Jsc, set_##name##Jsc, kJSPropertyAttributeNone},
-#define DEFINE_PROPERTY_JSC(spec) DEFINE_PROPERTY_JSC_IMPL spec
+#define JS_PRIV_JSC_DEFINE_PROPERTY(spec) JS_PRIV_JSC_DEFINE_PROPERTY_IMPL spec
 
-#define WITH_PROPERTIES(...)        \
-  WITH_PROPERTIES_QJS(__VA_ARGS__); \
-  inline static JSStaticValue propertiesJsc[] = {FOR_EACH(DEFINE_PROPERTY_JSC, __VA_ARGS__)};
+#define JS_API_WITH_PROPERTIES(...)               \
+  JS_PRIV_QJS_WITH_PROPERTIES(__VA_ARGS__);       \
+  inline static JSStaticValue propertiesJsc[] = { \
+      FOR_EACH(JS_PRIV_JSC_DEFINE_PROPERTY, __VA_ARGS__)};
 
-#define WITHOUT_PROPERTIES \
-  WITHOUT_PROPERTIES_QJS;  \
-  inline static JSStaticValue propertiesJsc[] = {};
-
-#define DEFINE_GETTER_JSC_IMPL(name, payload, mode) \
+#define JS_PRIV_JSC_DEFINE_GETTER_IMPL(name, payload, mode) \
   {#name, get_##name##Jsc, nullptr, kJSPropertyAttributeNone},
-#define DEFINE_GETTER_JSC_EXPAND(spec) DEFINE_GETTER_JSC_IMPL spec
-#define DEFINE_GETTER_JSC(spec) DEFINE_GETTER_JSC_EXPAND(NORMALIZE_GETTER_SPEC(spec))
+#define JS_PRIV_JSC_DEFINE_GETTER_EXPAND(spec) JS_PRIV_JSC_DEFINE_GETTER_IMPL spec
+#define JS_PRIV_JSC_DEFINE_GETTER(spec) \
+  JS_PRIV_JSC_DEFINE_GETTER_EXPAND(JS_PRIV_NORMALIZE_GETTER_SPEC(spec))
 
-#define WITH_GETTERS(...)       \
-  WITH_GETTER_QJS(__VA_ARGS__); \
-  inline static JSStaticValue gettersJsc[] = {FOR_EACH(DEFINE_GETTER_JSC, __VA_ARGS__)};
+#define JS_API_WITH_GETTERS(...)         \
+  JS_PRIV_QJS_WITH_GETTERS(__VA_ARGS__); \
+  inline static JSStaticValue gettersJsc[] = {FOR_EACH(JS_PRIV_JSC_DEFINE_GETTER, __VA_ARGS__)};
 
-#define WITHOUT_GETTERS \
-  WITHOUT_GETTER_QJS;   \
-  inline static JSStaticValue gettersJsc[] = {};
-
-#define DEFINE_FUNCTION_JSC(name) \
+#define JS_PRIV_JSC_DEFINE_FUNCTION(name) \
   {#name, name##Jsc, static_cast<JSPropertyAttributes>(name##_argc)},
 
-#define WITH_FUNCTIONS(...)                                            \
-  WITH_FUNCTIONS_QJS(__VA_ARGS__);                                     \
-  inline static JSStaticFunction functionsJsc[] = {                    \
-      FOR_EACH(DEFINE_FUNCTION_JSC, __VA_ARGS__){nullptr, nullptr, 0}, \
+#define JS_API_WITH_FUNCTIONS(...)                                             \
+  JS_PRIV_QJS_WITH_FUNCTIONS(__VA_ARGS__);                                     \
+  inline static JSStaticFunction functionsJsc[] = {                            \
+      FOR_EACH(JS_PRIV_JSC_DEFINE_FUNCTION, __VA_ARGS__){nullptr, nullptr, 0}, \
   };
-
-#define WITHOUT_FUNCTIONS \
-  WITHOUT_FUNCTIONS_QJS;  \
-  inline static JSStaticFunction functionsJsc[] = {{nullptr, nullptr, 0}};
 // NOLINTEND(cppcoreguidelines-macro-usage)

@@ -11,7 +11,7 @@ using CandidateIterator = Translation;
 
 template <>
 class JsWrapper<Translation> {
-  DEFINE_CFUNCTION(next, {
+  JS_API_DEFINE_CFUNCTION(next, {
     if (obj->exhausted()) {
       return engine.null();
     }
@@ -21,9 +21,9 @@ class JsWrapper<Translation> {
   })
 
 public:
-  EXPORT_CLASS_WITH_SHARED_POINTER(CandidateIterator,
-                                   WITH_CONSTRUCTOR(),
-                                   WITH_PROPERTIES(),
-                                   WITH_GETTERS(),
-                                   WITH_FUNCTIONS(next));
+  JS_API_EXPORT_CLASS_WITH_SHARED_POINTER(CandidateIterator,
+                                          JS_API_WITH_CONSTRUCTOR(),
+                                          JS_API_WITH_PROPERTIES(),
+                                          JS_API_WITH_GETTERS(),
+                                          JS_API_WITH_FUNCTIONS(next));
 };
