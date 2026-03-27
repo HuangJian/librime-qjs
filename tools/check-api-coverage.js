@@ -12,17 +12,94 @@ const DTS_FILE = join(__dirname, '../contrib/rime.d.ts')
 function parseCppExports() {
   const exports = new Map()
 
+  // Extract the balanced content inside the outermost parens starting at `startIdx`
+  function extractBalancedParens(str, startIdx) {
+    let depth = 0
+    let started = false
+    let result = ''
+    for (let i = startIdx; i < str.length; i++) {
+      if (str[i] === '(') {
+        depth++
+        started = true
+      } else if (str[i] === ')') {
+        depth--
+      }
+      if (started) {
+        result += str[i]
+        if (depth === 0) break
+      }
+    }
+    return result.slice(1, -1) // strip outer parens
+  }
+
+  // Split a string by top-level commas (respecting nested parens)
+  function splitTopLevelArgs(content) {
+    if (!content.trim()) return []
+    const args = []
+    let current = ''
+    let depth = 0
+    for (const ch of content) {
+      if (ch === '(') depth++
+      if (ch === ')') depth--
+      if (ch === ',' && depth === 0) {
+        args.push(current.trim())
+        current = ''
+      } else {
+        current += ch
+      }
+    }
+    if (current.trim()) args.push(current.trim())
+    return args
+  }
+
+  // Extract JS-visible names from a section's args string.
+  // Handles: bare words, tuples (jsName, ...), and nested macros like JS_API_AUTO_PROPERTIES(...).
+  function extractNames(argsStr) {
+    const rawArgs = splitTopLevelArgs(argsStr)
+    const results = []
+    for (const arg of rawArgs) {
+      // Nested macro: JS_API_AUTO_PROPERTIES(...) or JS_API_CUSTOM_PROPERTIES(...)
+      const macroMatch = arg.match(/^JS_API_(?:AUTO|CUSTOM)_PROPERTIES\s*\((.*)\)$/s)
+      if (macroMatch) {
+        results.push(...extractNames(macroMatch[1]))
+        continue
+      }
+      // Tuple: (jsName, ...) — first identifier is the JS name
+      const tupleMatch = arg.match(/^\s*\(\s*([a-zA-Z_]\w*)\s*,[\s\S]*?\)\s*$/s)
+      if (tupleMatch) {
+        results.push(tupleMatch[1])
+        continue
+      }
+      // Bare identifier
+      const wordMatch = arg.match(/^\s*([a-zA-Z_]\w*)\s*$/)
+      if (wordMatch) {
+        results.push(wordMatch[1])
+      }
+    }
+    return results
+  }
+
+  // Extract the args of a named section (e.g. JS_API_WITH_GETTERS) from classBody
+  function extractSection(classBody, sectionName) {
+    const idx = classBody.indexOf(sectionName)
+    if (idx === -1) return []
+    return extractNames(extractBalancedParens(classBody, idx + sectionName.length))
+  }
+
   readdirSync(TYPES_DIR)
     .filter((f) => f.startsWith('qjs_') && f.endsWith('.h'))
     .forEach((f) => {
       const content = readFileSync(join(TYPES_DIR, f), 'utf-8')
+        .replace(/\/\/.*$/gm, '') // strip C++ line comments
 
-      // Match class definitions
-      const classDefRegex = /EXPORT_CLASS_WITH_(?:RAW_POINTER|SHARED_POINTER)\s*\(\s*\n*(\w+),(\n.+)+\)/gs
-      let classMatch
+      // Match class definitions: JS_API_EXPORT_CLASS_WITH_RAW_POINTER(...) or _SHARED_POINTER(...)
+      const classDefRegex = /JS_API_EXPORT_CLASS_WITH_(?:RAW_POINTER|SHARED_POINTER)\s*\(/g
+      let match
 
-      while ((classMatch = classDefRegex.exec(content)) !== null) {
-        const [_, className, classBody] = classMatch
+      while ((match = classDefRegex.exec(content)) !== null) {
+        const classBody = extractBalancedParens(content, match.index + match[0].length - 1)
+        const className = splitTopLevelArgs(classBody)[0]?.trim()
+        if (!className) continue
 
         if (!exports.has(className)) {
           exports.set(className, { props: new Set(), getters: new Set(), methods: new Set() })
@@ -30,30 +107,21 @@ function parseCppExports() {
         const classExports = exports.get(className)
 
         // Parse properties
-        const propsMatch = classBody.match(/WITH_PROPERTIES\s*\((.+?)\)/s)
-        if (propsMatch) {
-          const props = propsMatch[1].split(',').map((p) => p.trim())
-          props.forEach((p) => classExports.props.add(p))
-        }
+        extractSection(classBody, 'JS_API_WITH_PROPERTIES').forEach((p) => classExports.props.add(p))
 
         // Parse getters
-        const gettersMatch = classBody.match(/WITH_GETTERS\s*\((.+?)\)/s)
-        if (gettersMatch) {
-          const getters = gettersMatch[1].split(',').map((g) => g.trim())
-          getters.forEach((g) => classExports.getters.add(g))
-        }
+        extractSection(classBody, 'JS_API_WITH_GETTERS').forEach((g) => classExports.getters.add(g))
 
         // Parse functions
-        const functionsMatch = classBody.match(/WITH_FUNCTIONS\s*\((.+?)\)/s)
-        if (functionsMatch) {
-          const functions = functionsMatch[1].split(',').map((f) => f.trim())
+        extractSection(classBody, 'JS_API_WITH_FUNCTIONS').forEach((fn) => classExports.methods.add(fn))
 
-          functions.forEach((f) => classExports.methods.add(f))
-        }
-
-        // Parse constructor
-        if (classBody.includes('WITH_CONSTRUCTOR')) {
-          classExports.methods.add('constructor')
+        // Parse constructor: JS_API_WITH_CONSTRUCTOR(funcName) has a non-empty arg
+        const ctorIdx = classBody.indexOf('JS_API_WITH_CONSTRUCTOR')
+        if (ctorIdx !== -1) {
+          const ctorArgs = extractBalancedParens(classBody, ctorIdx + 'JS_API_WITH_CONSTRUCTOR'.length)
+          if (ctorArgs.trim()) {
+            classExports.methods.add('constructor')
+          }
         }
       }
     })
