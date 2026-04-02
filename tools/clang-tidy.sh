@@ -185,6 +185,11 @@ if [ -n "${worker_file}" ]; then
     exit 0
 fi
 
+echo "Using clang-tidy: ${clang_tidy_bin}"
+"${clang_tidy_bin}" --version
+echo "clang-tidy arguments:"
+printf '  %q\n' "${clang_tidy_args[@]}"
+
 configure_compile_db
 
 if [ "${mode}" = "all" ]; then
