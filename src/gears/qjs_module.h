@@ -7,7 +7,7 @@
 
 template <typename T_JS_VALUE>
 class QjsModule {
-  using T_JS_OBJECT = JsEngine<T_JS_VALUE>::T_JS_OBJECT;
+  using T_JS_OBJECT = typename JsEngine<T_JS_VALUE>::T_JS_OBJECT;
 
 protected:
   QjsModule(const std::string& nameSpace, const Environment& environment, const char* mainFuncName);
