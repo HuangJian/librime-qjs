@@ -26,7 +26,7 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledTranslator) {
   the<Engine> rimeEngine(Engine::Create());
   Environment env(*rimeEngine, "help_menu");
   const auto* jsEnv = engine.wrap(&env);
-  JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), 1, &jsEnv);
+  JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), {jsEnv});
   EXPECT_TRUE(instance != nullptr) << "Failed to create instance of class with translate method";
 
   // Verify the instance has the translate method
@@ -36,10 +36,9 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledTranslator) {
   // Execute the translate method
   JSValueRef input = engine.wrap("/help");
   Segment segment;
-  JSValueRef args[] = {input, engine.wrap(&segment), jsEnv};
-  int size = sizeof(args) / sizeof(args[0]);
-  JSValueRef translateResult = engine.callFunction(engine.toObject(translateMethod), instance, size,
-                                                   static_cast<JSValueRef*>(args));
+  std::vector<JSValueRef> arguments = {input, engine.wrap(&segment), jsEnv};
+  JSValueRef translateResult =
+      engine.callFunction(engine.toObject(translateMethod), instance, arguments);
   EXPECT_TRUE(engine.isArray(translateResult));
 
   // Count items in translateResult
@@ -62,7 +61,7 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledFilter) {
   rimeEngine->context()->set_input("pinyin");
   Environment env(*rimeEngine, "sort_by_pinyin");
   const auto* jsEnv = engine.wrap(&env);
-  JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), 1, &jsEnv);
+  JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), {jsEnv});
   EXPECT_TRUE(instance != nullptr) << "Failed to create instance of class with filter method";
 
   // Verify the instance has the translate method
@@ -83,10 +82,8 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledFilter) {
   }
 
   // Execute the translate method
-  JSValueRef args[] = {jsCandidates, jsEnv};
-  int size = sizeof(args) / sizeof(args[0]);
-  JSValueRef filterResult = engine.callFunction(engine.toObject(filterMethod), instance, size,
-                                                static_cast<JSValueRef*>(args));
+  std::vector arguments = {jsCandidates, jsEnv};
+  JSValueRef filterResult = engine.callFunction(engine.toObject(filterMethod), instance, arguments);
   EXPECT_TRUE(engine.isArray(filterResult));
   size_t itemCount = engine.getArrayLength(filterResult);
   EXPECT_EQ(itemCount, candidates.size()) << "translateResult should contain items";
@@ -114,7 +111,7 @@ TEST_F(JscLoadBundledPluginTest, FilterTranslationWithJavaScriptCore) {
   fakeTranslation->append(New<SimpleCandidate>("user_phrase", 0, 1, "text5"));
 
   const auto* jsEnv = engine.wrap(&env);
-  JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), 1, &jsEnv);
+  JSObjectRef instance = engine.newClassInstance(engine.toObject(clazz), {jsEnv});
   JSValueRef filterMethod = engine.getObjectProperty(instance, "filter");
   EXPECT_TRUE(engine.isFunction(filterMethod));
 

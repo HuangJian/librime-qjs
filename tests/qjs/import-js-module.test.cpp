@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <quickjs.h>
 #include <filesystem>
+#include <vector>
 
 #include "engines/common.h"
 #include "engines/quickjs/quickjs_code_loader.h"
@@ -26,7 +27,7 @@ protected:
     JS_FreeRuntime(rt_);
   }
 
-  JSContext* getContext() { return ctx_; }
+  [[nodiscard]] JSContext* getContext() const { return ctx_; }
 
 private:
   JSRuntime* rt_{nullptr};
@@ -76,12 +77,12 @@ TEST_F(QuickJSModuleTest, ImportJsModuleFromAnotherJsFileWithEngine) {
 
   constexpr int A_NAMED_INT = 10;
   JSValue arg = engine.wrap(A_NAMED_INT);
-  JSValue obj = engine.newClassInstance(myClass, 1, &arg);
+  JSValue obj = engine.newClassInstance(myClass, {arg});
   ASSERT_FALSE(engine.isException(obj));
 
   JSValue greetArg = engine.wrap("QuickJS");
   JSValue greeFunction = engine.getMethodOfClassOrInstance(myClass, obj, "greet");
-  JSValue greetResult = engine.callFunction(greeFunction, obj, 1, &greetArg);
+  JSValue greetResult = engine.callFunction(greeFunction, obj, {greetArg});
   ASSERT_FALSE(JS_IsException(greetResult));
 
   auto str = engine.toStdString(greetResult);

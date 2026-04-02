@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rime/context.h>
+#include <vector>
 
 #include "engines/js_macros.h"
 #include "js_exception.h"
@@ -16,7 +17,7 @@ class JsWrapper<Notifier> {
   static void handleNotification(JsEngine<T>& engine, const T& jsFunc, Context* rimeContext) {
     auto undefined = engine.toObject(engine.undefined());
     T arg = engine.wrap(rimeContext);
-    auto result = engine.callFunction(engine.toObject(jsFunc), undefined, 1, &arg);
+    auto result = engine.callFunction(engine.toObject(jsFunc), undefined, std::vector<T>{arg});
     if (engine.isException(result)) {
       LOG(ERROR) << "Error in notifying the js connection";
     }

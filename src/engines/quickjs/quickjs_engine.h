@@ -3,6 +3,7 @@
 #include <quickjs.h>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include "engines/js_exception.h"
 #include "engines/js_traits.h"
@@ -119,15 +120,15 @@ public:
 
   [[nodiscard]] JSValue callFunction(const JSValue& func,
                                      const JSValue& thisArg,
-                                     const int argc,
-                                     JSValue* argv) const {
-    return impl_->callFunction(func, thisArg, argc, argv);
+                                     const std::vector<JSValue>& arguments) const {
+    return impl_->callFunction(func, thisArg, static_cast<int>(arguments.size()),
+                               const_cast<JSValue*>(arguments.data()));
   }
 
   [[nodiscard]] JSValue newClassInstance(const JSValue& clazz,
-                                         const int argc,
-                                         JSValue* argv) const {
-    return impl_->newClassInstance(clazz, argc, argv);
+                                         const std::vector<JSValue>& arguments) const {
+    return impl_->newClassInstance(clazz, static_cast<int>(arguments.size()),
+                                   const_cast<JSValue*>(arguments.data()));
   }
 
   [[nodiscard]] JSValue getJsClassHavingMethod(const JSValue& module,

@@ -5,6 +5,7 @@
 #include <rime/engine.h>
 #include <rime/schema.h>
 #include <memory>
+#include <vector>
 
 #include "dict_data_helper.hpp"
 #include "environment.h"
@@ -85,8 +86,8 @@ TYPED_TEST(QuickJSTypesTest, WrapUnwrapRimeTypes) {
   auto result = jsEngine.loadJsFile("types_test");
   auto global = jsEngine.getGlobalObject();
   auto jsFunc = jsEngine.getObjectProperty(jsEngine.toObject(global), "checkArgument");
-  auto retValue =
-      jsEngine.callFunction(jsEngine.toObject(jsFunc), jsEngine.toObject(global), 1, &environment);
+  auto retValue = jsEngine.callFunction(jsEngine.toObject(jsFunc), jsEngine.toObject(global),
+                                        std::vector<TypeParam>{environment});
 
   auto retJsEngine = jsEngine.getObjectProperty(jsEngine.toObject(retValue), "engine");
   auto* retEngine = jsEngine.template unwrap<Engine>(retJsEngine);

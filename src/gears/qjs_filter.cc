@@ -73,8 +73,7 @@ std::shared_ptr<Translation> QuickJSFilter<T_JS_VALUE>::apply(
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   if (jsEngine.isFunction(funcIsApplicable_)) {
     auto jsEvn = jsEngine.wrap(&environment);
-    T_JS_VALUE args[1] = {jsEvn};
-    auto result = jsEngine.callFunction(funcIsApplicable_, this->getInstance(), 1, args);
+    auto result = jsEngine.callFunction(funcIsApplicable_, this->getInstance(), {jsEvn});
     const bool isApplicable = jsEngine.isBool(result) && jsEngine.toBool(result);
     jsEngine.freeValue(jsEvn, result);
     if (!isApplicable) {

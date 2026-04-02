@@ -3,6 +3,7 @@
 #include <JavaScriptCore/JavaScript.h>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include "engines/javascriptcore/jsc_engine_impl.h"
 #include "engines/javascriptcore/jsc_string_raii.hpp"
@@ -172,15 +173,13 @@ public:
 
   JSValueRef callFunction(const JSObjectRef& func,
                           const JSObjectRef& thisArg,
-                          const int argc,
-                          const JSValueRef* argv) const {
-    return impl_->callFunction(func, thisArg, argc, argv);
+                          const std::vector<JSValueRef>& arguments) const {
+    return impl_->callFunction(func, thisArg, static_cast<int>(arguments.size()), arguments.data());
   }
 
   JSObjectRef newClassInstance(const JSObjectRef& clazz,
-                               const int argc,
-                               const JSValueRef* argv) const {
-    return impl_->newClassInstance(clazz, argc, argv);
+                               const std::vector<JSValueRef>& arguments) const {
+    return impl_->newClassInstance(clazz, static_cast<int>(arguments.size()), arguments.data());
   }
 
   JSValueRef getJsClassHavingMethod(const JSValueRef& module, const char* methodName) const {
