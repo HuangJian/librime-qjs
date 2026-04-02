@@ -30,6 +30,8 @@ jobs:
       - name: Configure build environment
         run: |
           brew install cmake llvm ninja nodejs
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> "${GITHUB_ENV}"
+          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> "${GITHUB_ENV}"
           echo "CMAKE_GENERATOR=Ninja" >> "${GITHUB_ENV}"
           echo "$(brew --prefix llvm)/bin" >> "${GITHUB_PATH}"
 

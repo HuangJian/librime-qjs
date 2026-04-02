@@ -36,6 +36,8 @@ done
 jobs="${CLANG_TIDY_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN || echo 4)}"
 ignore_files_regex='test_switch\.h$'
 clang_tidy_bin="${CLANG_TIDY_BIN:-}"
+clang_bin="${CLANG_BIN:-}"
+clangxx_bin="${CLANGXX_BIN:-}"
 
 resolve_clang_tidy() {
     local candidate=""
@@ -53,7 +55,6 @@ resolve_clang_tidy() {
     for candidate in \
         "/opt/homebrew/opt/llvm/bin/clang-tidy" \
         "/usr/local/opt/llvm/bin/clang-tidy" \
-        "/opt/local/libexec/llvm-20/bin/clang-tidy" \
         "$(brew --prefix llvm 2>/dev/null)/bin/clang-tidy"
     do
         if [ -n "${candidate}" ] && [ -x "${candidate}" ]; then
@@ -66,6 +67,40 @@ resolve_clang_tidy() {
     exit 1
 }
 
+resolve_clang_compilers() {
+    local brew_prefix=""
+
+    if [ -z "${clang_bin}" ] || [ ! -x "${clang_bin}" ] || [ -z "${clangxx_bin}" ] || [ ! -x "${clangxx_bin}" ]; then
+        brew_prefix="$(brew --prefix llvm 2>/dev/null || true)"
+    fi
+
+    if [ -z "${clang_bin}" ] || [ ! -x "${clang_bin}" ]; then
+        for candidate in \
+            "/opt/homebrew/opt/llvm/bin/clang" \
+            "/usr/local/opt/llvm/bin/clang" \
+            "${brew_prefix}/bin/clang"
+        do
+            if [ -n "${candidate}" ] && [ -x "${candidate}" ]; then
+                clang_bin="${candidate}"
+                break
+            fi
+        done
+    fi
+
+    if [ -z "${clangxx_bin}" ] || [ ! -x "${clangxx_bin}" ]; then
+        for candidate in \
+            "/opt/homebrew/opt/llvm/bin/clang++" \
+            "/usr/local/opt/llvm/bin/clang++" \
+            "${brew_prefix}/bin/clang++"
+        do
+            if [ -n "${candidate}" ] && [ -x "${candidate}" ]; then
+                clangxx_bin="${candidate}"
+                break
+            fi
+        done
+    fi
+}
+
 configure_compile_db() {
     mkdir -p "${build_dir}"
 
@@ -75,7 +110,15 @@ configure_compile_db() {
 
     if [ "${refresh_db}" -eq 1 ] || [ ! -f "${compile_commands}" ]; then
         echo "Generating compile_commands.json..."
-        cmake -S "${root}" -B "${build_dir}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        resolve_clang_compilers
+        if [ -n "${clang_bin}" ] && [ -n "${clangxx_bin}" ]; then
+            echo "Using C compiler: ${clang_bin}"
+            echo "Using CXX compiler: ${clangxx_bin}"
+            CC="${clang_bin}" CXX="${clangxx_bin}" \
+                cmake -S "${root}" -B "${build_dir}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        else
+            cmake -S "${root}" -B "${build_dir}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        fi
     else
         echo "Reusing ${compile_commands}"
     fi
