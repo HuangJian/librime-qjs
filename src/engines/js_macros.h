@@ -235,38 +235,38 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   inline static JSCFunction* constructorQjs = nullptr; \
   inline static const int CONSTRUCTOR_ARGC = 0;
 
-#define JS_PRIV_QJS_WITH_FINALIZER                                           \
-  static void finalizerQjs(JSRuntime*, JSValue val) {                        \
-    if (void* ptr = JS_GetOpaque(val, jsClassId)) {                          \
-      if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) {   \
-        delete ppObj;                                                        \
-        JS_SetOpaque(val, nullptr);                                          \
-      }                                                                      \
-    }                                                                        \
+#define JS_PRIV_QJS_WITH_FINALIZER                                         \
+  static void finalizerQjs(JSRuntime*, JSValue val) {                      \
+    if (void* ptr = JS_GetOpaque(val, jsClassId)) {                        \
+      if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) { \
+        delete ppObj;                                                      \
+        JS_SetOpaque(val, nullptr);                                        \
+      }                                                                    \
+    }                                                                      \
   }
 #define JS_PRIV_QJS_NO_FINALIZER inline static JSClassFinalizer* finalizerQjs = nullptr;
 
 #define JS_PRIV_DEFINE_AUTO_PROPERTY_ACCESSOR_0(name, cpp_name)
-#define JS_PRIV_DEFINE_AUTO_PROPERTY_ACCESSOR_1(name, cpp_name)                        \
-  template <typename T_OBJ>                                                            \
-  static auto get_auto_property_##name(T_OBJ&& obj, int)->decltype(obj->cpp_name()) {  \
-    return obj->cpp_name();                                                            \
-  }                                                                                    \
-  template <typename T_OBJ>                                                            \
-  static auto get_auto_property_##name(T_OBJ&& obj, long)->decltype((obj->cpp_name)) { \
-    return obj->cpp_name;                                                              \
-  }                                                                                    \
-  template <typename T_OBJ, typename T_VALUE>                                          \
-  static auto set_auto_property_##name(T_OBJ&& obj, T_VALUE&& value, int)              \
-      ->decltype(obj->set_##cpp_name(std::forward<T_VALUE>(value)), void()) {          \
-    obj->set_##cpp_name(std::forward<T_VALUE>(value));                                 \
-  }                                                                                    \
-  template <typename T_OBJ, typename T_VALUE>                                          \
-  static auto set_auto_property_##name(T_OBJ&& obj, T_VALUE&& value, long)             \
-      ->decltype((obj->cpp_name = std::forward<T_VALUE>(value)), void()) {             \
-    obj->cpp_name = std::forward<T_VALUE>(value);                                      \
-  }                                                                                    \
-  JS_API_DEFINE_GETTER(T_RIME_TYPE, name, get_auto_property_##name(obj, 0))            \
+#define JS_PRIV_DEFINE_AUTO_PROPERTY_ACCESSOR_1(name, cpp_name)                          \
+  template <typename T_OBJ>                                                              \
+  static auto get_auto_property_##name(T_OBJ&& obj, int) -> decltype(obj->cpp_name()) {  \
+    return obj->cpp_name();                                                              \
+  }                                                                                      \
+  template <typename T_OBJ>                                                              \
+  static auto get_auto_property_##name(T_OBJ&& obj, long) -> decltype((obj->cpp_name)) { \
+    return obj->cpp_name;                                                                \
+  }                                                                                      \
+  template <typename T_OBJ, typename T_VALUE>                                            \
+  static auto set_auto_property_##name(T_OBJ&& obj, T_VALUE&& value, int)                \
+      -> decltype(obj->set_##cpp_name(std::forward<T_VALUE>(value)), void()) {           \
+    obj->set_##cpp_name(std::forward<T_VALUE>(value));                                   \
+  }                                                                                      \
+  template <typename T_OBJ, typename T_VALUE>                                            \
+  static auto set_auto_property_##name(T_OBJ&& obj, T_VALUE&& value, long)               \
+      -> decltype((obj->cpp_name = std::forward<T_VALUE>(value)), void()) {              \
+    obj->cpp_name = std::forward<T_VALUE>(value);                                        \
+  }                                                                                      \
+  JS_API_DEFINE_GETTER(T_RIME_TYPE, name, get_auto_property_##name(obj, 0))              \
   JS_API_DEFINE_SETTER(T_RIME_TYPE, name, set_auto_property_##name(obj, value, 0))
 
 #define JS_PRIV_DEFINE_AUTO_PROPERTY_ACCESSOR_IMPL(name, cpp_name, enabled) \
@@ -285,15 +285,15 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
 #define JS_PRIV_DEFINE_GETTER_ACCESSOR_manual(name, payload)
 #define JS_PRIV_DEFINE_GETTER_ACCESSOR_custom(name, statement) \
   JS_API_DEFINE_GETTER(T_RIME_TYPE, name, statement)
-#define JS_PRIV_DEFINE_GETTER_ACCESSOR_auto(name, cpp_name)                          \
-  template <typename T_OBJ>                                                          \
-  static auto get_auto_getter_##name(T_OBJ&& obj, int)->decltype(obj->cpp_name()) {  \
-    return obj->cpp_name();                                                          \
-  }                                                                                  \
-  template <typename T_OBJ>                                                          \
-  static auto get_auto_getter_##name(T_OBJ&& obj, long)->decltype((obj->cpp_name)) { \
-    return obj->cpp_name;                                                            \
-  }                                                                                  \
+#define JS_PRIV_DEFINE_GETTER_ACCESSOR_auto(name, cpp_name)                            \
+  template <typename T_OBJ>                                                            \
+  static auto get_auto_getter_##name(T_OBJ&& obj, int) -> decltype(obj->cpp_name()) {  \
+    return obj->cpp_name();                                                            \
+  }                                                                                    \
+  template <typename T_OBJ>                                                            \
+  static auto get_auto_getter_##name(T_OBJ&& obj, long) -> decltype((obj->cpp_name)) { \
+    return obj->cpp_name;                                                              \
+  }                                                                                    \
   JS_API_DEFINE_GETTER(T_RIME_TYPE, name, get_auto_getter_##name(obj, 0))
 
 #define JS_PRIV_NORMALIZE_GETTER_SPEC_PLAIN(x) (x, x, auto)
