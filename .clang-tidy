@@ -21,6 +21,7 @@ Checks: '-*,
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-avoid-c-arrays,
+  -portability-avoid-pragma-once,
   -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape'
 

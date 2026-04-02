@@ -11,10 +11,12 @@
 
 template <typename T_JS_VALUE>
 class QuickJSFilter : public QjsModule<T_JS_VALUE> {
+  using T_JS_OBJECT = JsEngine<T_JS_VALUE>::T_JS_OBJECT;
+
   inline static std::chrono::time_point<std::chrono::steady_clock> beginClock =
       std::chrono::steady_clock::now();
 
-  typename JsEngine<T_JS_VALUE>::T_JS_OBJECT funcIsApplicable_;
+  T_JS_OBJECT funcIsApplicable_;
   bool isFilterFuncGenerator_ = false;
 
 public:

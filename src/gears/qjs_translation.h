@@ -34,7 +34,7 @@ private:
 
 template <typename T_JS_VALUE>
 class QuickJSFastTranslation final : public Translation {
-  using T_JS_OBJECT = typename JsEngine<T_JS_VALUE>::T_JS_OBJECT;
+  using T_JS_OBJECT = JsEngine<T_JS_VALUE>::T_JS_OBJECT;
 
   bool isGeneratorEverInvoked_ = false;
   T_JS_OBJECT generator_;

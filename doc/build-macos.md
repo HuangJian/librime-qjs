@@ -9,7 +9,7 @@
 ### Required Tools
 - Xcode Command Line Tools
 - cmake 3.12 or newer
-- clang/llvm 20 or newer
+- clang/llvm 22 or newer
 - Node.js 22 or newer
 
 ## Environment Setup
@@ -24,14 +24,14 @@
   - Check cmake version: `cmake --version`
 
 - clang/llvm:
-  - Install clang/llvm: `sudo port install clang-20`
-  - Add llvm to PATH: `export PATH="/opt/local/libexec/llvm-20/bin:$PATH"`
-  - config llvm: `sudo port select --set llvm mp-llvm-20`
-  - config clang: `sudo port select --set clang mp-clang-20`
+  - Install clang/llvm: `sudo port install clang-22`
+  - Add llvm to PATH: `export PATH="/opt/local/libexec/llvm-22/bin:$PATH"`
+  - config llvm: `sudo port select --set llvm mp-llvm-22`
+  - config clang: `sudo port select --set clang mp-clang-22`
   - Update the shell configuration file (.zshrc or .bash_profile):
     ```shell
     # Add MacPorts LLVM to your PATH
-    export PATH="/opt/local/libexec/llvm-20/bin:$PATH"
+    export PATH="/opt/local/libexec/llvm-22/bin:$PATH"
 
     # llvm/clang installed by MacPorts
     alias clang="$(llvm-config --bindir)/clang"
@@ -41,8 +41,8 @@
     export CC=$(llvm-config --bindir)/clang
     export CXX=$(llvm-config --bindir)/clang++
     # Set up compiler flags if needed
-    export LDFLAGS="-L/opt/local/libexec/llvm-20/lib"
-    export CPPFLAGS="-I/opt/local/libexec/llvm-20/include"
+    export LDFLAGS="-L/opt/local/libexec/llvm-22/lib"
+    export CPPFLAGS="-I/opt/local/libexec/llvm-22/include"
     ```
   - Check LLVM version: `llvm-config --version` and `clang --version`
 

@@ -17,7 +17,7 @@ public:
   bool next() override { return current_ < vec_.size(); }
 
   JSValue peek() override {
-    int value = next() ? vec_[current_++] : -1;
+    int value = next() ? vec_.at(current_++) : -1;
     return JS_NewInt32(context_, value);
   }
 

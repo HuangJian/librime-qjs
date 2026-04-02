@@ -77,7 +77,7 @@ TEST_F(JscLoadBundledPluginTest, RunEsmBundledFilter) {
 
   const auto* jsCandidates = engine.newArray();
   for (size_t i = 0; i < candidates.size(); ++i) {
-    JSValueRef jsCandidate = engine.wrap(candidates[i]);
+    JSValueRef jsCandidate = engine.wrap(candidates.at(i));
     engine.insertItemToArray(jsCandidates, i, jsCandidate);
   }
 

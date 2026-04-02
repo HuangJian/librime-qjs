@@ -235,15 +235,15 @@ constexpr std::size_t countof(const T (& /*unused*/)[N]) noexcept {
   inline static JSCFunction* constructorQjs = nullptr; \
   inline static const int CONSTRUCTOR_ARGC = 0;
 
-#define JS_PRIV_QJS_WITH_FINALIZER                                                \
-  inline static JSClassFinalizer* finalizerQjs = [](JSRuntime* rt, JSValue val) { \
-    if (void* ptr = JS_GetOpaque(val, jsClassId)) {                               \
-      if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) {        \
-        delete ppObj;                                                             \
-        JS_SetOpaque(val, nullptr);                                               \
-      }                                                                           \
-    }                                                                             \
-  };
+#define JS_PRIV_QJS_WITH_FINALIZER                                           \
+  static void finalizerQjs(JSRuntime*, JSValue val) {                        \
+    if (void* ptr = JS_GetOpaque(val, jsClassId)) {                          \
+      if (auto* ppObj = static_cast<std::shared_ptr<T_RIME_TYPE>*>(ptr)) {   \
+        delete ppObj;                                                        \
+        JS_SetOpaque(val, nullptr);                                          \
+      }                                                                      \
+    }                                                                        \
+  }
 #define JS_PRIV_QJS_NO_FINALIZER inline static JSClassFinalizer* finalizerQjs = nullptr;
 
 #define JS_PRIV_DEFINE_AUTO_PROPERTY_ACCESSOR_0(name, cpp_name)

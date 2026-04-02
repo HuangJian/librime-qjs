@@ -7,13 +7,15 @@
 
 template <typename T_JS_VALUE>
 class QjsModule {
+  using T_JS_OBJECT = JsEngine<T_JS_VALUE>::T_JS_OBJECT;
+
 protected:
   QjsModule(const std::string& nameSpace, const Environment& environment, const char* mainFuncName);
   ~QjsModule();
 
   [[nodiscard]] bool isLoaded() const { return isLoaded_; }
-  [[nodiscard]] typename JsEngine<T_JS_VALUE>::T_JS_OBJECT getInstance() const { return instance_; }
-  [[nodiscard]] typename JsEngine<T_JS_VALUE>::T_JS_OBJECT getMainFunc() const { return mainFunc_; }
+  [[nodiscard]] T_JS_OBJECT getInstance() const { return instance_; }
+  [[nodiscard]] T_JS_OBJECT getMainFunc() const { return mainFunc_; }
   [[nodiscard]] std::string getNamespace() const { return namespace_; }
 
 private:
@@ -21,9 +23,9 @@ private:
 
   bool isLoaded_ = false;
 
-  typename JsEngine<T_JS_VALUE>::T_JS_OBJECT instance_;
-  typename JsEngine<T_JS_VALUE>::T_JS_OBJECT mainFunc_;
-  typename JsEngine<T_JS_VALUE>::T_JS_OBJECT finalizer_;
+  T_JS_OBJECT instance_;
+  T_JS_OBJECT mainFunc_;
+  T_JS_OBJECT finalizer_;
 
 public:
   QjsModule(const QjsModule&) = delete;
