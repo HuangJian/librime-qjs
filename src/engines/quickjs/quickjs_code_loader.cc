@@ -61,10 +61,10 @@ JSValue QuickJSCodeLoader::loadJsModuleToNamespace(JSContext* ctx, const char* m
 
 JSValue QuickJSCodeLoader::loadJsModuleToGlobalThis(JSContext* ctx, const char* moduleName) {
   char* jsCode = loadFile(moduleName);
-  if (!jsCode) {
+  if (jsCode == nullptr) {
     jsCode = readJsCode(ctx, moduleName);
   }
-  if (!jsCode) {
+  if (jsCode == nullptr) {
     return JS_ThrowInternalError(ctx, "Could not open the module file: %s", moduleName);
   }
   std::string jsCodeStr(jsCode);
@@ -218,8 +218,8 @@ JSValue QuickJSCodeLoader::getExportedClassByNameInModule(JSContext* ctx,
                                                           const char* className) {
   JSPropertyEnum* props = nullptr;
   uint32_t propCount = 0;  // Get all enumerable properties from namespace
-  if (constexpr int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
-      JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
+  if (constexpr int FLAGS = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
+      JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, FLAGS) == 0) {
     const size_t n = strlen(className);
     for (uint32_t i = 0; i < propCount; i++) {
       const JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
@@ -247,8 +247,8 @@ JSValue QuickJSCodeLoader::getExportedClassHavingMethodNameInModule(JSContext* c
                                                                     const char* methodName) {
   JSPropertyEnum* props = nullptr;
   uint32_t propCount = 0;  // Get all enumerable properties from namespace
-  if (constexpr int flags = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
-      JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, flags) == 0) {
+  if (constexpr int FLAGS = JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY;
+      JS_GetOwnPropertyNames(ctx, &props, &propCount, moduleObj, FLAGS) == 0) {
     for (uint32_t i = 0; i < propCount; i++) {
       const JSValue propVal = JS_GetProperty(ctx, moduleObj, props[i].atom);
       const char* propName = JS_AtomToCString(ctx, props[i].atom);

@@ -1,6 +1,7 @@
 #include "jsc_code_loader.h"
 #include <glog/logging.h>
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -13,9 +14,9 @@ std::pair<std::string, std::filesystem::path> JscCodeLoader::loadModuleSource(
     [[maybe_unused]] JSContextRef ctx,
     const std::string& baseFolderPath,
     const std::string& moduleName) {
-  std::string possibleFileNames[] = {"dist/" + moduleName + ".iife.js",
-                                     "dist/" + moduleName + ".js", moduleName + ".iife.js",
-                                     moduleName + ".js"};
+  const std::array<std::string, 4> possibleFileNames = {
+      "dist/" + moduleName + ".iife.js", "dist/" + moduleName + ".js", moduleName + ".iife.js",
+      moduleName + ".js"};
   for (const auto& fileName : possibleFileNames) {
     std::filesystem::path filePath = std::filesystem::path(baseFolderPath) / fileName;
     if (!std::filesystem::exists(filePath)) {

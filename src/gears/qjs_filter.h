@@ -42,7 +42,7 @@ public:
       : ComponentWrapperBase<T_ACTUAL, Filter, T_JS_VALUE>(ticket) {}
 
   // NOLINTNEXTLINE(readability-identifier-naming)
-  virtual an<Translation> Apply(an<Translation> translation, CandidateList* candidates) override {
+  an<Translation> Apply(an<Translation> translation, CandidateList* candidates) override {
     return this->actual()->apply(translation, this->environment());
   }
 };  // namespace rime

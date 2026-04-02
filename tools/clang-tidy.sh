@@ -69,6 +69,7 @@ declare -a clang_tidy_args=(
     -extra-arg=-isystem"${root}/../../include"
     -extra-arg=-isystem"${root}/../../include/glog"
     -extra-arg=-isystem"${root}/thirdparty/quickjs"
+    -extra-arg=-isystem"${root}/thirdparty/cpp-subprocess"
     -extra-arg=-isystem/usr/local/include
     -extra-arg=-stdlib=libc++
     -extra-arg=-D_ENABLE_JAVASCRIPTCORE

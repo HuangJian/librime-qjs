@@ -242,7 +242,7 @@ JSValue QuickJsEngineImpl::wrap(const char* typeName, void* ptr, const char* poi
   }
   if (JS_SetOpaque(jsobj, ptr) < 0) {
     JS_FreeValue(context_, jsobj);
-    const auto format = "Failed to set a %s pointer to a %s object with classId = %d";
+    const auto* const format = "Failed to set a %s pointer to a %s object with classId = %d";
     return JS_ThrowInternalError(context_, format, pointerType, typeName, it->second);
   }
   return jsobj;

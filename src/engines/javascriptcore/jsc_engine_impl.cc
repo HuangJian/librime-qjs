@@ -28,7 +28,7 @@ void JscEngineImpl::setBaseFolderPath(const char* absolutePath) {
 JSObjectRef JscEngineImpl::createInstanceOfModule(const char* moduleName,
                                                   const std::vector<JSValueRef>& args) const {
   JSValueRef exception = nullptr;
-  for (auto& path : arrBaseFolderPath_) {
+  for (const auto& path : arrBaseFolderPath_) {
     const JSObjectRef instance =
         JscCodeLoader::createInstanceOfIifeBundledModule(ctx_, path, moduleName, args, &exception);
     if (exception == nullptr) {
@@ -45,7 +45,7 @@ JSObjectRef JscEngineImpl::createInstanceOfModule(const char* moduleName,
 JSValueRef JscEngineImpl::loadJsFile(const char* fileName) const {
   JSValueRef exception = nullptr;
 
-  for (auto& path : arrBaseFolderPath_) {
+  for (const auto& path : arrBaseFolderPath_) {
     const auto* globalThis =
         JscCodeLoader::loadEsmBundledModuleToGlobalThis(ctx_, path, fileName, &exception);
     if (exception == nullptr) {
@@ -142,8 +142,10 @@ JSValueRef JscEngineImpl::getJsClassHavingMethod(const JSValueRef& module,
   const JSPropertyNameArrayRef propertyNames = JSObjectCopyPropertyNames(ctx_, moduleObj);
   const size_t count = JSPropertyNameArrayGetCount(propertyNames);
 
-  for (int i = count - 1; i >= 0; i--) {
-    const JSStringRef propertyName = JSPropertyNameArrayGetNameAtIndex(propertyNames, i);
+  for (size_t i = 0; i < count; i++) {
+    // reverse-loop the properties with the index: count - i - 1
+    const JSStringRef propertyName =
+        JSPropertyNameArrayGetNameAtIndex(propertyNames, count - i - 1);
     if (const JSValueRef value = JSObjectGetProperty(ctx_, moduleObj, propertyName, nullptr);
         JSValueIsObject(ctx_, value)) {
       const JSObjectRef obj = JSValueToObject(ctx_, value, nullptr);
