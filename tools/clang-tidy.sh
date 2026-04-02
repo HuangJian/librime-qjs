@@ -35,6 +35,36 @@ done
 
 jobs="${CLANG_TIDY_JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN || echo 4)}"
 ignore_files_regex='test_switch\.h$'
+clang_tidy_bin="${CLANG_TIDY_BIN:-}"
+
+resolve_clang_tidy() {
+    local candidate=""
+
+    if [ -n "${clang_tidy_bin}" ] && [ -x "${clang_tidy_bin}" ]; then
+        return
+    fi
+
+    candidate="$(command -v clang-tidy 2>/dev/null || true)"
+    if [ -n "${candidate}" ]; then
+        clang_tidy_bin="${candidate}"
+        return
+    fi
+
+    for candidate in \
+        "/opt/homebrew/opt/llvm/bin/clang-tidy" \
+        "/usr/local/opt/llvm/bin/clang-tidy" \
+        "/opt/local/libexec/llvm-20/bin/clang-tidy" \
+        "$(brew --prefix llvm 2>/dev/null)/bin/clang-tidy"
+    do
+        if [ -n "${candidate}" ] && [ -x "${candidate}" ]; then
+            clang_tidy_bin="${candidate}"
+            return
+        fi
+    done
+
+    echo "clang-tidy not found. Set CLANG_TIDY_BIN or add LLVM's bin directory to PATH." >&2
+    exit 1
+}
 
 configure_compile_db() {
     mkdir -p "${build_dir}"
@@ -89,7 +119,7 @@ process_file() {
     fi
 
     echo "Processing ${file}..."
-    clang-tidy "${clang_tidy_args[@]}" "${file}"
+    "${clang_tidy_bin}" "${clang_tidy_args[@]}" "${file}"
 }
 
 collect_all_targets() {
@@ -147,6 +177,8 @@ run_target_stream() {
 run_all_targets() {
     collect_all_targets | xargs -0 -P "${jobs}" -I {} "$0" --worker-file={}
 }
+
+resolve_clang_tidy
 
 if [ -n "${worker_file}" ]; then
     process_file "${worker_file}"
