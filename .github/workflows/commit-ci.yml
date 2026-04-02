@@ -17,6 +17,11 @@ jobs:
 
       - name: Checkout last commit
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main branch for diff base
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
 
       - name: Checkout submodules/dependencies
         run: bash ./action-install.sh

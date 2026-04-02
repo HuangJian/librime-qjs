@@ -14,6 +14,7 @@ compile_commands="${build_dir}/compile_commands.json"
 mode="modified"
 refresh_db=0
 worker_file=""
+base_ref="${CLANG_TIDY_BASE_REF:-origin/main}"
 for arg in "$@"; do
     case "$arg" in
         all|modified)
@@ -98,9 +99,18 @@ collect_all_targets() {
 
 collect_modified_targets() {
     local file
+    local diff_base=""
+
+    if git -C "${root}" rev-parse --verify --quiet "${base_ref}" >/dev/null; then
+        diff_base="$(git -C "${root}" merge-base HEAD "${base_ref}")"
+    fi
 
     {
-        git -C "${root}" diff --name-only --diff-filter=ACMR HEAD -- src tests
+        if [ -n "${diff_base}" ]; then
+            git -C "${root}" diff --name-only --diff-filter=ACMR "${diff_base}"...HEAD -- src tests
+        else
+            git -C "${root}" diff --name-only --diff-filter=ACMR HEAD -- src tests
+        fi
         git -C "${root}" ls-files --others --exclude-standard -- src tests
     } | awk 'NF && !seen[$0]++' | while IFS= read -r file; do
         case "$file" in
@@ -149,6 +159,10 @@ if [ "${mode}" = "all" ]; then
     echo "Linting all translation units with ${jobs} jobs..."
     run_all_targets
 else
-    echo "Linting modified translation units with ${jobs} jobs..."
+    if git -C "${root}" rev-parse --verify --quiet "${base_ref}" >/dev/null; then
+        echo "Linting translation units changed since merge-base with ${base_ref} using ${jobs} jobs..."
+    else
+        echo "Base ref ${base_ref} not found; linting locally modified translation units with ${jobs} jobs..."
+    fi
     collect_modified_targets | run_target_stream
 fi
