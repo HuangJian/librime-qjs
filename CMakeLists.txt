@@ -182,6 +182,7 @@ if(ENABLE_JAVASCRIPTCORE)
   # https://github.com/copilot/share/004b4028-0820-8803-b940-a848008d6951
   target_compile_options(librime-qjs-objs PRIVATE -Wno-non-literal-gnu-string-literal-operator-template)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(librime-qjs-objs PRIVATE -Wno-elaborated-enum-base)
     target_compile_options(librime-qjs-objs PRIVATE -fno-strict-enums)
   endif()
 
