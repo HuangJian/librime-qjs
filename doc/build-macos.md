@@ -152,8 +152,8 @@ sudo cp ${qjs_dylib} ${rime_plugin_folder} && \
 ### Lint with clang-tidy
 
 - clang-tidy is a part of the clang/llvm toolchain, check it's version: `clang-tidy --version`
-- lint all the files: `(cd ./plugins/qjs; bash ./tools/clang-tidy.sh all)`
-- lint the modified files: `(cd ./plugins/qjs; bash ./tools/clang-tidy.sh modified)`
+- lint all the files: `(cd ./plugins/qjs; bash ./tools/clang-tidy.sh)`
+- lint certain file: `(cd ./plugins/qjs; bash ./tools/clang-tidy.sh --worker-file=<file>)`
 - The issues should be present in the VSCode Editor window after clangd setup.
 - Fix the issues as best as you can.
 

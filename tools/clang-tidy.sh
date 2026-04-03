@@ -3,25 +3,17 @@
 set -euo pipefail
 
 # usage:
-# - lint the modified files: `bash tools/clang-tidy.sh modified`
 # - lint all the files: `bash tools/clang-tidy.sh all`
-# - force-refresh compile_commands.json: `bash tools/clang-tidy.sh --refresh-db [all|modified]`
+# - lint one file: `bash tools/clang-tidy.sh --worker-file=<file>`
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 build_dir="${root}/build"
 compile_commands="${build_dir}/compile_commands.json"
 
-mode="modified"
-refresh_db=0
 worker_file=""
-base_ref="${CLANG_TIDY_BASE_REF:-origin/main}"
 for arg in "$@"; do
     case "$arg" in
-        all|modified)
-            mode="$arg"
-            ;;
-        --refresh-db)
-            refresh_db=1
+        all)
             ;;
         --worker-file=*)
             worker_file="${arg#--worker-file=}"
@@ -91,7 +83,8 @@ resolve_clang_compilers() {
         for candidate in \
             "/opt/homebrew/opt/llvm/bin/clang++" \
             "/usr/local/opt/llvm/bin/clang++" \
-            "${brew_prefix}/bin/clang++"
+            "${brew_prefix}/bin/clang++" \
+            "$(llvm-config --bindir)/clang++"
         do
             if [ -n "${candidate}" ] && [ -x "${candidate}" ]; then
                 clangxx_bin="${candidate}"
@@ -108,19 +101,14 @@ configure_compile_db() {
         mv "${root}/compile_commands.json" "${compile_commands}"
     fi
 
-    if [ "${refresh_db}" -eq 1 ] || [ ! -f "${compile_commands}" ]; then
-        echo "Generating compile_commands.json..."
-        resolve_clang_compilers
-        if [ -n "${clang_bin}" ] && [ -n "${clangxx_bin}" ]; then
-            echo "Using C compiler: ${clang_bin}"
-            echo "Using CXX compiler: ${clangxx_bin}"
-            CC="${clang_bin}" CXX="${clangxx_bin}" \
-                cmake -S "${root}" -B "${build_dir}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        else
+    echo "Generating compile_commands.json..."
+    if [ -n "${clang_bin}" ] && [ -n "${clangxx_bin}" ]; then
+        echo "Using C compiler: ${clang_bin}"
+        echo "Using CXX compiler: ${clangxx_bin}"
+        CC="${clang_bin}" CXX="${clangxx_bin}" \
             cmake -S "${root}" -B "${build_dir}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        fi
     else
-        echo "Reusing ${compile_commands}"
+        cmake -S "${root}" -B "${build_dir}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     fi
 }
 
@@ -170,53 +158,6 @@ collect_all_targets() {
         -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' \) -print0
 }
 
-collect_modified_targets() {
-    local file
-    local diff_base=""
-
-    if git -C "${root}" rev-parse --verify --quiet "${base_ref}" >/dev/null; then
-        diff_base="$(git -C "${root}" merge-base HEAD "${base_ref}")"
-    fi
-
-    {
-        if [ -n "${diff_base}" ]; then
-            git -C "${root}" diff --name-only --diff-filter=ACMR "${diff_base}"...HEAD -- src tests
-        else
-            git -C "${root}" diff --name-only --diff-filter=ACMR HEAD -- src tests
-        fi
-        git -C "${root}" ls-files --others --exclude-standard -- src tests
-    } | awk 'NF && !seen[$0]++' | while IFS= read -r file; do
-        case "$file" in
-            *.c|*.cc|*.cpp)
-                printf '%s\n' "${root}/${file}"
-                ;;
-            *.h|*.hpp)
-                local header_basename
-                header_basename="$(basename "$file")"
-                rg -l \
-                    --glob '*.{c,cc,cpp}' \
-                    -e "#include\\s*[<\"]${header_basename}[>\"]" \
-                    -e "#include\\s*[<\"].*${file}[>\"]" \
-                    "${root}/src" "${root}/tests" 2>/dev/null || true
-                ;;
-        esac
-    done | awk 'NF && !seen[$0]++'
-}
-
-run_target_stream() {
-    local first_target
-
-    if ! IFS= read -r first_target; then
-        echo "No files to lint."
-        return
-    fi
-
-    {
-        printf '%s\n' "${first_target}"
-        cat
-    } | xargs -P "${jobs}" -I {} "$0" --worker-file={}
-}
-
 run_all_targets() {
     collect_all_targets | xargs -0 -P "${jobs}" -I {} "$0" --worker-file={}
 }
@@ -233,16 +174,13 @@ echo "Using clang-tidy: ${clang_tidy_bin}"
 echo "clang-tidy arguments:"
 printf '  %q\n' "${clang_tidy_args[@]}"
 
+
+resolve_clang_compilers
+
+echo "Using clangxx: ${clangxx_bin}"
+"${clangxx_bin}" --version
+
 configure_compile_db
 
-if [ "${mode}" = "all" ]; then
-    echo "Linting all translation units with ${jobs} jobs..."
-    run_all_targets
-else
-    if git -C "${root}" rev-parse --verify --quiet "${base_ref}" >/dev/null; then
-        echo "Linting translation units changed since merge-base with ${base_ref} using ${jobs} jobs..."
-    else
-        echo "Base ref ${base_ref} not found; linting locally modified translation units with ${jobs} jobs..."
-    fi
-    collect_modified_targets | run_target_stream
-fi
+echo "Linting all translation units with ${jobs} jobs..."
+run_all_targets

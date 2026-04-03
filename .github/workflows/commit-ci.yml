@@ -63,17 +63,12 @@ jobs:
       - name: Install Rime plugins
         run: ./action-install-plugins-macos.sh
 
-      - name: Fetch main branch for diff base
-        run: |
-          git -C ./plugins/qjs fetch --no-tags --prune --unshallow origin || true
-          git -C ./plugins/qjs fetch --no-tags origin main:refs/remotes/origin/main
-
       - name: Code format lint
         run: bash ./tools/clang-format.sh lint
         working-directory: ./plugins/qjs
 
-      - name: Code style lint on modified files
-        run: bash ./tools/clang-tidy.sh modified
+      - name: Code style lint on all files
+        run: bash ./tools/clang-tidy.sh all
         working-directory: ./plugins/qjs
 
       - name: Check rime.d.ts
