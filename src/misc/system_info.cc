@@ -223,7 +223,7 @@ std::string SystemInfo::getMacOSVersion() {
   constexpr int STR_SIZE = 256;
   char str[STR_SIZE];
   size_t size = sizeof(str);
-  const auto ptr = static_cast<char*>(str);
+  auto* const ptr = static_cast<char*>(str);
   if (sysctlbyname("kern.osproductversion", ptr, &size, nullptr, 0) == 0) {
     return ptr;
   }

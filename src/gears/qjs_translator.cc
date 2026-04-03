@@ -20,9 +20,8 @@ an<Translation> QuickJSTranslator<T_JS_VALUE>::query(const std::string& input,
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
   T_JS_VALUE jsSegment = engine.wrap(const_cast<Segment*>(&segment));
   auto jsEnvironment = engine.wrap(&environment);
-  T_JS_VALUE args[] = {jsInput, jsSegment, jsEnvironment};
-  T_JS_VALUE resultArray =
-      engine.callFunction(this->getMainFunc(), this->getInstance(), countof(args), args);
+  std::vector<T_JS_VALUE> arguments = {jsInput, jsSegment, jsEnvironment};
+  T_JS_VALUE resultArray = engine.callFunction(this->getMainFunc(), this->getInstance(), arguments);
   engine.freeValue(jsInput, jsSegment, jsEnvironment);
   if (!engine.isArray(resultArray)) {
     LOG(ERROR) << "[qjs] A candidate array should be returned by `translate` of the plugin: "

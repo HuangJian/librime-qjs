@@ -16,8 +16,8 @@ ProcessResult QuickJSProcessor<T_JS_VALUE>::processKeyEvent(const KeyEvent& keyE
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
   T_JS_VALUE jsKeyEvt = engine.wrap(const_cast<KeyEvent*>(&keyEvent));
   auto jsEnvironment = engine.wrap(&environment);
-  T_JS_VALUE args[] = {jsKeyEvt, jsEnvironment};
-  T_JS_VALUE jsResult = engine.callFunction(this->getMainFunc(), this->getInstance(), 2, args);
+  std::vector<T_JS_VALUE> arguments = {jsKeyEvt, jsEnvironment};
+  T_JS_VALUE jsResult = engine.callFunction(this->getMainFunc(), this->getInstance(), arguments);
   engine.freeValue(jsKeyEvt, jsEnvironment);
 
   if (engine.isException(jsResult)) {

@@ -17,7 +17,7 @@ public:
     return true;
   }
 
-  an<Candidate> Peek() override { return candidates_[iter_]; }
+  an<Candidate> Peek() override { return candidates_.at(iter_); }
 
   void append(const an<Candidate>& candidate) {
     candidates_.push_back(candidate);

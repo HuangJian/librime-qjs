@@ -2,6 +2,7 @@
 #include <quickjs.h>
 
 #include <string>
+#include <vector>
 
 #include "../test_switch.h"
 
@@ -27,7 +28,7 @@ TYPED_TEST(QuickJSErrorTest, TestJsRuntimeError) {
   auto func = jsEngine.getObjectProperty(globalObj, "funcWithRuntimeError");
   ASSERT_TRUE(jsEngine.isFunction(func));
 
-  auto result = jsEngine.callFunction(func, JS_UNDEFINED, 0, nullptr);
+  auto result = jsEngine.callFunction(func, JS_UNDEFINED, {});
   ASSERT_TRUE(jsEngine.isException(result));
 
   // The exception is alredy captured in the js engine logger. The log should be:

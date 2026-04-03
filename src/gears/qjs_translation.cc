@@ -28,9 +28,9 @@ bool QuickJSTranslation<T_JS_VALUE>::doFilter(const T_JS_VALUE& filterObj,
   }
 
   auto jsEnvironment = jsEngine.wrap(&environment);
-  T_JS_VALUE args[] = {jsArray, jsEnvironment};
+  std::vector<T_JS_VALUE> arguments = {jsArray, jsEnvironment};
   T_JS_VALUE resultArray =
-      jsEngine.callFunction(jsEngine.toObject(filterFunc), jsEngine.toObject(filterObj), 2, args);
+      jsEngine.callFunction(jsEngine.toObject(filterFunc), jsEngine.toObject(filterObj), arguments);
   jsEngine.freeValue(jsArray, jsEnvironment);
 
   if (!jsEngine.isArray(resultArray)) {
@@ -62,8 +62,8 @@ QuickJSFastTranslation<T_JS_VALUE>::QuickJSFastTranslation(const an<Translation>
   auto& jsEngine = JsEngine<T_JS_VALUE>::instance();
   auto iterator = jsEngine.wrap(translation);
   auto jsEnv = jsEngine.wrap(&environment);
-  T_JS_VALUE args[2] = {iterator, jsEnv};
-  generator_ = jsEngine.toObject(jsEngine.callFunction(filterFunc, filterObj, 2, args));
+  std::vector<T_JS_VALUE> arguments = {iterator, jsEnv};
+  generator_ = jsEngine.toObject(jsEngine.callFunction(filterFunc, filterObj, arguments));
   jsEngine.freeValue(jsEnv, iterator);
   nextFunction_ = jsEngine.toObject(jsEngine.getObjectProperty(generator_, "next"));
   jsEngine.protectFromGC(generator_, nextFunction_);
@@ -131,7 +131,7 @@ void QuickJSFastTranslation<T_JS_VALUE>::invokeGenerator() {
     jsEngine.freeValue(nextResult_);
   }
 
-  nextResult_ = jsEngine.toObject(jsEngine.callFunction(nextFunction_, generator_, 0, nullptr));
+  nextResult_ = jsEngine.toObject(jsEngine.callFunction(nextFunction_, generator_, {}));
   isGeneratorEverInvoked_ = true;
   if (jsEngine.isException(nextResult_)) {
     LOG(ERROR) << "[qjs] Exception thrown while filtering candidates with iterator";

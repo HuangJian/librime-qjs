@@ -15,8 +15,9 @@ QjsModule<T_JS_VALUE>::QjsModule(const std::string& nameSpace,
   const char* dataDirArray[2] = {rime_get_api()->get_user_data_dir(),
                                  rime_get_api()->get_shared_data_dir()};
   for (const auto* dataDir : dataDirArray) {
-    if (dataDir == nullptr)
+    if (dataDir == nullptr) {
       continue;
+    }
     std::filesystem::path path(dataDir);
     path.append("js");
     jsEngine.setBaseFolderPath(path.generic_string().c_str());
@@ -54,7 +55,7 @@ QjsModule<T_JS_VALUE>::~QjsModule() {
     DLOG(INFO) << "[qjs] ~" << namespace_ << " no `finalizer` function exported.";
   } else if (isLoaded_) {
     DLOG(INFO) << "[qjs] running the finalizer function of " << namespace_;
-    T_JS_VALUE finalizerResult = jsEngine.callFunction(finalizer_, instance_, 0, nullptr);
+    T_JS_VALUE finalizerResult = jsEngine.callFunction(finalizer_, instance_, {});
     if (jsEngine.isException(finalizerResult)) {
       LOG(ERROR) << "[qjs] ~" << namespace_ << " Error running the finalizer function.";
     }

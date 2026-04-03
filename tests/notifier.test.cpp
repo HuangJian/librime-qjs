@@ -6,6 +6,7 @@
 #include <rime/schema.h>
 
 #include <quickjs.h>
+#include <vector>
 #include "test_switch.h"
 #include "types/environment.h"
 #include "types/qjs_types.h"
@@ -60,7 +61,7 @@ TYPED_TEST(QuickJSNotifierTest, ConnectToRimeNotifier) {
   auto undefined = jsEngine.toObject(jsEngine.undefined());
 
   {
-    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, 0, nullptr);
+    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, {});
     ASSERT_FALSE(jsEngine.toBool(isConnected));
     jsEngine.freeValue(isConnected);
   }
@@ -68,19 +69,20 @@ TYPED_TEST(QuickJSNotifierTest, ConnectToRimeNotifier) {
   {
     auto connectToNotifierFunc =
         jsEngine.toObject(jsEngine.getObjectProperty(global, "connectToNotifier"));
-    auto connectToNotifier = jsEngine.callFunction(connectToNotifierFunc, global, 1, &env);
-    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, 0, nullptr);
+    auto connectToNotifier =
+        jsEngine.callFunction(connectToNotifierFunc, global, std::vector<TypeParam>{env});
+    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, {});
     ASSERT_TRUE(jsEngine.toBool(isConnected));
-    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, 0, nullptr);
+    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, {});
     ASSERT_EQ(jsEngine.toInt(notifiedTimes), 0);
     jsEngine.freeValue(notifiedTimes, isConnected, connectToNotifier, connectToNotifierFunc);
   }
   {
     engine->context()->set_input("notify");
     engine->context()->Commit();
-    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, 0, nullptr);
+    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, {});
     ASSERT_TRUE(jsEngine.toBool(isConnected));
-    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, 0, nullptr);
+    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, {});
     ASSERT_EQ(jsEngine.toInt(notifiedTimes), 1);
     LOG(INFO) << "commit_history: " << engine->context()->commit_history().repr();
     ASSERT_TRUE(engine->context()->commit_history().repr().find("[js]text1") != std::string::npos);
@@ -89,9 +91,9 @@ TYPED_TEST(QuickJSNotifierTest, ConnectToRimeNotifier) {
   {
     engine->context()->set_input("notify again");
     engine->context()->Commit();
-    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, 0, nullptr);
+    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, {});
     ASSERT_TRUE(jsEngine.toBool(isConnected));
-    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, 0, nullptr);
+    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, {});
     ASSERT_EQ(jsEngine.toInt(notifiedTimes), 2);
     ASSERT_TRUE(engine->context()->commit_history().repr().find("[js]text2") != std::string::npos);
     jsEngine.freeValue(notifiedTimes, isConnected);
@@ -99,18 +101,17 @@ TYPED_TEST(QuickJSNotifierTest, ConnectToRimeNotifier) {
   {
     auto disconnectFromNotifierFunc =
         jsEngine.toObject(jsEngine.getObjectProperty(global, "disconnectFromNotifier"));
-    auto disconnectFromNotifier =
-        jsEngine.callFunction(disconnectFromNotifierFunc, global, 0, nullptr);
-    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, 0, nullptr);
+    auto disconnectFromNotifier = jsEngine.callFunction(disconnectFromNotifierFunc, global, {});
+    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, {});
     ASSERT_FALSE(jsEngine.toBool(isConnected));
     jsEngine.freeValue(disconnectFromNotifierFunc, disconnectFromNotifier, isConnected);
   }
   {
     engine->context()->set_input("should not notify");
     engine->context()->Commit();
-    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, 0, nullptr);
+    auto isConnected = jsEngine.callFunction(isConnectedFunc, global, {});
     ASSERT_FALSE(jsEngine.toBool(isConnected));
-    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, 0, nullptr);
+    auto notifiedTimes = jsEngine.callFunction(getNotifiedTimesFunc, global, {});
     ASSERT_EQ(jsEngine.toInt(notifiedTimes), 2);  // unchanged after disconnection
     ASSERT_TRUE(engine->context()->commit_history().repr().find("[js]text3") == std::string::npos);
     jsEngine.freeValue(notifiedTimes, isConnected);

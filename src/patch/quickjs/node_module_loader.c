@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -405,23 +406,37 @@ char* loadFile(const char* absolutePath) {
     return NULL;
   }
 
-  char* content = malloc((size_t)length + 1);
+  const size_t fileSize = (size_t)length;
+  if ((long)fileSize != length) {
+    logError("File length overflow: %ld for file: %s", length, absolutePath);
+    fclose(file);
+    return NULL;
+  }
+
+  if (fileSize > SIZE_MAX - 1) {
+    logError("File length too large for buffer allocation: %zu for file: %s", fileSize, absolutePath);
+    fclose(file);
+    return NULL;
+  }
+
+  const size_t bufferSize = fileSize + 1;
+  char* content = malloc(bufferSize);
   if (!content) {
     logError("Failed to allocate memory for file: %s", absolutePath);
     fclose(file);
     return NULL;
   }
 
-  const size_t readCount = fread(content, 1, (size_t)length, file);
+  const size_t readCount = fread(content, 1, fileSize, file);
   fclose(file);
 
-  if (readCount != (size_t)length) {
+  if (readCount != fileSize) {
     logError("Failed to read file: %s, expected %ld bytes but got %zu", absolutePath, length, readCount);
     free(content);
     return NULL;
   }
 
-  content[length] = '\0';
+  content[readCount] = '\0'; // NOLINT(clang-analyzer-security.ArrayBound)
   return content;
 }
 

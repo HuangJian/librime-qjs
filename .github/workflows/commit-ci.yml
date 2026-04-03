@@ -9,26 +9,78 @@ on:
       - '![0-9]+.*'
   pull_request:
 
+permissions:
+  contents: read
 
 jobs:
   lint:
     runs-on: macos-15
+    env:
+      boost_version: 1.89.0
+      BOOST_ROOT: ${{ github.workspace }}/deps/boost-1.89.0
+      RIME_PLUGINS: ${{ github.repository }}@${{ github.ref_name }}
     steps:
 
       - name: Checkout last commit
-        uses: actions/checkout@v4
-
-      - name: Checkout submodules/dependencies
-        run: bash ./action-install.sh
+        uses: actions/checkout@v5
+        with:
+          repository: HuangJian/librime
+          submodules: recursive
 
       - name: Configure build environment
-        run: brew update && brew install cmake llvm clang-format nodejs
+        run: |
+          brew install cmake llvm ninja nodejs
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> "${GITHUB_ENV}"
+          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> "${GITHUB_ENV}"
+          echo "CMAKE_GENERATOR=Ninja" >> "${GITHUB_ENV}"
+          echo "$(brew --prefix llvm)/bin" >> "${GITHUB_PATH}"
+
+      - name: Configure build variant
+        run: |
+          echo "BUILD_UNIVERSAL=1" >> "${GITHUB_ENV}"
+
+      - name: Install Boost
+        run: ./install-boost.sh
+
+      - name: Check submodules
+        run: git submodule > submodule-status
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            bin
+            include
+            lib
+            share
+          key: ${{ runner.os }}-${{ runner.arch }}-deps-${{ hashFiles('submodule-status') }}
+
+      - name: Build dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: make deps
+
+      - name: Install Rime plugins
+        run: ./action-install-plugins-macos.sh
+
+      - name: Build librime without the qjs executable
+        run: |
+          cmake . -Bbuild \
+            -DCMAKE_INSTALL_PREFIX="$PWD/dist" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_MERGED_PLUGINS=OFF \
+            -DENABLE_EXTERNAL_PLUGINS=ON \
+            -DBUILD_TOOLS=OFF
+          cmake --build build
 
       - name: Code format lint
         run: bash ./tools/clang-format.sh lint
+        working-directory: ./plugins/qjs
 
-      - name: Code style lint on modified files
-        run: bash ./tools/clang-tidy.sh modified
+      - name: Code style lint on all files
+        run: bash ./tools/clang-tidy.sh all
+        working-directory: ./plugins/qjs
 
       - name: Check rime.d.ts
-        run: (cd ./tools; node ./check-api-coverage.js)
+        run: node ./check-api-coverage.js
+        working-directory: ./plugins/qjs/tools

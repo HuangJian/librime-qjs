@@ -56,7 +56,11 @@ public:
 
   ~QuickJSFastTranslation() override;
 
+  // Defined out-of-line and explicitly instantiated in qjs_translation.cc.
+  // NOLINTNEXTLINE(portability-template-virtual-member-function)
   bool Next() override;
+  // Defined out-of-line and explicitly instantiated in qjs_translation.cc.
+  // NOLINTNEXTLINE(portability-template-virtual-member-function)
   an<Candidate> Peek() override;
 
 private:

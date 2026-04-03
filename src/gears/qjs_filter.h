@@ -11,10 +11,12 @@
 
 template <typename T_JS_VALUE>
 class QuickJSFilter : public QjsModule<T_JS_VALUE> {
+  using T_JS_OBJECT = typename JsEngine<T_JS_VALUE>::T_JS_OBJECT;
+
   inline static std::chrono::time_point<std::chrono::steady_clock> beginClock =
       std::chrono::steady_clock::now();
 
-  typename JsEngine<T_JS_VALUE>::T_JS_OBJECT funcIsApplicable_;
+  T_JS_OBJECT funcIsApplicable_;
   bool isFilterFuncGenerator_ = false;
 
 public:
@@ -42,7 +44,7 @@ public:
       : ComponentWrapperBase<T_ACTUAL, Filter, T_JS_VALUE>(ticket) {}
 
   // NOLINTNEXTLINE(readability-identifier-naming)
-  virtual an<Translation> Apply(an<Translation> translation, CandidateList* candidates) override {
+  an<Translation> Apply(an<Translation> translation, CandidateList* candidates) override {
     return this->actual()->apply(translation, this->environment());
   }
 };  // namespace rime

@@ -55,7 +55,7 @@ __declspec(allocate(".CRT$XCU")) void(__cdecl* rime_register_module_qjs_)(void) 
 static void __cdecl rime_register_module_qjs(void) {
   static RimeModule module = {0};
   if (!module.data_size) {
-    module.data_size = sizeof(RimeModule) - sizeof((module).data_size);
+    module.data_size = sizeof(RimeModule) - sizeof(module.data_size);
     module.module_name = "qjs";
     module.initialize = rime_qjs_initialize;
     module.finalize = rime_qjs_finalize;
@@ -69,7 +69,7 @@ static void rime_register_module_qjs() __attribute__((constructor));
 
 static void rime_register_module_qjs() {
   static RimeModule module = {
-      .data_size = sizeof(RimeModule) - sizeof((module).data_size),
+      .data_size = sizeof(RimeModule) - sizeof(module.data_size),
       .module_name = "qjs",
       .initialize = rime_qjs_initialize,
       .finalize = rime_qjs_finalize,

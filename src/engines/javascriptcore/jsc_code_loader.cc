@@ -1,6 +1,7 @@
 #include "jsc_code_loader.h"
 #include <glog/logging.h>
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -13,9 +14,9 @@ std::pair<std::string, std::filesystem::path> JscCodeLoader::loadModuleSource(
     [[maybe_unused]] JSContextRef ctx,
     const std::string& baseFolderPath,
     const std::string& moduleName) {
-  std::string possibleFileNames[] = {"dist/" + moduleName + ".iife.js",
-                                     "dist/" + moduleName + ".js", moduleName + ".iife.js",
-                                     moduleName + ".js"};
+  const std::array<std::string, 4> possibleFileNames = {
+      "dist/" + moduleName + ".iife.js", "dist/" + moduleName + ".js", moduleName + ".iife.js",
+      moduleName + ".js"};
   for (const auto& fileName : possibleFileNames) {
     std::filesystem::path filePath = std::filesystem::path(baseFolderPath) / fileName;
     if (!std::filesystem::exists(filePath)) {
@@ -55,10 +56,11 @@ JSObjectRef JscCodeLoader::createInstanceOfIifeBundledModule(JSContextRef ctx,
   std::string instanceName = flatNamespace + "_instance";
 
   auto* globalThis = JSContextGetGlobalObject(ctx);
-  std::vector<std::string> argumentNames(args.size());
+  std::vector<std::string> argumentNames;
+  argumentNames.reserve(args.size());
   for (size_t i = 0; i < args.size(); i++) {
-    argumentNames[i] = flatNamespace + "_arg" + std::to_string(i);
-    JSObjectSetProperty(ctx, globalThis, JscStringRAII(argumentNames[i].c_str()), args[i],
+    argumentNames.emplace_back(flatNamespace + "_arg" + std::to_string(i));
+    JSObjectSetProperty(ctx, globalThis, JscStringRAII(argumentNames.back().c_str()), args.at(i),
                         kJSPropertyAttributeNone, exception);
   }
   replaceNewClassInstanceStatementInPlace(source, instanceName, argumentNames);

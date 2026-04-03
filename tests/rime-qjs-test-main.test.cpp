@@ -14,7 +14,7 @@
 #endif
 
 void setJavaScriptCoreOptionsToDebug() {
-#if defined(_ENABLE_JAVASCRIPTCORE)
+#ifdef _ENABLE_JAVASCRIPTCORE
   LOG(INFO) << "setting the undocumented JavaScriptCore options to debug";
 
   setenv("JSC_dumpOptions", "1", 1);  // Logs JSC runtime options at startup
@@ -46,7 +46,7 @@ public:
     LOG(INFO) << "setting up user data dir: " << userDataDir_;
 
     RimeTraits traits = {
-        .data_size = sizeof(RimeTraits) - sizeof((traits).data_size),
+        .data_size = sizeof(RimeTraits) - sizeof(traits.data_size),
         .shared_data_dir = userDataDir_.c_str(),
         .user_data_dir = userDataDir_.c_str(),
         .distribution_name = nullptr,

@@ -173,9 +173,19 @@ if(WIN32)
   target_compile_definitions(librime-qjs-objs PRIVATE RIME_IMPORTS)
 endif()
 
+
 if(ENABLE_JAVASCRIPTCORE)
   find_library(JAVASCRIPTCORE JavaScriptCore REQUIRED)
   include_directories(${JAVASCRIPTCORE}/Headers)
+
+  # Suppress enum declaration warnings from macOS SDK headers
+  # https://github.com/copilot/share/004b4028-0820-8803-b940-a848008d6951
+  target_compile_options(librime-qjs-objs PRIVATE -Wno-non-literal-gnu-string-literal-operator-template)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(librime-qjs-objs PRIVATE -Wno-elaborated-enum-base)
+    target_compile_options(librime-qjs-objs PRIVATE -fno-strict-enums)
+  endif()
+
   target_link_libraries(librime-qjs-objs PRIVATE ${JAVASCRIPTCORE})
 endif()
 

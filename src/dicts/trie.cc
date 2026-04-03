@@ -38,7 +38,7 @@ void Trie::loadBinaryFile(const std::string& filePath) {
       throw std::runtime_error("Corrupted data file");
     }
 
-    data_[i].assign(current, strLen);
+    data_.at(i).assign(current, strLen);
     current += strLen;
   }
 
@@ -112,7 +112,7 @@ void Trie::add(const std::string& key, const std::string& value) {
     }
 
     // Store the associated data
-    data_[id] = value;
+    data_.at(id) = value;
   } else {
     throw std::runtime_error("Failed to add key-value pair");
   }
@@ -138,7 +138,7 @@ void Trie::build(const std::unordered_map<std::string, std::string>& map) {
     agent.set_query(key.c_str(), key.length());
 
     if (trie_.lookup(agent)) {
-      data_[agent.key().id()] = value;
+      data_.at(agent.key().id()) = value;
     } else {
       throw std::runtime_error("Failed to add key-value pair");
     }
@@ -152,7 +152,7 @@ std::optional<std::string> Trie::find(const std::string& key) const {
   if (trie_.lookup(agent)) {
     std::size_t id = agent.key().id();
     if (id < data_.size()) {
-      return data_[id];
+      return data_.at(id);
     }
   }
   return std::nullopt;
@@ -173,7 +173,7 @@ std::vector<std::pair<std::string, std::string>> Trie::prefixSearch(
   while (trie_.predictive_search(agent)) {
     std::string key(agent.key().ptr(), agent.key().length());
     if (const std::size_t id = agent.key().id(); id < data_.size()) {
-      auto value = data_[id];
+      auto value = data_.at(id);
       if (!concatSeparator_.empty()) {
         auto arr = split(value, concatSeparator_);
         for (auto& item : arr) {
