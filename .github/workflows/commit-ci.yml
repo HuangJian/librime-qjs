@@ -60,12 +60,12 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: make deps
 
-      - name: Build librime
-        run: make
-
       - name: Install Rime plugins
         run: ./action-install-plugins-macos.sh
 
+      - name: Build librime
+        run: make
+        
       - name: Code format lint
         run: bash ./tools/clang-format.sh lint
         working-directory: ./plugins/qjs
