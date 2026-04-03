@@ -63,9 +63,16 @@ jobs:
       - name: Install Rime plugins
         run: ./action-install-plugins-macos.sh
 
-      - name: Build librime
-        run: make
-        
+      - name: Build librime without the qjs executable
+        run: |
+          cmake . -Bbuild \
+            -DCMAKE_INSTALL_PREFIX="$PWD/dist" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_MERGED_PLUGINS=OFF \
+            -DENABLE_EXTERNAL_PLUGINS=ON \
+            -DBUILD_TOOLS=OFF
+          cmake --build build
+
       - name: Code format lint
         run: bash ./tools/clang-format.sh lint
         working-directory: ./plugins/qjs
